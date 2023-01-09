@@ -85,6 +85,7 @@ public:
     static Eigen::Affine3f GetTranslation(const Eigen::Matrix4f& transform);
     static Eigen::Affine3f GetTranslationRotation(const Eigen::Matrix4f& transform);
     static Eigen::Affine3f GetScaling(const Eigen::Matrix4f& _transform);
+    static Eigen::Vector3f GetScalingVec(const Eigen::Matrix4f& _transform);
 
     Eigen::Affine3f Tout{Eigen::Affine3f::Identity()}, Tin{Eigen::Affine3f::Identity()}; // transformations of *this* object (only)
     float lineWidth = 5;

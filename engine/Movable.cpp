@@ -234,6 +234,13 @@ Eigen::Affine3f Movable::GetScaling(const Eigen::Matrix4f& _transform)
     return Eigen::Affine3f{Eigen::Scaling(Sx, Sy, Sz)};
 }
 
+Eigen::Vector3f Movable::GetScalingVec(const Eigen::Matrix4f& _transform)
+{
+    Eigen::Affine3f scale = GetScaling(_transform);
+
+    return Eigen::Vector3f(scale(0,0), scale(1,1), scale(2,2));
+}
+
 Eigen::Matrix4f Movable::GetAggregatedTransform() const
 {
     if (auto p = parent.lock())
