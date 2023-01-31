@@ -39,6 +39,7 @@ public:
 //    virtual void nextCyclicDescentStep() = 0;
     std::shared_ptr<Model> pickedModel;
     std::shared_ptr<Camera> camera;
+    bool animate = false;
 
     virtual void MouseCallback(Viewport* viewport, int x, int y, int button, int action, int mods, int buttonState[]);
     virtual void ScrollCallback(Viewport* viewport, int x, int y, int xoffset, int yoffset, bool dragging, int buttonState[]);

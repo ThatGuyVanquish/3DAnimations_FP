@@ -4,6 +4,7 @@
 #include "Viewport.h"
 #include "DrawVisitor.h"
 #include "GLFW/glfw3.h"
+#include <AnimationVisitor.h>
 
 
 namespace cg3d
@@ -36,6 +37,7 @@ private:
     Viewport* FindViewportAtPos(int x, int y);
 
     DrawVisitor defaultVisitor;
+    AnimationVisitor animationVisitor;
     std::vector<std::shared_ptr<Viewport>> viewports;
     Viewport* viewportAtMousePress = nullptr;
     Viewport* viewportAtKeyPress = nullptr;
