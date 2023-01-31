@@ -20,8 +20,8 @@
     position_eye = vec3 (View * Model * vec4 (position, 1.0));
     normal_eye = vec3 (Model * vec4 (normal, 0.0));
     normal_eye = normalize(normal_eye);
-    // Kai = vec4(color,1);
-    // Kdi = vec4(color,1);
+    Kai = vec4(color,1);
+    Kdi = vec4(color,1);
     Ksi = vec4(0.7,0.7,0.7,1);
     texcoordi = texcoord;
     gl_Position = Proj * vec4 (position_eye, 1.0); //Proj * View * vec4(position, 1.0);"
