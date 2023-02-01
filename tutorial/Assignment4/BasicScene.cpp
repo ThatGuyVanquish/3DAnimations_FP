@@ -1,5 +1,5 @@
 #include "BasicScene.h"
-
+#include "stb_image.h"
 using namespace cg3d;
 
 BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGui(std::move(name), display)
@@ -10,25 +10,89 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
     style.FrameRounding = 5.0f;
 }
 
-bool* pOpen = nullptr;
+void BasicScene::formatScore()
+{
+    if (currentScoreFormatted != nullptr)
+        delete currentScoreFormatted;
+    std::string currentScoreString = std::to_string(currentScore);
+    currentScoreFormatted = strcpy(new char[currentScoreString.length() + 1], currentScoreString.c_str());
+}
+
+void BasicScene::startTimer()
+{
+    /*
+        Initiate 3 second timer then set animate to true and start scoreboard timer
+    */
+}
+
+void BasicScene::Scoreboard()
+{
+    ImGui::CreateContext();
+    float width = 1920.0, height = 100.0;
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.12f));
+    ImGui::Begin("Scoreboard", scoreboardToggle,(MENU_FLAGS - ImGuiWindowFlags_NoBackground));
+    ImGui::SetWindowSize(ImVec2(width, height));
+    ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
+    ImGui::PopStyleColor();
+    ImGui::SameLine(200.0f, 3.0f);
+    ImGui::SetCursorPos(ImVec2(120.0f, 30.0f));
+    float old_size = ImGui::GetFont()->Scale;
+    ImGui::GetFont()->Scale *= 3;
+    ImGui::PushFont(ImGui::GetFont());
+    ImGui::Text("SCORE:");
+    ImGui::SameLine(0.0f, 50.0f);
+    if (currentScoreFormatted == nullptr)
+        formatScore();
+    ImGui::Text(currentScoreFormatted);
+    ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
+    ImGui::Text("TIMER:");
+    ImGui::SameLine(0.0f, 50.0f);
+    ImGui::Text("30:00");
+    ImGui::GetFont()->Scale = old_size;
+    ImGui::PopFont();
+    ImGui::End();
+}
+
+void BasicScene::MainMenu()
+{
+    ImGui::CreateContext();
+    ImGui::Begin("Main Menu", mainMenuTogle, MENU_FLAGS);
+    
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("C:\\Users\\Naveh\\Documents\\3D Animations\\3DAnimations_FP\\tutorial\\Assignment4\\resources\\mainmenu_bg.png", &width, &height, &nrChannels, 0);
+
+    // Generate the OpenGL texture
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::Image((void*)textureID, ImVec2(width,height));
+    ImGui::SetWindowPos("Main Menu", ImVec2(675, 275), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Main Menu", ImVec2(width + 20, height + 20), ImGuiCond_Always);
+    bool* pOpen2 = nullptr;
+    //ImGui::Text("SNAAAAAAAKE");
+    ImGui::SetCursorPos(ImVec2(105, 185));
+    ImGui::SetWindowFontScale(1.3f);
+    if (ImGui::Button("START GAME"))
+    {
+        showMainMenu = false;
+        gaming = true;
+        startTimer();
+    }
+    ImGui::End();
+}
 
 void BasicScene::BuildImGui()
 {
-    int flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
-    ImGui::Begin("Main Menu", pOpen, flags);
-    //ImGui::SetWindowPos("Main Menu", ImVec2(800, 450), ImGuiCond_Always); // set to never when started gameplay
-    ImGui::SetWindowSize("Main Menu", ImVec2(200, 250), ImGuiCond_Always);
-    ImGui::Text("I'M A SNAKEEEE. I'M A SNEAKY SNEAKY SNAKEEE");
-    bool* pOpen2 = nullptr;
-    if (ImGui::Button("BLYAT SUCCA"))
-    {
-        //ImGui::Begin("Test", pOpen2, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-        //ImGui::SetWindowSize("Test", ImVec2(200, 250), ImGuiCond_Always);
-        //ImGui::Text("I'M A SNAKEEEE. I'M A SNEAKY SNEAKY SNAKEEE");
-    }
-    /*ImGui::SetWindowCollapsed("Main Menu", pOpen, ImGuiCond_Always);*/
-    ImGui::End();
+    if (showMainMenu)
+        MainMenu();
+    //if (gaming)
+        Scoreboard();
 }
 
 void BasicScene::InitCameras(float fov, int width, int height, float near, float far)
@@ -117,7 +181,7 @@ void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, in
         switch (key)
         {
         case GLFW_KEY_R:
-            //ImGui::Begin("Main Menu", pOpen, ImGuiCond_Always);
+            showMainMenu = true;
             break;
         case GLFW_KEY_1:
             camera = cameras[1];
@@ -127,6 +191,10 @@ void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, in
             break;
         case GLFW_KEY_S:
             animate = !animate;
+            break;
+        case GLFW_KEY_J:
+            currentScore += 1000;
+            formatScore();
             break;
         }
     }
