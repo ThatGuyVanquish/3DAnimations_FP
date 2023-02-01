@@ -1,13 +1,15 @@
 #pragma once
 
-#include "Scene.h"
+//#include "Scene.h"
 #include "SceneWithImGui.h"
 #include "CamModel.h"
+#include "ImGuiOverlay.cpp"
 #include <utility>
 #include "IglMeshLoader.h"
-#include "imgui.h"
+//#include "imgui.h"
 #include "file_dialog_open.h"
 #include "GLFW/glfw3.h"
+
 //#include <glad/glad.h>
 
 class BasicScene : public cg3d::SceneWithImGui
@@ -23,14 +25,9 @@ public:
     void startTimer();
 
     bool animate = false;
+
 private:
     void formatScore();
-    char* getResource(const char* fileName);
-    bool initializedFonts = false;
-    void initFonts();
-    void ShowSmallText(const char* text);
-    void ShowMediumText(const char* text);
-    void ShowLargeText(const char* text);
 
     bool gaming = false;
     bool started = true;
@@ -41,15 +38,21 @@ private:
     int currentScore = 0;
     char* currentScoreFormatted = nullptr;
     bool* scoreboardToggle = nullptr;
+    std::chrono::time_point<std::chrono::steady_clock> startOfTimer;
 
     bool* startTimerToggle = nullptr;
+    std::chrono::time_point<std::chrono::steady_clock> startTimerDeadline;
+    bool timerRunning = false;
 
     std::shared_ptr<cg3d::Movable> root;
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{ 2 };
     // camera[0] = top down view
     // camera[1] = snake view
+
+
     static const int MENU_FLAGS = ImGuiWindowFlags_NoBackground |ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+
     std::vector<std::shared_ptr<cg3d::Model>> cyls;
     void InitSnake(int num = 5);
     void InitCameras(float fov, int width, int height, float near, float far);
