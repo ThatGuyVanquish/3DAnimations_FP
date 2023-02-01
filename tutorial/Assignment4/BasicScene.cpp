@@ -1,5 +1,6 @@
 #include "BasicScene.h"
 #include "stb_image.h"
+#include <filesystem>
 using namespace cg3d;
 
 BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGui(std::move(name), display)
@@ -20,15 +21,31 @@ void BasicScene::formatScore()
 
 void BasicScene::startTimer()
 {
+    if (started)
+        return;
     /*
         Initiate 3 second timer then set animate to true and start scoreboard timer
     */
+    float width = 500.0f, height = 500.0f;
+    ImGui::Begin("StartTimer", mainMenuTogle, MENU_FLAGS);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
+    ShowLargeText("SHEEEEESH");
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.0f, 0.0f, 1.0f));
+    float originaFontlScale = ImGui::GetFont()->Scale;
+    ImGui::GetFont()->Scale *= 2;
+    ImGui::PushFont(ImGui::GetFont());
+    ImGui::Text("3");
+    ImGui::PopFont();
+    ImGui::GetFont()->Scale /= 2;
+    ImGui::PopStyleColor();
+    ImGui::End();
 }
 
 void BasicScene::Scoreboard()
 {
-    ImGui::CreateContext();
     float width = 1920.0, height = 100.0;
+    ImGui::CreateContext();
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.12f));
     ImGui::Begin("Scoreboard", scoreboardToggle,(MENU_FLAGS - ImGuiWindowFlags_NoBackground));
     ImGui::SetWindowSize(ImVec2(width, height));
@@ -53,13 +70,26 @@ void BasicScene::Scoreboard()
     ImGui::End();
 }
 
+char* BasicScene::getResource(const char* fileName)
+{
+    std::filesystem::path cwd = std::filesystem::current_path() / "..\\..\\..\\tutorial\\Assignment4\\resources";
+    std::filesystem::path filePath = cwd / fileName;
+    std::string filePathString = filePath.string();
+    return strcpy(new char[filePathString.length() + 1], filePathString.c_str());
+}
+
 void BasicScene::MainMenu()
 {
     ImGui::CreateContext();
     ImGui::Begin("Main Menu", mainMenuTogle, MENU_FLAGS);
     
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("C:\\Users\\Naveh\\Documents\\3D Animations\\3DAnimations_FP\\tutorial\\Assignment4\\resources\\mainmenu_bg.png", &width, &height, &nrChannels, 0);
+    //std::filesystem::path cwd = std::filesystem::current_path() / "..\\..\\..\\tutorial\\Assignment4\\resources";
+    //std::filesystem::path imagePath = cwd / "mainmenu_bg.png";
+    //std::string imagePathString = imagePath.string();
+    char* imgPath = getResource("mainmenu_bg.png");
+    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
+    delete imgPath;
 
     // Generate the OpenGL texture
     unsigned int textureID;
@@ -82,17 +112,20 @@ void BasicScene::MainMenu()
     {
         showMainMenu = false;
         gaming = true;
-        startTimer();
+        //startTimer();
     }
     ImGui::End();
 }
 
 void BasicScene::BuildImGui()
 {
+    /*if (!initializedFonts)
+        initFonts();*/
     if (showMainMenu)
         MainMenu();
-    //if (gaming)
+    if (gaming)
         Scoreboard();
+    startTimer();
 }
 
 void BasicScene::InitCameras(float fov, int width, int height, float near, float far)
@@ -132,6 +165,38 @@ void BasicScene::InitSnake(int num)
         }
     }
 }
+
+void BasicScene::initFonts()
+{
+    initializedFonts = true;
+    ImGuiIO io = ImGui::GetIO();
+    char* arial = getResource("ARIAL.TTF");
+    io.Fonts->AddFontFromFileTTF(arial, 16.0f);
+    io.Fonts->AddFontFromFileTTF(arial, 32.0f);
+    io.Fonts->AddFontFromFileTTF(arial, 64.0f);
+}
+
+void BasicScene::ShowSmallText(const char* text)
+{
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    ImGui::Text(text);
+    ImGui::PopFont();
+}
+
+void BasicScene::ShowMediumText(const char* text)
+{
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+    ImGui::Text(text);
+    ImGui::PopFont();
+}
+
+void BasicScene::ShowLargeText(const char* text)
+{
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+    ImGui::Text(text);
+    ImGui::PopFont();
+}
+
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
@@ -196,6 +261,10 @@ void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, in
             currentScore += 1000;
             formatScore();
             break;
+        case GLFW_KEY_T:
+            startTimer();
+            break;
         }
+        
     }
 }

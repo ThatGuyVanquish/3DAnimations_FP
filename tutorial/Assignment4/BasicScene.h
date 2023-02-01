@@ -25,8 +25,15 @@ public:
     bool animate = false;
 private:
     void formatScore();
+    char* getResource(const char* fileName);
+    bool initializedFonts = false;
+    void initFonts();
+    void ShowSmallText(const char* text);
+    void ShowMediumText(const char* text);
+    void ShowLargeText(const char* text);
 
     bool gaming = false;
+    bool started = true;
 
     bool* mainMenuTogle = nullptr;
     bool showMainMenu = true;
@@ -34,6 +41,8 @@ private:
     int currentScore = 0;
     char* currentScoreFormatted = nullptr;
     bool* scoreboardToggle = nullptr;
+
+    bool* startTimerToggle = nullptr;
 
     std::shared_ptr<cg3d::Movable> root;
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{ 2 };
