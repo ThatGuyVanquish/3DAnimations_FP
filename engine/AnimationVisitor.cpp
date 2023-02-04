@@ -57,7 +57,7 @@ namespace cg3d
                         model->Rotate(prevRotationQuaternion); //might need rotate in system
                     }
                 }
-                Visitor::Visit(model);
+//                Visitor::Visit(model);
             }
         }
         //if (!model->isHidden) {
