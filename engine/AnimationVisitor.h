@@ -13,19 +13,17 @@ namespace cg3d
     class AnimationVisitor : public Visitor
     {
     public:
+//        explicit AnimationVisitor(Scene *scene);
+
         void Run(Scene* scene, Camera* camera) override;
         void Visit(Model* model) override;
-        void Visit(Scene* _scene) override;
-        void Init() override;
-        bool drawOutline = true;
-        float outlineLineWidth = 5;
+//        void Visit(Scene* _scene) override;
 
-        Eigen::Vector4f outlineLineColor{ 1, 1, 1, 1 };
 
     private:
-        void DrawOutline();
-
         Scene* scene;
+        int rotatedCylIndex = 0;
+        Eigen::Quaternionf prevRotationQuaternion;
     };
 
 } // namespace cg3d

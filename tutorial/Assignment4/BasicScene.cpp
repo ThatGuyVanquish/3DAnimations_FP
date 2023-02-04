@@ -27,7 +27,7 @@ void BasicScene::startTimer()
         Initiate 3 second timer then set animate to true and start scoreboard timer
     */
     float width = 500.0f, height = 500.0f;
-    ImGui::Begin("StartTimer", mainMenuTogle, MENU_FLAGS);
+    ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
     ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
     ShowLargeText("SHEEEEESH");
@@ -81,7 +81,7 @@ char* BasicScene::getResource(const char* fileName)
 void BasicScene::MainMenu()
 {
     ImGui::CreateContext();
-    ImGui::Begin("Main Menu", mainMenuTogle, MENU_FLAGS);
+    ImGui::Begin("Main Menu", mainMenuToggle, MENU_FLAGS);
     
     int width, height, nrChannels;
     //std::filesystem::path cwd = std::filesystem::current_path() / "..\\..\\..\\tutorial\\Assignment4\\resources";
@@ -229,6 +229,19 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     //snake->Scale(0.5);
     camera->Translate(15, Axis::Z);
     //cube->Scale(3);
+
+    // Creation of axis mesh
+    Eigen::MatrixXd vertices(6, 3);
+    vertices << -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1;
+    Eigen::MatrixXi faces(3, 2);
+    faces << 0, 1, 2, 3, 4, 5;
+    Eigen::MatrixXd vertexNormals = Eigen::MatrixXd::Ones(6, 3);
+    Eigen::MatrixXd textureCoords = Eigen::MatrixXd::Ones(6, 2);
+    coordsys = std::make_shared<Mesh>("coordsys", vertices, faces, vertexNormals, textureCoords);
+    auto axis = Model::Create("Axis", coordsys, material);
+    axis->mode = 1;
+    axis->Scale(20);
+    AddChild(axis);
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -240,11 +253,28 @@ Eigen::Vector3f dir = { 1,0,0 };
 
 void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, int scancode, int action, int mods)
 {
-    auto system = camera->GetRotation().transpose();
+//    auto system = camera->GetRotation().transpose();
+    auto system = cyls[0]->GetRotation().transpose();
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         switch (key)
         {
+        case GLFW_KEY_LEFT:
+            cyls[0]->RotateInSystem(system, 0.1f, Axis::Y);
+            cyls[1]->RotateInSystem(system, -0.1f, Axis::Y);
+            break;
+        case GLFW_KEY_RIGHT:
+            cyls[0]->RotateInSystem(system, -0.1f, Axis::Y);
+            cyls[1]->RotateInSystem(system, 0.1f, Axis::Y);
+            break;
+        case GLFW_KEY_UP:
+            cyls[0]->RotateInSystem(system, 0.1f, Axis::Z);
+            cyls[1]->RotateInSystem(system, -0.1f, Axis::Z);
+            break;
+        case GLFW_KEY_DOWN:
+            cyls[0]->RotateInSystem(system, -0.1f, Axis::Z);
+            cyls[1]->RotateInSystem(system, 0.1f, Axis::Z);
+            break;
         case GLFW_KEY_R:
             showMainMenu = true;
             break;
