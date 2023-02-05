@@ -22,8 +22,9 @@ namespace cg3d
 
     private:
         Scene* scene;
-        int rotatedCylIndex = 0;
+        int prevRotatedCylIndex = 0;
         Eigen::Quaternionf prevRotationQuaternion;
+        float slerpFactor = 0.99f;
     };
 
 } // namespace cg3d

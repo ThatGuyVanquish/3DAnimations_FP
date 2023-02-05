@@ -1,6 +1,7 @@
 #include "BasicScene.h"
 #include "stb_image.h"
 #include <filesystem>
+
 using namespace cg3d;
 
 BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGui(std::move(name), display)
@@ -138,32 +139,70 @@ void BasicScene::InitCameras(float fov, int width, int height, float near, float
     camera = cameras[0];
     //maybe place snake then have camera[1] relative to it based on being a child of snake's root
     InitSnake();
-    cyls[0]->AddChild(cameras[1]);
+    cyls[0].model->AddChild(cameras[1]);
     cameras[1]->Translate(0.5f, Axis::Y);
 }
 
-void BasicScene::InitSnake(int num)
-{   
+void BasicScene::InitSnake()
+{
     auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/xCylinder.obj");
     auto program = std::make_shared<Program>("shaders/basicShader");
     auto material = std::make_shared<Material>("material", program); // empty material
-    for(int i = 0; i < num; i++) 
+    auto green{ std::make_shared<Material>("green", program, true)};
+    green->AddTexture(0, "textures/grass.bmp", 2);
+    red = { std::make_shared<Material>("red", program) };
+    red->AddTexture(0, "textures/box0.bmp", 2);
+
+    float scaleFactor = 1.0f;
+    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(cylMesh);
+    for(int i = 0; i < numOfCyls; i++)
     {
-        cyls.push_back(Model::Create("Cyl " + std::to_string(i), cylMesh, material));
+        auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, material);
+        cyls.push_back({cylModel, scaleFactor, aabb});
+        auto collisionBox = cg3d::Model::Create("Bounding box 0", CollisionDetection::meshifyBoundingBox(aabb.m_box),green);
+        cyls[i].model->AddChild(collisionBox);
+        collisionBox->showFaces = false;
+        collisionBox->showWireframe = true;
+        cyls[i].model->showFaces = false;
+
         if (i == 0) // first axis and cylinder depend on scene's root
         {
-            root->AddChild(cyls[0]);
-            cyls[0]->Translate({ 0.8f, 0, 0 });
-            cyls[0]->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
+            root->AddChild(cyls[0].model);
+            cyls[0].model->Translate({ 0.8f, 0, 0 });
+            cyls[0].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
         }
         else
         {
-            cyls[i - 1]->AddChild(cyls[i]);
-            //cyls[i]->Scale(1, Axis::X);
-            cyls[i]->Translate(1.6f, Axis::X);
-            cyls[i]->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
+            cyls[i - 1].model->AddChild(cyls[i].model);
+            //cyls[i].model->Scale(1, Axis::X);
+            cyls[i].model->Translate(1.6f, Axis::X);
+            cyls[i].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
         }
     }
+//    auto phongShader = std::make_shared <cg3d::Program>("shaders/phongShader");
+//    auto material2 = std::make_shared<cg3d::Material>("material2", phongShader);
+    auto camelHeadMesh = IglLoader::MeshFromFiles("camelhead", "data/camelhead.off");
+    auto camelHeadModel = Model::Create("Camelhead", camelHeadMesh, material);
+    aabb = InitAABB(camelHeadMesh);
+    camelHead = {camelHeadModel, 1.5f, aabb};
+    auto collisionBox = cg3d::Model::Create("Bounding box 0", CollisionDetection::meshifyBoundingBox(aabb.m_box),green);
+    camelHead.model->AddChild(collisionBox);
+    collisionBox->showFaces = false;
+    collisionBox->showWireframe = true;
+    collisionBox->Scale(camelHead.scaleFactor);
+    camelHeadModel->Scale(camelHead.scaleFactor);
+    camelHeadModel->Rotate(-M_PI_2, Axis::Y);
+    camelHeadModel->Translate(-1.6f, Axis::X);
+    cyls[0].model->AddChild(camelHeadModel);
+}
+
+igl::AABB<Eigen::MatrixXd, 3> BasicScene::InitAABB(std::shared_ptr<Mesh> mesh)
+{
+    Eigen::MatrixXd V = mesh->data[0].vertices;
+    Eigen::MatrixXi F = mesh->data[0].faces;
+    igl::AABB<Eigen::MatrixXd, 3> axisAligned;
+    axisAligned.init(V, F);
+    return axisAligned;
 }
 
 void BasicScene::initFonts()
@@ -247,6 +286,82 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
 {
     Scene::Update(program, proj, view, model);
+    program.SetUniform4f("lightColor", 0.8f, 0.3f, 0.0f, 0.5f);
+    program.SetUniform4f("Kai", 1.0f, 0.3f, 0.6f, 1.0f);
+    program.SetUniform4f("Kdi", 0.5f, 0.5f, 0.0f, 1.0f);
+    program.SetUniform1f("specular_exponent", 5.0);
+    program.SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+}
+
+/**
+ * need to add actions to be made when a collision of 2 objects detected, like:
+ * 1. when the head of the snake collides with a "good" object, it should be eaten and gain score
+ * 2. when the head of the snake collides with a "bad" object or itself, it should lower the score or end the game
+ * 3. any other scenarios...
+ */
+void BasicScene::checkForCollision()
+{
+    // collision with the head:
+    for (int i = 1; i < cyls.size(); i++)
+    {
+        Eigen::AlignedBox3d box0, box1;
+        if (CollisionDetection::intersects(
+                camelHead.scaleFactor,
+                camelHead.aabb,
+                camelHead.model->GetAggregatedTransform(),
+                cyls[i].scaleFactor,
+                cyls[i].aabb,
+                cyls[i].model->GetAggregatedTransform(),
+                box0, box1
+        ))
+        {
+            animate = false;
+        }
+    }
+
+    // search for collision between cylinders
+    for (int i = 0; i < cyls.size(); i++) {
+        for (int j = i+2; j < cyls.size(); j++) {
+            Eigen::AlignedBox3d box0, box1;
+            if (CollisionDetection::intersects(
+                    cyls[i].scaleFactor,
+                    cyls[i].aabb,
+                    cyls[i].model->GetAggregatedTransform(),
+                    cyls[j].scaleFactor,
+                    cyls[j].aabb,
+                    cyls[j].model->GetAggregatedTransform(),
+                    box0, box1
+            ))
+            {
+                animate = false;
+                auto m0 = cg3d::Model::Create(
+                        "cb0",
+                        cg3d::Mesh::Cube(),
+                        red
+                );
+                auto m1 = cg3d::Model::Create(
+                        "cb1",
+                        cg3d::Mesh::Cube(),
+                        red
+                );
+                std::vector<std::shared_ptr<cg3d::Mesh>> test0, test1;
+                test0.push_back(CollisionDetection::meshifyBoundingBox(box0));
+                test1.push_back(CollisionDetection::meshifyBoundingBox(box1));
+                m0->SetMeshList(test0);
+                m1->SetMeshList(test1);
+                m0->showFaces = false;
+                m1->showFaces = false;
+                m0->showWireframe = true;
+                m1->showWireframe = true;
+                m0->isHidden = false;
+                m1->isHidden = false;
+                cyls[i].model->AddChild(m0);
+                cyls[j].model->AddChild(m1);
+
+            }
+        }
+    }
+
 }
 
 Eigen::Vector3f dir = { 1,0,0 };
@@ -254,26 +369,34 @@ Eigen::Vector3f dir = { 1,0,0 };
 void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, int scancode, int action, int mods)
 {
 //    auto system = camera->GetRotation().transpose();
-    auto system = cyls[0]->GetRotation().transpose();
+    auto system = cyls[0].model->GetRotation().transpose();
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         switch (key)
         {
         case GLFW_KEY_LEFT:
-            cyls[0]->RotateInSystem(system, 0.1f, Axis::Y);
-            cyls[1]->RotateInSystem(system, -0.1f, Axis::Y);
+//            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Y);
+//            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Y);
+            cyls[0].model->Rotate(0.1f, Axis::Y);
+            cyls[1].model->Rotate(-0.1f, Axis::Y);
             break;
         case GLFW_KEY_RIGHT:
-            cyls[0]->RotateInSystem(system, -0.1f, Axis::Y);
-            cyls[1]->RotateInSystem(system, 0.1f, Axis::Y);
+//            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Y);
+//            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Y);
+            cyls[0].model->Rotate(-0.1f, Axis::Y);
+            cyls[1].model->Rotate(0.1f, Axis::Y);
             break;
         case GLFW_KEY_UP:
-            cyls[0]->RotateInSystem(system, 0.1f, Axis::Z);
-            cyls[1]->RotateInSystem(system, -0.1f, Axis::Z);
+//            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Z);
+//            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Z);
+            cyls[0].model->Rotate(-0.1f, Axis::Z);
+            cyls[1].model->Rotate(0.1f, Axis::Z);
             break;
         case GLFW_KEY_DOWN:
-            cyls[0]->RotateInSystem(system, -0.1f, Axis::Z);
-            cyls[1]->RotateInSystem(system, 0.1f, Axis::Z);
+//            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Z);
+//            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Z);
+            cyls[0].model->Rotate(0.1f, Axis::Z);
+            cyls[1].model->Rotate(-0.1f, Axis::Z);
             break;
         case GLFW_KEY_R:
             showMainMenu = true;
@@ -298,3 +421,37 @@ void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, in
         
     }
 }
+
+//void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)
+//{
+//    if (dragging) {
+//        auto system = camera->GetRotation().transpose() * GetRotation();
+//        auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
+//        auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
+//        if (pickedModel) {
+//            pickedModel->SetTout(pickedToutAtPress);
+//            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
+//                pickedModel->TranslateInSystem(system,
+//                                               {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
+//            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
+//                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Z);
+//            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
+//                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
+//                pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
+//            }
+//        }
+//        else {
+//            // camera->SetTout(cameraToutAtPress);
+//            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
+//                root->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
+//            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
+//                root->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
+//            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
+//                root->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
+//                root->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
+//            }
+//        }
+//        xAtPress = x;
+//        yAtPress = y;
+//    }
+//}

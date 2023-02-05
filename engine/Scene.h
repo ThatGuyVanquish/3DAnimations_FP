@@ -16,6 +16,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <AABB.h>
 
 #include "glfw/Viewer.h"
 
@@ -36,10 +37,13 @@ public:
 
     virtual void Init(Visitor* visitor);
     virtual void Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model);
-//    virtual void nextCyclicDescentStep() = 0;
+    virtual void nextCyclicDescentStep() {};
+    virtual void checkForCollision() {};
     std::shared_ptr<Model> pickedModel;
     std::shared_ptr<Camera> camera;
     bool animate;
+    int numOfCyls = 16;
+
 
     virtual void MouseCallback(Viewport* viewport, int x, int y, int button, int action, int mods, int buttonState[]);
     virtual void ScrollCallback(Viewport* viewport, int x, int y, int xoffset, int yoffset, bool dragging, int buttonState[]);
