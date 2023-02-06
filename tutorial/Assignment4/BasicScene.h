@@ -12,15 +12,10 @@
 #include <map>
 #include "CollisionDetection.cpp"
 
-//#include <glad/glad.h>
+// header for common structures like model_data
+#include "common.h"
 
-typedef struct {
-    std::shared_ptr<cg3d::Model> model;
-    float scaleFactor;
-    igl::AABB<Eigen::MatrixXd, 3> aabb;
-    std::shared_ptr<cg3d::Model> collisionFrame;
-    std::shared_ptr<cg3d::Model> collisionBox;
-} model_data;
+//#include <glad/glad.h>
 
 class BasicScene : public cg3d::SceneWithImGui {
 public:
@@ -44,15 +39,18 @@ private:
 
     // materials
     std::shared_ptr<cg3d::Program> program;
+    std::shared_ptr<cg3d::Program> snakeShader;
     std::shared_ptr<cg3d::Material> basicMaterial;
     std::shared_ptr<cg3d::Material> green;
     std::shared_ptr<cg3d::Material> red;
+    std::shared_ptr<cg3d::Material> snakeSkin;
 
     // models
     std::shared_ptr<cg3d::Movable> root;
     std::shared_ptr<cg3d::Mesh> coordsys;
     std::vector<model_data> cyls, objects;
-    model_data camelHead;
+    model_data head;
+    model_data snake;
 
     // cameras
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};

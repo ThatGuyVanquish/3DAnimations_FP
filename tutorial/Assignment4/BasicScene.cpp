@@ -93,15 +93,14 @@ void BasicScene::InitCameras(float fov, int width, int height, float near, float
 
 void BasicScene::InitSnake()
 {
+    //init cylinders
     auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/xCylinder.obj");
-
-
     float scaleFactor = 1.0f;
-    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(cylMesh);
+    igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = InitAABB(cylMesh);
     for(int i = 0; i < numOfCyls; i++)
     {
         auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
-        cyls.push_back({cylModel, scaleFactor, aabb});
+        cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         InitCollisionModels(cyls[i]);
         cyls[i].model->showFaces = false;
 
@@ -121,17 +120,72 @@ void BasicScene::InitSnake()
     }
 
     // init head
-    auto camelHeadMesh = IglLoader::MeshFromFiles("camelhead", "data/bunny.off");
-    auto camelHeadModel = Model::Create("Camelhead", camelHeadMesh, basicMaterial);
-    aabb = InitAABB(camelHeadMesh);
-    camelHead = {camelHeadModel, 3.0f, aabb};
-    InitCollisionModels(camelHead);
-    camelHeadModel->Scale(camelHead.scaleFactor);
-    camelHeadModel->Rotate(-M_PI_2, Axis::Y);
-    camelHeadModel->Translate(-1.6f, Axis::X);
-    camelHeadModel->showFaces = false;
-    camelHeadModel->showWireframe = true;
-    cyls[0].model->AddChild(camelHeadModel);
+    auto headMesh = IglLoader::MeshFromFiles("head", "data/bunny.off");
+    auto headModel = Model::Create("head", headMesh, basicMaterial);
+    igl::AABB<Eigen::MatrixXd, 3> head_aabb = InitAABB(headMesh);
+    head = {headModel, 3.0f, head_aabb};
+    InitCollisionModels(head);
+    headModel->Scale(head.scaleFactor);
+    headModel->Rotate(-M_PI_2, Axis::Y);
+    headModel->Translate(-1.6f, Axis::X);
+    headModel->showFaces = false;
+    headModel->showWireframe = true;
+    cyls[0].model->AddChild(headModel);
+
+    // init snake
+    snakeShader = std::make_shared<Program>("shaders/overlay");
+    snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+//    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
+    auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
+    auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = InitAABB(snakeMesh);
+    snake = {snakeModel, 16.0f, snake_aabb};
+//    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
+    int index_x, index_y, index_z;
+    double max_x, max_y, max_z, min_x, min_y, min_z;
+    int min_x_index, min_y_index, min_z_index;
+    Eigen::MatrixXd V = snake.model->GetMesh(0)->data[0].vertices;
+    for (int i = 0; i < V.rows(); i++)
+    {
+        Eigen::Vector3d vertex = V.row(i);
+        if (min_x > vertex[0]) {
+            min_x = vertex[0];
+            min_x_index = i;
+        }
+        if (min_y > vertex[1]) {
+            min_y = vertex[1];
+            min_y_index = i;
+        }
+        if (min_z > vertex[2]) {
+            min_z = vertex[2];
+            min_z_index = i;
+        }
+        if (max_x < vertex[0]) {
+            max_x = vertex[0];
+            index_x = i;
+        }
+        if (max_y < vertex[1]) {
+            max_y = vertex[1];
+            index_y = i;
+        }
+        if (max_z < vertex[2]) {
+            max_z = vertex[2];
+            index_z = i;
+        }
+    }
+    std::cout
+            << "min x: " << min_x << "\n"
+            << "index_min_x: " << min_x_index << "\n"
+            << "min y: " << min_y << "\n"
+            << "index_min_y: " << min_y_index << "\n"
+            << "min z: " << min_z << "\n"
+            << "index_min_z: " << min_z_index << "\n"
+            << "max x: " << max_x << "\n"
+            << "index_max_x: " << index_x << "\n"
+            << "max y: " << max_y << "\n"
+            << "index_max_y: " << index_y << "\n"
+            << "max z: " << max_z << "\n"
+            << "index_max_z: " << index_z << "\n" << std::endl;
 
 }
 
@@ -211,9 +265,9 @@ void BasicScene::checkForCollision()
     {
         Eigen::AlignedBox3d box_camel, box_i;
         if (CollisionDetection::intersects(
-                camelHead.scaleFactor,
-                camelHead.aabb,
-                camelHead.model->GetAggregatedTransform(),
+                head.scaleFactor,
+                head.aabb,
+                head.model->GetAggregatedTransform(),
                 cyls[i].scaleFactor,
                 cyls[i].aabb,
                 cyls[i].model->GetAggregatedTransform(),
@@ -221,7 +275,7 @@ void BasicScene::checkForCollision()
         ))
         {
             animate = false;
-            SetCollisionBox(camelHead, box_camel);
+            SetCollisionBox(head, box_camel);
             SetCollisionBox(cyls[i], box_i);
         }
     }
@@ -229,9 +283,9 @@ void BasicScene::checkForCollision()
     {
         Eigen::AlignedBox3d box_camel, box_i;
         if (CollisionDetection::intersects(
-                camelHead.scaleFactor,
-                camelHead.aabb,
-                camelHead.model->GetAggregatedTransform(),
+                head.scaleFactor,
+                head.aabb,
+                head.model->GetAggregatedTransform(),
                 objects[i].scaleFactor,
                 objects[i].aabb,
                 objects[i].model->GetAggregatedTransform(),
@@ -239,7 +293,7 @@ void BasicScene::checkForCollision()
         ))
         {
             animate = false;
-            SetCollisionBox(camelHead, box_camel);
+            SetCollisionBox(head, box_camel);
             SetCollisionBox(objects[i], box_i);
         }
     }
