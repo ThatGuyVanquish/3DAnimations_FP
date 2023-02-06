@@ -30,8 +30,8 @@ namespace cg3d
     void AnimationVisitor::Visit(Model* model)
     {
         Eigen::Matrix3f system = model->GetRotation().transpose();
-        Eigen::Vector3f vec1, vec2;
-        vec1 = Eigen::Vector3f(1, 0, 0);
+        Eigen::Vector3f rotation_axis, rotation_vec;
+        rotation_axis = Eigen::Vector3f(0, 0, 1);
         if (scene->animate)
         {
             std::string modelsName = model->name;
@@ -40,18 +40,18 @@ namespace cg3d
                 int cylIndex = std::stoi(modelsName.substr(4));
                 if (cylIndex == 0) // need to check what's the head of the snake
                 {
-                    model->TranslateInSystem(system, Eigen::Vector3f(-0.01f, 0, 0));
+                    model->TranslateInSystem(system, Eigen::Vector3f(0, 0, -0.01f));
                 }
                 else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
-                    vec2 = model->Tout.rotation() * Eigen::Vector3f(1, 0, 0);
-                    prevRotationQuaternion = Eigen::Quaternionf::FromTwoVectors(vec2, vec1);
+                    rotation_vec = model->Tout.rotation() * rotation_axis;
+                    prevRotationQuaternion = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_axis);
                     prevRotationQuaternion = prevRotationQuaternion.slerp(slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prevRotationQuaternion); //might need rotate in system
                     prevRotatedCylIndex++;
                 } else if (cylIndex == prevRotatedCylIndex + 1) {
                     model->Rotate(prevRotationQuaternion.conjugate());
-                    vec2 = model->Tout.rotation() * Eigen::Vector3f(1, 0, 0);
-                    prevRotationQuaternion = Eigen::Quaternionf::FromTwoVectors(vec2, vec1);
+                    rotation_vec = model->Tout.rotation() * rotation_axis;
+                    prevRotationQuaternion = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_axis);
                     prevRotationQuaternion = prevRotationQuaternion.slerp(slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prevRotationQuaternion); //might need rotate in system
                     prevRotatedCylIndex++;

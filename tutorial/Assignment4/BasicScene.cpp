@@ -42,7 +42,9 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     //auto snake = Model::Create("SSSSSSSSSSSSSSSSSSSNAKE", snakeMesh, snakeSkin);
     //AddChild(snake);
     //snake->Scale(0.5);
-    camera->Translate(15, Axis::Z);
+    camera->Translate(30, Axis::Z);
+    camera->Translate(15, Axis::Y);
+    camera->Rotate(-M_PI_4/2.0, Axis::X);
     //cube->Scale(3);
 
     // Creation of axis mesh
@@ -94,7 +96,7 @@ void BasicScene::InitCameras(float fov, int width, int height, float near, float
 void BasicScene::InitSnake()
 {
     //init cylinders
-    auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/xCylinder.obj");
+    auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/zCylinder.obj");
     float scaleFactor = 1.0f;
     igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = InitAABB(cylMesh);
     for(int i = 0; i < numOfCyls; i++)
@@ -107,15 +109,15 @@ void BasicScene::InitSnake()
         if (i == 0) // first axis and cylinder depend on scene's root
         {
             root->AddChild(cyls[0].model);
-            cyls[0].model->Translate({ 0.8f, 0, 0 });
-            cyls[0].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
+            cyls[0].model->Translate({ 0, 0, 0.8f });
+            cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         }
         else
         {
             cyls[i - 1].model->AddChild(cyls[i].model);
             //cyls[i].model->Scale(1, Axis::X);
-            cyls[i].model->Translate(1.6f, Axis::X);
-            cyls[i].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
+            cyls[i].model->Translate(1.6f, Axis::Z);
+            cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         }
     }
 
@@ -126,8 +128,8 @@ void BasicScene::InitSnake()
     head = {headModel, 3.0f, head_aabb};
     InitCollisionModels(head);
     headModel->Scale(head.scaleFactor);
-    headModel->Rotate(-M_PI_2, Axis::Y);
-    headModel->Translate(-1.6f, Axis::X);
+//    headModel->Rotate(-M_PI_2, Axis::Y);
+    headModel->Translate(-1.6f, Axis::Z);
     headModel->showFaces = false;
     headModel->showWireframe = true;
     cyls[0].model->AddChild(headModel);
@@ -197,7 +199,7 @@ void BasicScene::initObjects()
     objects.push_back({bunnyModel, 3.0f, aabb});
     InitCollisionModels(objects[0]);
     root->AddChild(bunnyModel);
-    bunnyModel->Translate({0.0, 0.0, -5.0});
+    bunnyModel->Translate({-5.0, 0.0, 0.0});
     bunnyModel->Scale(objects[0].scaleFactor);
     bunnyModel->showFaces = false;
     bunnyModel->showWireframe = true;
@@ -528,14 +530,14 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_UP:
 //            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Z);
-            cyls[0].model->Rotate(-0.1f, Axis::Z);
-            cyls[1].model->Rotate(0.1f, Axis::Z);
+            cyls[0].model->Rotate(-0.1f, Axis::X);
+            cyls[1].model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_DOWN:
 //            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Z);
-            cyls[0].model->Rotate(0.1f, Axis::Z);
-            cyls[1].model->Rotate(-0.1f, Axis::Z);
+            cyls[0].model->Rotate(0.1f, Axis::X);
+            cyls[1].model->Rotate(-0.1f, Axis::X);
             break;
         case GLFW_KEY_R:
             showMainMenu = true;
