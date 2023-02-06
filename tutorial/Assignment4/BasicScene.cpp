@@ -12,6 +12,285 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
     style.FrameRounding = 5.0f;
 }
 
+void BasicScene::Init(float fov, int width, int height, float near, float far)
+{
+    InitMaterials();
+    AddChild(root = Movable::Create("root")); // a common invisible parent object for all the shapes
+    InitSnake();
+    initObjects();
+    InitCameras(fov, width, height, near, far);
+    /* auto underwater{ std::make_shared<Material>("underwater", "shaders/cubemapShader") };
+     underwater->AddTexture(0, "textures/cubemaps/Underwater_", 3);
+     auto bg{ Model::Create("background", Mesh::Cube(), underwater) };
+     AddChild(bg);
+     bg->Scale(120, Axis::XYZ);
+     bg->SetPickable(false);
+     bg->SetStatic();*/
+
+    auto daylight{ std::make_shared<Material>("daylight", "shaders/cubemapShader") };
+    daylight->AddTexture(0, "textures/cubemaps/Daylight Box_", 3);
+    auto background{ Model::Create("background", Mesh::Cube(), daylight) };
+    AddChild(background);
+    background->Scale(120, Axis::XYZ);
+    background->SetPickable(false);
+    background->SetStatic();
+
+    //auto snakeShader = std::make_shared<Program>("shaders/overlay");
+    //auto snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+    //snakeSkin->AddTexture(0, "textures/snake1.png", 2);
+    //auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
+    //auto snake = Model::Create("SSSSSSSSSSSSSSSSSSSNAKE", snakeMesh, snakeSkin);
+    //AddChild(snake);
+    //snake->Scale(0.5);
+    camera->Translate(15, Axis::Z);
+    //cube->Scale(3);
+
+    // Creation of axis mesh
+    Eigen::MatrixXd vertices(6, 3);
+    vertices << -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1;
+    Eigen::MatrixXi faces(3, 2);
+    faces << 0, 1, 2, 3, 4, 5;
+    Eigen::MatrixXd vertexNormals = Eigen::MatrixXd::Ones(6, 3);
+    Eigen::MatrixXd textureCoords = Eigen::MatrixXd::Ones(6, 2);
+    coordsys = std::make_shared<Mesh>("coordsys", vertices, faces, vertexNormals, textureCoords);
+    auto axis = Model::Create("Axis", coordsys, basicMaterial);
+    axis->mode = 1;
+    axis->Scale(20);
+    AddChild(axis);
+}
+
+/**
+ * model init methods:
+ * 1. InitMaterials
+ * 2. InitCameras
+ * 3. InitSnake
+ * 4. initObjects
+ */
+void BasicScene::InitMaterials()
+{
+    program = std::make_shared<Program>("shaders/basicShader");
+    basicMaterial = std::make_shared<Material>("basicMaterial", program); // empty material
+    green = std::make_shared<Material>("green", program, true);
+    green->AddTexture(0, "textures/grass.bmp", 2);
+    red = std::make_shared<Material>("red", program);
+    red->AddTexture(0, "textures/box0.bmp", 2);
+}
+
+void BasicScene::InitCameras(float fov, int width, int height, float near, float far)
+{
+    for (int i = 0; i < 2; i++)
+    {
+        cameras[i] = Camera::Create("camera " + std::to_string(i), fov, float(width) / float(height), near, far);
+    }
+    //set up camera location
+    camera = cameras[0];
+    //maybe place snake then have camera[1] relative to it based on being a child of snake's root
+    cyls[0].model->AddChild(cameras[1]);
+    cameras[1]->Translate(0.5f, Axis::Y);
+    cameras[1]->Translate(0.5, Axis::X);
+    cameras[1]->Rotate(M_PI_2, Axis::Y);
+}
+
+void BasicScene::InitSnake()
+{
+    auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/xCylinder.obj");
+
+
+    float scaleFactor = 1.0f;
+    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(cylMesh);
+    for(int i = 0; i < numOfCyls; i++)
+    {
+        auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
+        cyls.push_back({cylModel, scaleFactor, aabb});
+        InitCollisionModels(cyls[i]);
+        cyls[i].model->showFaces = false;
+
+        if (i == 0) // first axis and cylinder depend on scene's root
+        {
+            root->AddChild(cyls[0].model);
+            cyls[0].model->Translate({ 0.8f, 0, 0 });
+            cyls[0].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
+        }
+        else
+        {
+            cyls[i - 1].model->AddChild(cyls[i].model);
+            //cyls[i].model->Scale(1, Axis::X);
+            cyls[i].model->Translate(1.6f, Axis::X);
+            cyls[i].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
+        }
+    }
+
+    // init head
+    auto camelHeadMesh = IglLoader::MeshFromFiles("camelhead", "data/bunny.off");
+    auto camelHeadModel = Model::Create("Camelhead", camelHeadMesh, basicMaterial);
+    aabb = InitAABB(camelHeadMesh);
+    camelHead = {camelHeadModel, 3.0f, aabb};
+    InitCollisionModels(camelHead);
+    camelHeadModel->Scale(camelHead.scaleFactor);
+    camelHeadModel->Rotate(-M_PI_2, Axis::Y);
+    camelHeadModel->Translate(-1.6f, Axis::X);
+    camelHeadModel->showFaces = false;
+    camelHeadModel->showWireframe = true;
+    cyls[0].model->AddChild(camelHeadModel);
+
+}
+
+void BasicScene::initObjects()
+{
+    auto bunnyMesh = IglLoader::MeshFromFiles("bunny", "data/bunny.off");
+    auto bunnyModel = Model::Create("bunny", bunnyMesh, basicMaterial);
+    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(bunnyMesh);
+    objects.push_back({bunnyModel, 3.0f, aabb});
+    InitCollisionModels(objects[0]);
+    root->AddChild(bunnyModel);
+    bunnyModel->Translate({0.0, 0.0, -5.0});
+    bunnyModel->Scale(objects[0].scaleFactor);
+    bunnyModel->showFaces = false;
+    bunnyModel->showWireframe = true;
+}
+
+/**
+ * collision detection methods:
+ * 1. InitAABB - AABB init method for a given mesh object
+ * 2. InitCollisionModels
+ * 3. checkForCollision
+ */
+igl::AABB<Eigen::MatrixXd, 3> BasicScene::InitAABB(std::shared_ptr<Mesh> mesh)
+{
+    Eigen::MatrixXd V = mesh->data[0].vertices;
+    Eigen::MatrixXi F = mesh->data[0].faces;
+    igl::AABB<Eigen::MatrixXd, 3> axisAligned;
+    axisAligned.init(V, F);
+    return axisAligned;
+}
+
+void BasicScene::InitCollisionModels(model_data &modelData) {
+    auto collisionFrame = cg3d::Model::Create(
+            "collisionFrame "+modelData.model->name,
+            CollisionDetection::meshifyBoundingBox(modelData.aabb.m_box),
+            green
+    );
+    collisionFrame->showFaces = false;
+    collisionFrame->showWireframe = true;
+    collisionFrame->Scale(modelData.scaleFactor);
+    modelData.model->AddChild(collisionFrame);
+    modelData.collisionFrame = collisionFrame;
+
+    auto collisionBox = cg3d::Model::Create(
+            "collisionBox "+modelData.model->name,
+            cg3d::Mesh::Cube(),
+            red
+    );
+    collisionBox->showFaces = false;
+    collisionBox->showWireframe = false;
+    collisionBox->isHidden = true;
+    collisionBox->isPickable = false;
+    modelData.model->AddChild(collisionBox);
+    modelData.collisionBox = collisionBox;
+}
+
+void BasicScene::SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box)
+{
+    std::vector<std::shared_ptr<cg3d::Mesh>> meshVec;
+    meshVec.push_back(CollisionDetection::meshifyBoundingBox(box));
+    modelData.collisionBox->SetMeshList(meshVec);
+    modelData.collisionBox->showWireframe = true;
+    modelData.collisionBox->isHidden = false;
+}
+
+/**
+ * need to add actions to be made when a collision of 2 objects detected, like:
+ * 1. when the head of the snake collides with a "good" object, it should be eaten and gain score
+ * 2. when the head of the snake collides with a "bad" object or itself, it should lower the score or end the game
+ * 3. any other scenarios...
+ */
+void BasicScene::checkForCollision()
+{
+    // collision with the head:
+    for (int i = 1; i < cyls.size(); i++)
+    {
+        Eigen::AlignedBox3d box_camel, box_i;
+        if (CollisionDetection::intersects(
+                camelHead.scaleFactor,
+                camelHead.aabb,
+                camelHead.model->GetAggregatedTransform(),
+                cyls[i].scaleFactor,
+                cyls[i].aabb,
+                cyls[i].model->GetAggregatedTransform(),
+                box_camel, box_i
+        ))
+        {
+            animate = false;
+            SetCollisionBox(camelHead, box_camel);
+            SetCollisionBox(cyls[i], box_i);
+        }
+    }
+    for (int i = 0; i < objects.size(); i++)
+    {
+        Eigen::AlignedBox3d box_camel, box_i;
+        if (CollisionDetection::intersects(
+                camelHead.scaleFactor,
+                camelHead.aabb,
+                camelHead.model->GetAggregatedTransform(),
+                objects[i].scaleFactor,
+                objects[i].aabb,
+                objects[i].model->GetAggregatedTransform(),
+                box_camel, box_i
+        ))
+        {
+            animate = false;
+            SetCollisionBox(camelHead, box_camel);
+            SetCollisionBox(objects[i], box_i);
+        }
+    }
+
+    // search for collision between cylinders and between cylinders and objects:
+    for (int i = 0; i < cyls.size(); i++) {
+        for (int j = i+2; j < cyls.size(); j++) {
+            Eigen::AlignedBox3d box_i, box_j;
+            if (CollisionDetection::intersects(
+                    cyls[i].scaleFactor,
+                    cyls[i].aabb,
+                    cyls[i].model->GetAggregatedTransform(),
+                    cyls[j].scaleFactor,
+                    cyls[j].aabb,
+                    cyls[j].model->GetAggregatedTransform(),
+                    box_i, box_j
+            ))
+            {
+                animate = false;
+                SetCollisionBox(cyls[i], box_i);
+                SetCollisionBox(cyls[j], box_j);
+            }
+        }
+
+        for (int j = 0; j < objects.size(); j++)
+        {
+            Eigen::AlignedBox3d box_i, box_j;
+            if (CollisionDetection::intersects(
+                    cyls[i].scaleFactor,
+                    cyls[i].aabb,
+                    cyls[i].model->GetAggregatedTransform(),
+                    objects[j].scaleFactor,
+                    objects[j].aabb,
+                    objects[j].model->GetAggregatedTransform(),
+                    box_i, box_j
+            ))
+            {
+                animate = false;
+                SetCollisionBox(cyls[i], box_i);
+                SetCollisionBox(objects[j], box_j);
+            }
+        }
+    }
+}
+
+void BasicScene::SetCamera(int index)
+{
+    camera = cameras[index];
+    viewport->camera = camera;
+}
+
 void BasicScene::formatScore()
 {
     if (currentScoreFormatted != nullptr)
@@ -129,81 +408,7 @@ void BasicScene::BuildImGui()
     startTimer();
 }
 
-void BasicScene::InitCameras(float fov, int width, int height, float near, float far)
-{
-    for (int i = 0; i < 2; i++)
-    {
-        cameras[i] = Camera::Create("camera " + std::to_string(i), fov, float(width) / float(height), near, far);
-    }
-    //set up camera location
-    camera = cameras[0];
-    //maybe place snake then have camera[1] relative to it based on being a child of snake's root
-    InitSnake();
-    cyls[0].model->AddChild(cameras[1]);
-    cameras[1]->Translate(0.5f, Axis::Y);
-}
 
-void BasicScene::InitSnake()
-{
-    auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/xCylinder.obj");
-    auto program = std::make_shared<Program>("shaders/basicShader");
-    auto material = std::make_shared<Material>("material", program); // empty material
-    auto green{ std::make_shared<Material>("green", program, true)};
-    green->AddTexture(0, "textures/grass.bmp", 2);
-    red = { std::make_shared<Material>("red", program) };
-    red->AddTexture(0, "textures/box0.bmp", 2);
-
-    float scaleFactor = 1.0f;
-    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(cylMesh);
-    for(int i = 0; i < numOfCyls; i++)
-    {
-        auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, material);
-        cyls.push_back({cylModel, scaleFactor, aabb});
-        auto collisionBox = cg3d::Model::Create("Bounding box 0", CollisionDetection::meshifyBoundingBox(aabb.m_box),green);
-        cyls[i].model->AddChild(collisionBox);
-        collisionBox->showFaces = false;
-        collisionBox->showWireframe = true;
-        cyls[i].model->showFaces = false;
-
-        if (i == 0) // first axis and cylinder depend on scene's root
-        {
-            root->AddChild(cyls[0].model);
-            cyls[0].model->Translate({ 0.8f, 0, 0 });
-            cyls[0].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
-        }
-        else
-        {
-            cyls[i - 1].model->AddChild(cyls[i].model);
-            //cyls[i].model->Scale(1, Axis::X);
-            cyls[i].model->Translate(1.6f, Axis::X);
-            cyls[i].model->SetCenter(Eigen::Vector3f(-0.8f, 0, 0));
-        }
-    }
-//    auto phongShader = std::make_shared <cg3d::Program>("shaders/phongShader");
-//    auto material2 = std::make_shared<cg3d::Material>("material2", phongShader);
-    auto camelHeadMesh = IglLoader::MeshFromFiles("camelhead", "data/camelhead.off");
-    auto camelHeadModel = Model::Create("Camelhead", camelHeadMesh, material);
-    aabb = InitAABB(camelHeadMesh);
-    camelHead = {camelHeadModel, 1.5f, aabb};
-    auto collisionBox = cg3d::Model::Create("Bounding box 0", CollisionDetection::meshifyBoundingBox(aabb.m_box),green);
-    camelHead.model->AddChild(collisionBox);
-    collisionBox->showFaces = false;
-    collisionBox->showWireframe = true;
-    collisionBox->Scale(camelHead.scaleFactor);
-    camelHeadModel->Scale(camelHead.scaleFactor);
-    camelHeadModel->Rotate(-M_PI_2, Axis::Y);
-    camelHeadModel->Translate(-1.6f, Axis::X);
-    cyls[0].model->AddChild(camelHeadModel);
-}
-
-igl::AABB<Eigen::MatrixXd, 3> BasicScene::InitAABB(std::shared_ptr<Mesh> mesh)
-{
-    Eigen::MatrixXd V = mesh->data[0].vertices;
-    Eigen::MatrixXi F = mesh->data[0].faces;
-    igl::AABB<Eigen::MatrixXd, 3> axisAligned;
-    axisAligned.init(V, F);
-    return axisAligned;
-}
 
 void BasicScene::initFonts()
 {
@@ -236,53 +441,6 @@ void BasicScene::ShowLargeText(const char* text)
     ImGui::PopFont();
 }
 
-
-void BasicScene::Init(float fov, int width, int height, float near, float far)
-{
-    AddChild(root = Movable::Create("root")); // a common invisible parent object for all the shapes
-    InitCameras(fov, width, height, near, far);
-   /* auto underwater{ std::make_shared<Material>("underwater", "shaders/cubemapShader") };
-    underwater->AddTexture(0, "textures/cubemaps/Underwater_", 3);
-    auto bg{ Model::Create("background", Mesh::Cube(), underwater) };
-    AddChild(bg);
-    bg->Scale(120, Axis::XYZ);
-    bg->SetPickable(false);
-    bg->SetStatic();*/
-
-    auto daylight{ std::make_shared<Material>("daylight", "shaders/cubemapShader") };
-    daylight->AddTexture(0, "textures/cubemaps/Daylight Box_", 3);
-    auto background{ Model::Create("background", Mesh::Cube(), daylight) };
-    AddChild(background);
-    background->Scale(120, Axis::XYZ);
-    background->SetPickable(false);
-    background->SetStatic();
-    auto program = std::make_shared<Program>("shaders/basicShader");
-    auto material = std::make_shared<Material>("material", program); // empty material
-
-    //auto snakeShader = std::make_shared<Program>("shaders/overlay");
-    //auto snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-    //snakeSkin->AddTexture(0, "textures/snake1.png", 2);
-    //auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-    //auto snake = Model::Create("SSSSSSSSSSSSSSSSSSSNAKE", snakeMesh, snakeSkin);
-    //AddChild(snake);
-    //snake->Scale(0.5);
-    camera->Translate(15, Axis::Z);
-    //cube->Scale(3);
-
-    // Creation of axis mesh
-    Eigen::MatrixXd vertices(6, 3);
-    vertices << -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1;
-    Eigen::MatrixXi faces(3, 2);
-    faces << 0, 1, 2, 3, 4, 5;
-    Eigen::MatrixXd vertexNormals = Eigen::MatrixXd::Ones(6, 3);
-    Eigen::MatrixXd textureCoords = Eigen::MatrixXd::Ones(6, 2);
-    coordsys = std::make_shared<Mesh>("coordsys", vertices, faces, vertexNormals, textureCoords);
-    auto axis = Model::Create("Axis", coordsys, material);
-    axis->mode = 1;
-    axis->Scale(20);
-    AddChild(axis);
-}
-
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
 {
     Scene::Update(program, proj, view, model);
@@ -293,80 +451,7 @@ void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, con
     program.SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
 }
 
-/**
- * need to add actions to be made when a collision of 2 objects detected, like:
- * 1. when the head of the snake collides with a "good" object, it should be eaten and gain score
- * 2. when the head of the snake collides with a "bad" object or itself, it should lower the score or end the game
- * 3. any other scenarios...
- */
-void BasicScene::checkForCollision()
-{
-    // collision with the head:
-    for (int i = 1; i < cyls.size(); i++)
-    {
-        Eigen::AlignedBox3d box0, box1;
-        if (CollisionDetection::intersects(
-                camelHead.scaleFactor,
-                camelHead.aabb,
-                camelHead.model->GetAggregatedTransform(),
-                cyls[i].scaleFactor,
-                cyls[i].aabb,
-                cyls[i].model->GetAggregatedTransform(),
-                box0, box1
-        ))
-        {
-            animate = false;
-        }
-    }
-
-    // search for collision between cylinders
-    for (int i = 0; i < cyls.size(); i++) {
-        for (int j = i+2; j < cyls.size(); j++) {
-            Eigen::AlignedBox3d box0, box1;
-            if (CollisionDetection::intersects(
-                    cyls[i].scaleFactor,
-                    cyls[i].aabb,
-                    cyls[i].model->GetAggregatedTransform(),
-                    cyls[j].scaleFactor,
-                    cyls[j].aabb,
-                    cyls[j].model->GetAggregatedTransform(),
-                    box0, box1
-            ))
-            {
-                animate = false;
-                auto m0 = cg3d::Model::Create(
-                        "cb0",
-                        cg3d::Mesh::Cube(),
-                        red
-                );
-                auto m1 = cg3d::Model::Create(
-                        "cb1",
-                        cg3d::Mesh::Cube(),
-                        red
-                );
-                std::vector<std::shared_ptr<cg3d::Mesh>> test0, test1;
-                test0.push_back(CollisionDetection::meshifyBoundingBox(box0));
-                test1.push_back(CollisionDetection::meshifyBoundingBox(box1));
-                m0->SetMeshList(test0);
-                m1->SetMeshList(test1);
-                m0->showFaces = false;
-                m1->showFaces = false;
-                m0->showWireframe = true;
-                m1->showWireframe = true;
-                m0->isHidden = false;
-                m1->isHidden = false;
-                cyls[i].model->AddChild(m0);
-                cyls[j].model->AddChild(m1);
-
-            }
-        }
-    }
-
-}
-
-Eigen::Vector3f dir = { 1,0,0 };
-
-void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, int scancode, int action, int mods)
+void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods)
 {
 //    auto system = camera->GetRotation().transpose();
     auto system = cyls[0].model->GetRotation().transpose();
@@ -402,10 +487,10 @@ void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, in
             showMainMenu = true;
             break;
         case GLFW_KEY_1:
-            camera = cameras[1];
+            SetCamera(1);
             break;
         case GLFW_KEY_0:
-            camera = cameras[0];
+            SetCamera(0);
             break;
         case GLFW_KEY_S:
             animate = !animate;
@@ -420,6 +505,21 @@ void BasicScene::KeyCallback(cg3d::Viewport* viewport, int x, int y, int key, in
         }
         
     }
+}
+
+void BasicScene::ViewportSizeCallback(Viewport* _viewport)
+{
+    for (auto& cam: cameras)
+        cam->SetProjection(float(_viewport->width) / float(_viewport->height));
+
+    // note: we don't need to call Scene::ViewportSizeCallback since we are setting the projection of all the cameras
+}
+
+void BasicScene::AddViewportCallback(Viewport* _viewport)
+{
+    viewport = _viewport;
+
+    Scene::AddViewportCallback(viewport);
 }
 
 //void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)

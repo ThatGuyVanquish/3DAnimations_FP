@@ -14,11 +14,12 @@
 
 //#include <glad/glad.h>
 
-typedef struct
-{
+typedef struct {
     std::shared_ptr<cg3d::Model> model;
     float scaleFactor;
     igl::AABB<Eigen::MatrixXd, 3> aabb;
+    std::shared_ptr<cg3d::Model> collisionFrame;
+    std::shared_ptr<cg3d::Model> collisionBox;
 } model_data;
 
 class BasicScene : public cg3d::SceneWithImGui {
@@ -40,6 +41,47 @@ public:
     void startTimer();
 
 private:
+
+    // materials
+    std::shared_ptr<cg3d::Program> program;
+    std::shared_ptr<cg3d::Material> basicMaterial;
+    std::shared_ptr<cg3d::Material> green;
+    std::shared_ptr<cg3d::Material> red;
+
+    // models
+    std::shared_ptr<cg3d::Movable> root;
+    std::shared_ptr<cg3d::Mesh> coordsys;
+    std::vector<model_data> cyls, objects;
+    model_data camelHead;
+
+    // cameras
+    std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};
+    cg3d::Viewport* viewport = nullptr;
+
+
+    // models init methods
+    void InitMaterials();
+
+    void InitCameras(float fov, int width, int height, float near, float far);
+
+    void InitSnake();
+
+    void initObjects();
+
+    // collision detection
+    igl::AABB<Eigen::MatrixXd, 3> InitAABB(std::shared_ptr<cg3d::Mesh> mesh);
+
+    void InitCollisionModels(model_data &modelData);
+
+    void SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box);
+
+    void checkForCollision() override;
+
+    // camera managing methods
+    void SetCamera(int index);
+
+
+
     void formatScore();
 
     char *getResource(const char *fileName);
@@ -66,11 +108,6 @@ private:
 
     bool *startTimerToggle = nullptr;
 
-    std::shared_ptr<cg3d::Movable> root;
-    std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};
-    std::shared_ptr<cg3d::Mesh> coordsys;
-    std::vector<model_data> cyls;
-    model_data camelHead;
 
     // camera[0] = top down view
     // camera[1] = snake view
@@ -78,17 +115,9 @@ private:
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-    void InitSnake();
 
-    void InitCameras(float fov, int width, int height, float near, float far);
-//    void CursorPosCallback(cg3d::Viewport* viewport, int xNew, int yNew, bool dragging, int* buttonState) override;
-
-    void KeyCallback(cg3d::Viewport *viewport, int x, int y, int key, int scancode, int action, int mods) override;
-
-
-    // collision detection
-    igl::AABB<Eigen::MatrixXd, 3> InitAABB(std::shared_ptr<cg3d::Mesh> mesh);
-    void checkForCollision() override;
-    std::shared_ptr<cg3d::Material> red;
+    void KeyCallback(cg3d::Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods) override;
+    void ViewportSizeCallback(cg3d::Viewport* _viewport) override;
+    void AddViewportCallback(cg3d::Viewport* _viewport) override;
 
 };
