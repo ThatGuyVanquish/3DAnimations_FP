@@ -27,6 +27,7 @@ namespace cg3d
         float slerpFactor = 0.99f;
         Eigen::MatrixXd W;
         bool calc_w = true;
+        bool doSkinning = true;
     };
 
 } // namespace cg3d

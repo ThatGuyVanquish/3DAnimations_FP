@@ -39,10 +39,13 @@ namespace cg3d
             {
                 if (calc_w)
                 {
-                    
+                    calculateWeights(W, scene->cyls, scene->snake);
+                    calc_w = false;
                 }
+                applySkinning(W, scene->cyls, scene->snake);
+//                doSkinning = false;
             }
-            if (modelsName.starts_with("Cyl"))
+            else if (modelsName.starts_with("Cyl"))
             {
                 int cylIndex = std::stoi(modelsName.substr(4));
                 if (cylIndex == 0) // need to check what's the head of the snake
@@ -66,6 +69,7 @@ namespace cg3d
                 if (prevRotatedCylIndex >= scene->numOfCyls-1)
                 {
                     prevRotatedCylIndex = 0;
+//                    doSkinning = true;
                 }
             }
         }

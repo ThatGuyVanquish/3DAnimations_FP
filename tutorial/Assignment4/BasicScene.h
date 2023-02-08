@@ -45,12 +45,7 @@ private:
     std::shared_ptr<cg3d::Material> red;
     std::shared_ptr<cg3d::Material> snakeSkin;
 
-    // models
-    std::shared_ptr<cg3d::Movable> root;
-    std::shared_ptr<cg3d::Mesh> coordsys;
-    std::vector<model_data> cyls, objects;
-    model_data head;
-    model_data snake;
+
 
     // cameras
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};

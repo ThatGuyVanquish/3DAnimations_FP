@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "IglMeshLoader.h"
+#include "../tutorial/Assignment4/IglMeshLoader.h"
 #include <AABB.h>
 #include "Model.h"
 

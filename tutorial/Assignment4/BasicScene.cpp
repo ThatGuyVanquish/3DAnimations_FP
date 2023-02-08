@@ -142,7 +142,11 @@ void BasicScene::InitSnake()
     auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
     igl::AABB<Eigen::MatrixXd, 3> snake_aabb = InitAABB(snakeMesh);
     snake = {snakeModel, 16.0f, snake_aabb};
+    snakeModel->Translate(1.6*(numOfCyls/2), Axis::Z);
+    snakeModel->Scale(4.0f, Axis::Z);
+    snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
+    cyls[0].model->AddChild(snakeModel);
     int index_x, index_y, index_z;
     double max_x, max_y, max_z, min_x, min_y, min_z;
     int min_x_index, min_y_index, min_z_index;
@@ -520,24 +524,28 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
 //            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Y);
             cyls[0].model->Rotate(0.1f, Axis::Y);
             cyls[1].model->Rotate(-0.1f, Axis::Y);
+            snake.model->Rotate(-0.1f, Axis::Y);
             break;
         case GLFW_KEY_RIGHT:
 //            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Y);
 //            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Y);
             cyls[0].model->Rotate(-0.1f, Axis::Y);
             cyls[1].model->Rotate(0.1f, Axis::Y);
+            snake.model->Rotate(0.1f, Axis::Y);
             break;
         case GLFW_KEY_UP:
 //            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Z);
             cyls[0].model->Rotate(-0.1f, Axis::X);
             cyls[1].model->Rotate(0.1f, Axis::X);
+            snake.model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_DOWN:
 //            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Z);
             cyls[0].model->Rotate(0.1f, Axis::X);
             cyls[1].model->Rotate(-0.1f, Axis::X);
+            snake.model->Rotate(-0.1f, Axis::X);
             break;
         case GLFW_KEY_R:
             showMainMenu = true;
