@@ -35,6 +35,13 @@ namespace cg3d
         if (scene->animate)
         {
             std::string modelsName = model->name;
+            if (modelsName.starts_with("SNAKE"))
+            {
+                if (calc_w)
+                {
+                    
+                }
+            }
             if (modelsName.starts_with("Cyl"))
             {
                 int cylIndex = std::stoi(modelsName.substr(4));

@@ -2,7 +2,7 @@
 
 #include "Visitor.h"
 #include "Camera.h"
-
+#include "Skinning.cpp"
 #include <utility>
 #include <memory>
 
@@ -25,6 +25,8 @@ namespace cg3d
         int prevRotatedCylIndex = 0;
         Eigen::Quaternionf prevRotationQuaternion;
         float slerpFactor = 0.99f;
+        Eigen::MatrixXd W;
+        bool calc_w = true;
     };
 
 } // namespace cg3d
