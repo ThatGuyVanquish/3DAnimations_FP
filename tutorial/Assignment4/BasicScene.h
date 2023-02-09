@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Scene.h"
+//#include "Scene.h"
 #include "SceneWithImGui.h"
 #include "CamModel.h"
+#include "ImGuiOverlay.cpp"
 #include <utility>
 #include "IglMeshLoader.h"
-#include "imgui.h"
+//#include "imgui.h"
 #include "file_dialog_open.h"
 #include "GLFW/glfw3.h"
 #include <AABB.h>
@@ -15,9 +16,11 @@
 // header for common structures like model_data
 #include "common.h"
 
+
 //#include <glad/glad.h>
 
-class BasicScene : public cg3d::SceneWithImGui {
+class BasicScene : public cg3d::SceneWithImGui
+{
 public:
     //explicit BasicScene(std::string name, cg3d::Display* display) : Scene(std::move(name), display) {};
     BasicScene(std::string name, cg3d::Display *display);
@@ -77,18 +80,6 @@ private:
 
     void formatScore();
 
-    char *getResource(const char *fileName);
-
-    bool initializedFonts = false;
-
-    void initFonts();
-
-    void ShowSmallText(const char *text);
-
-    void ShowMediumText(const char *text);
-
-    void ShowLargeText(const char *text);
-
     bool gaming = false;
     bool started = true;
 
@@ -96,14 +87,18 @@ private:
     bool showMainMenu = true;
 
     int currentScore = 0;
-    char *currentScoreFormatted = nullptr;
-    bool *scoreboardToggle = nullptr;
+    char* currentScoreFormatted = nullptr;
+    bool* scoreboardToggle = nullptr;
+    std::chrono::time_point<std::chrono::steady_clock> startOfTimer;
 
-    bool *startTimerToggle = nullptr;
+    bool* startTimerToggle = nullptr;
+    std::chrono::time_point<std::chrono::steady_clock> startTimerDeadline;
+    bool timerRunning = false;
 
 
     // camera[0] = top down view
     // camera[1] = snake view
+
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;

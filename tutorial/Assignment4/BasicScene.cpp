@@ -1,11 +1,13 @@
 #include "BasicScene.h"
 #include "stb_image.h"
+#include <chrono>
 #include <filesystem>
 
 using namespace cg3d;
 
 BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGui(std::move(name), display)
 {
+    initFonts();
     ImGui::GetIO().IniFilename = nullptr;
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
@@ -319,27 +321,45 @@ void BasicScene::startTimer()
 {
     if (started)
         return;
+    if (!timerRunning)
+    {
+        startTimerDeadline = std::chrono::high_resolution_clock::now() + std::chrono::seconds(3);
+        timerRunning = true;
+    }
     /*
         Initiate 3 second timer then set animate to true and start scoreboard timer
     */
-    float width = 500.0f, height = 500.0f;
+    float width = 1000.0f, height = 500.0f;
     ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
-    ShowLargeText("SHEEEEESH");
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f, 0.0f, 0.0f, 1.0f));
-    float originaFontlScale = ImGui::GetFont()->Scale;
-    ImGui::GetFont()->Scale *= 2;
-    ImGui::PushFont(ImGui::GetFont());
-    ImGui::Text("3");
-    ImGui::PopFont();
-    ImGui::GetFont()->Scale /= 2;
-    ImGui::PopStyleColor();
+    ImGui::SetWindowPos(ImVec2(675.0f, 275.0f));
+    auto now = std::chrono::high_resolution_clock::now();
+    if (now < startTimerDeadline)
+    {
+        auto delta = std::chrono::duration_cast<std::chrono::seconds>(startTimerDeadline - now);
+        std::string deltaStr = std::to_string(delta.count() + 1);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ShowXLText(deltaStr.c_str());
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - startTimerDeadline).count() <= 500)
+            ShowXLText("GO!");
+        else
+        {
+            started = true;
+            timerRunning = false;
+            startOfTimer = std::chrono::high_resolution_clock::now();
+        }
+    }
     ImGui::End();
 }
 
 void BasicScene::Scoreboard()
 {
+    if (!gaming)
+        return;
     float width = 1920.0, height = 100.0;
     ImGui::CreateContext();
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.12f));
@@ -349,29 +369,20 @@ void BasicScene::Scoreboard()
     ImGui::PopStyleColor();
     ImGui::SameLine(200.0f, 3.0f);
     ImGui::SetCursorPos(ImVec2(120.0f, 30.0f));
-    float old_size = ImGui::GetFont()->Scale;
-    ImGui::GetFont()->Scale *= 3;
-    ImGui::PushFont(ImGui::GetFont());
-    ImGui::Text("SCORE:");
+    ShowLargeText("SCORE:");
     ImGui::SameLine(0.0f, 50.0f);
     if (currentScoreFormatted == nullptr)
         formatScore();
-    ImGui::Text(currentScoreFormatted);
-    ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
-    ImGui::Text("TIMER:");
-    ImGui::SameLine(0.0f, 50.0f);
-    ImGui::Text("30:00");
-    ImGui::GetFont()->Scale = old_size;
-    ImGui::PopFont();
-    ImGui::End();
-}
+    ShowLargeText(currentScoreFormatted);
 
-char* BasicScene::getResource(const char* fileName)
-{
-    std::filesystem::path cwd = std::filesystem::current_path() / "..\\..\\..\\tutorial\\Assignment4\\resources";
-    std::filesystem::path filePath = cwd / fileName;
-    std::string filePathString = filePath.string();
-    return strcpy(new char[filePathString.length() + 1], filePathString.c_str());
+    ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
+    ShowLargeText("TIMER:");
+    auto now = std::chrono::high_resolution_clock::now();
+    auto delta = std::chrono::duration_cast<std::chrono::seconds>(now - startOfTimer);
+    std::string deltaStr = std::to_string(delta.count() + 1);
+    ImGui::SameLine(0.0f, 50.0f);
+    ShowLargeText(deltaStr.c_str());
+    ImGui::End();
 }
 
 void BasicScene::MainMenu()
@@ -380,9 +391,6 @@ void BasicScene::MainMenu()
     ImGui::Begin("Main Menu", mainMenuToggle, MENU_FLAGS);
     
     int width, height, nrChannels;
-    //std::filesystem::path cwd = std::filesystem::current_path() / "..\\..\\..\\tutorial\\Assignment4\\resources";
-    //std::filesystem::path imagePath = cwd / "mainmenu_bg.png";
-    //std::string imagePathString = imagePath.string();
     char* imgPath = getResource("mainmenu_bg.png");
     unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
     delete imgPath;
@@ -397,64 +405,28 @@ void BasicScene::MainMenu()
     stbi_image_free(data);
 
     ImGui::Image((void*)textureID, ImVec2(width,height));
-    ImGui::SetWindowPos("Main Menu", ImVec2(675, 275), ImGuiCond_Always);
+    ImGui::SetWindowPos("Main Menu", ImVec2(675.0f, 275.0f), ImGuiCond_Always);
     ImGui::SetItemAllowOverlap();
     ImGui::SetWindowSize("Main Menu", ImVec2(width + 20, height + 20), ImGuiCond_Always);
-    bool* pOpen2 = nullptr;
-    //ImGui::Text("SNAAAAAAAKE");
-    ImGui::SetCursorPos(ImVec2(105, 185));
+    ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
     ImGui::SetWindowFontScale(1.3f);
     if (ImGui::Button("START GAME"))
     {
         showMainMenu = false;
         gaming = true;
-        //startTimer();
+        started = false;
     }
     ImGui::End();
 }
 
 void BasicScene::BuildImGui()
 {
-    /*if (!initializedFonts)
-        initFonts();*/
     if (showMainMenu)
         MainMenu();
     if (gaming)
         Scoreboard();
-    startTimer();
-}
-
-
-
-void BasicScene::initFonts()
-{
-    initializedFonts = true;
-    ImGuiIO io = ImGui::GetIO();
-    char* arial = getResource("ARIAL.TTF");
-    io.Fonts->AddFontFromFileTTF(arial, 16.0f);
-    io.Fonts->AddFontFromFileTTF(arial, 32.0f);
-    io.Fonts->AddFontFromFileTTF(arial, 64.0f);
-}
-
-void BasicScene::ShowSmallText(const char* text)
-{
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
-    ImGui::Text(text);
-    ImGui::PopFont();
-}
-
-void BasicScene::ShowMediumText(const char* text)
-{
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
-    ImGui::Text(text);
-    ImGui::PopFont();
-}
-
-void BasicScene::ShowLargeText(const char* text)
-{
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
-    ImGui::Text(text);
-    ImGui::PopFont();
+    if (!started)
+        startTimer();
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -520,7 +492,8 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             formatScore();
             break;
         case GLFW_KEY_T:
-            startTimer();
+            //startTimer();
+            started = false;
             break;
         }
         
