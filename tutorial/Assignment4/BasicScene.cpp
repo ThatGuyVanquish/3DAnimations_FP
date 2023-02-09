@@ -110,29 +110,30 @@ void BasicScene::InitSnake()
         {
             root->AddChild(cyls[0].model);
             cyls[0].model->Translate({ 0, 0, 0.8f });
-            cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+            cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, 0.8f));
         }
         else
         {
             cyls[i - 1].model->AddChild(cyls[i].model);
             //cyls[i].model->Scale(1, Axis::X);
             cyls[i].model->Translate(1.6f, Axis::Z);
-            cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+            cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, 0.8f));
         }
     }
 
     // init head
-    auto headMesh = IglLoader::MeshFromFiles("head", "data/bunny.off");
+    auto headMesh = IglLoader::MeshFromFiles("head", "data/camelhead.off");
     auto headModel = Model::Create("head", headMesh, basicMaterial);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = InitAABB(headMesh);
-    head = {headModel, 3.0f, head_aabb};
+    head = {headModel, 1.0f, head_aabb};
     InitCollisionModels(head);
     headModel->Scale(head.scaleFactor);
-//    headModel->Rotate(-M_PI_2, Axis::Y);
+    headModel->Rotate(-M_PI, Axis::Y);
     headModel->Translate(-1.6f, Axis::Z);
     headModel->showFaces = false;
     headModel->showWireframe = true;
     cyls[0].model->AddChild(headModel);
+
 
     // init snake
     snakeShader = std::make_shared<Program>("shaders/overlay");
@@ -147,51 +148,6 @@ void BasicScene::InitSnake()
     snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
 //    cyls[0].model->AddChild(snakeModel);
-    int index_x, index_y, index_z;
-    double max_x, max_y, max_z, min_x, min_y, min_z;
-    int min_x_index, min_y_index, min_z_index;
-    Eigen::MatrixXd V = snake.model->GetMesh(0)->data[0].vertices;
-    for (int i = 0; i < V.rows(); i++)
-    {
-        Eigen::Vector3d vertex = V.row(i);
-        if (min_x > vertex[0]) {
-            min_x = vertex[0];
-            min_x_index = i;
-        }
-        if (min_y > vertex[1]) {
-            min_y = vertex[1];
-            min_y_index = i;
-        }
-        if (min_z > vertex[2]) {
-            min_z = vertex[2];
-            min_z_index = i;
-        }
-        if (max_x < vertex[0]) {
-            max_x = vertex[0];
-            index_x = i;
-        }
-        if (max_y < vertex[1]) {
-            max_y = vertex[1];
-            index_y = i;
-        }
-        if (max_z < vertex[2]) {
-            max_z = vertex[2];
-            index_z = i;
-        }
-    }
-    std::cout
-            << "min x: " << min_x << "\n"
-            << "index_min_x: " << min_x_index << "\n"
-            << "min y: " << min_y << "\n"
-            << "index_min_y: " << min_y_index << "\n"
-            << "min z: " << min_z << "\n"
-            << "index_min_z: " << min_z_index << "\n"
-            << "max x: " << max_x << "\n"
-            << "index_max_x: " << index_x << "\n"
-            << "max y: " << max_y << "\n"
-            << "index_max_y: " << index_y << "\n"
-            << "max z: " << max_z << "\n"
-            << "index_max_z: " << index_z << "\n" << std::endl;
 
 }
 
@@ -203,7 +159,7 @@ void BasicScene::initObjects()
     objects.push_back({bunnyModel, 3.0f, aabb});
     InitCollisionModels(objects[0]);
     root->AddChild(bunnyModel);
-    bunnyModel->Translate({-5.0, 0.0, 0.0});
+    bunnyModel->Translate({0.0, 0.0, -5.0});
     bunnyModel->Scale(objects[0].scaleFactor);
     bunnyModel->showFaces = false;
     bunnyModel->showWireframe = true;

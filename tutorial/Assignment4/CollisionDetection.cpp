@@ -214,12 +214,25 @@ namespace CollisionDetection {
         R = abs(arg1 - arg2);
         if (R > R0 + R1) return false;
 
+        // getting here means obb0 and obb1 collide
         if (obb0.is_leaf() && obb1.is_leaf()) {
             collidedBox0 = obb0.m_box;
             collidedBox1 = obb1.m_box;
             return true;
         }
-        if (obb0.m_left == nullptr || obb1.m_left == nullptr) return false;
+        // getting here means at least one of the obb's is not a leaf
+        if (obb0.is_leaf()) {
+            return
+                    intersects(scale0, obb0, transform0, scale1, *obb1.m_left, transform1, collidedBox0, collidedBox1) ||
+                    intersects(scale0, obb0, transform0, scale1, *obb1.m_right, transform1, collidedBox0, collidedBox1);
+        }
+        if (obb1.is_leaf()) {
+            return
+                    intersects(scale0, *obb0.m_left, transform0, scale1, obb1, transform1, collidedBox0, collidedBox1) ||
+                    intersects(scale0, *obb0.m_right, transform0, scale1, obb1, transform1, collidedBox0, collidedBox1);
+        }
+//        if (obb0.m_left == nullptr || obb1.m_left == nullptr) return false; // do we need this check?
+        // getting here means both obb's are not leafs, so we check all possible pairs of children
         return
                 intersects(scale0, *obb0.m_left, transform0, scale1, *obb1.m_left, transform1, collidedBox0, collidedBox1) ||
                 intersects(scale0, *obb0.m_left, transform0, scale1, *obb1.m_right, transform1, collidedBox0, collidedBox1) ||

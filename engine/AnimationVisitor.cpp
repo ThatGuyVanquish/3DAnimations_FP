@@ -37,13 +37,13 @@ namespace cg3d
             std::string modelsName = model->name;
             if (modelsName.starts_with("SNAKE"))
             {
-                if (calc_w)
-                {
-                    calculateWeights(W, scene->cyls, scene->snake);
-                    calc_w = false;
-                }
-                applySkinning(W, scene->cyls, scene->snake);
-//                doSkinning = false;
+//                if (calc_w)
+//                {
+//                    calculateWeights(W, scene->cyls, scene->snake);
+//                    calc_w = false;
+//                }
+//                applySkinning(W, scene->cyls, scene->snake);
+////                doSkinning = false;
             }
             else if (modelsName.starts_with("Cyl"))
             {
