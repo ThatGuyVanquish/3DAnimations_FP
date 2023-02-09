@@ -110,14 +110,14 @@ void BasicScene::InitSnake()
         {
             root->AddChild(cyls[0].model);
             cyls[0].model->Translate({ 0, 0, 0.8f });
-            cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, 0.8f));
+            cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         }
         else
         {
             cyls[i - 1].model->AddChild(cyls[i].model);
             //cyls[i].model->Scale(1, Axis::X);
             cyls[i].model->Translate(1.6f, Axis::Z);
-            cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, 0.8f));
+            cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         }
     }
 
@@ -492,16 +492,16 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_UP:
 //            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Z);
-            cyls[0].model->Rotate(-0.1f, Axis::X);
-            cyls[1].model->Rotate(0.1f, Axis::X);
-            snake.model->Rotate(0.1f, Axis::X);
+            cyls[0].model->Rotate(0.1f, Axis::X);
+            cyls[1].model->Rotate(-0.1f, Axis::X);
+            snake.model->Rotate(-0.1f, Axis::X);
             break;
         case GLFW_KEY_DOWN:
 //            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Z);
-            cyls[0].model->Rotate(0.1f, Axis::X);
-            cyls[1].model->Rotate(-0.1f, Axis::X);
-            snake.model->Rotate(-0.1f, Axis::X);
+            cyls[0].model->Rotate(-0.1f, Axis::X);
+            cyls[1].model->Rotate(0.1f, Axis::X);
+            snake.model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_R:
             showMainMenu = true;

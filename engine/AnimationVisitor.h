@@ -23,7 +23,7 @@ namespace cg3d
     private:
         Scene* scene;
         int prevRotatedCylIndex = 0;
-        Eigen::Quaternionf prevRotationQuaternion;
+        Eigen::Quaternionf prev_quat_x, prev_quat_y, prev_quat_z;
         float slerpFactor = 0.99f;
         Eigen::MatrixXd W;
         bool calc_w = true;
