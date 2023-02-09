@@ -3,7 +3,8 @@
 #include "imgui.h"
 static char* getResource(const char* fileName)
 {
-    std::filesystem::path cwd = std::filesystem::current_path() / "../tutorial/Assignment4/resources";
+    std::filesystem::path cwd = std::filesystem::current_path() / "../../../tutorial/Assignment4/resources";
+    //std::filesystem::path cwd = std::filesystem::current_path() / "../tutorial/Assignment4/resources"; works for lior
     std::filesystem::path filePath = cwd / fileName;
     std::string filePathString = filePath.string();
     return strcpy(new char[filePathString.length() + 1], filePathString.c_str());
@@ -45,4 +46,10 @@ static void ShowXLText(const char* text)
     ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
     ImGui::Text(text);
     ImGui::PopFont();
+}
+
+static char* formatScore(int score)
+{
+    std::string currentScoreString = std::to_string(score);
+    return strcpy(new char[currentScoreString.length() + 1], currentScoreString.c_str());
 }

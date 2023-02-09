@@ -2,6 +2,8 @@
 #include "stb_image.h"
 #include <chrono>
 #include <filesystem>
+#include "corecrt_math_defines.h"
+#include <random>
 
 using namespace cg3d;
 
@@ -61,6 +63,38 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     axis->mode = 1;
     axis->Scale(20);
     AddChild(axis);
+    generateViableEntities();
+    spawnEntity(0);
+    //auto test = IglLoader::MeshFromFiles("test", "data/Sword01.off");
+    //auto testmodel = Model::Create("apple", test, basicMaterial);
+    //testmodel->Translate({ 0.0, 0.0, -5.0 });
+    ////testmodel->RotateByDegree(M_PI_2, Axis::Y);
+    //testmodel->Scale(0.03f);
+    //testmodel->showFaces = true;
+    //testmodel->showWireframe = true;
+    //testmodel->showTextures = true;
+    //root->AddChild(testmodel);
+
+    //auto test2 = IglLoader::MeshFromFiles("test", "data/Apple.off");
+    //auto testmodel2 = Model::Create("apple", test2, basicMaterial);
+    //testmodel2->Translate({ 0.0, 0.0, -20.0 });
+    //testmodel->RotateByDegree(-M_PI_2, Axis::Z);
+    //testmodel2->Scale(0.05f);
+    //testmodel2->showFaces = true;
+    //testmodel2->showWireframe = true;
+    //testmodel2->showTextures = true;
+    //root->AddChild(testmodel2);
+
+    //auto test2 = IglLoader::MeshFromFiles("test", "data/bumpy-cube.obj");
+    //auto testmodel2 = Model::Create("apple", test2, basicMaterial);
+    //testmodel2->Translate({ 0.0, 0.0, -30.0f });
+    ////testmodel2->RotateByDegree(M_PI_2, Axis::Y);
+    //testmodel2->Scale(5.0f);
+    //testmodel2->showFaces = true;
+    //testmodel2->showWireframe = true;
+    //testmodel2->showTextures = true;
+    //root->AddChild(testmodel2);
+
 }
 
 /**
@@ -165,6 +199,53 @@ void BasicScene::initObjects()
     bunnyModel->Scale(objects[0].scaleFactor);
     bunnyModel->showFaces = false;
     bunnyModel->showWireframe = true;
+}
+
+void BasicScene::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material)
+{
+    auto mesh = cg3d::IglLoader::MeshFromFiles("Entity_" + entityTypeToString(ent.type) + ent.name, ent.pathToMesh);
+    auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
+    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(mesh);
+    model_data currentModel = {model, ent.scale, aabb};
+    objects.push_back(currentModel);
+    InitCollisionModels(objects[objects.size() - 1]);
+    root->AddChild(model);
+    model->Translate({ 0.0, 0.0, -5.0 });
+    model->Scale(ent.scale);
+    model->showFaces = false;
+    model->showWireframe = true;
+    entity_data currentEntity = { currentModel, std::chrono::high_resolution_clock::now(), 
+        {ent.name, ent.pathToMesh, ent.scale ,ent.type, ent.points, ent.lifeTime / currentLevel} };
+    entities.push_back(currentEntity);
+}
+
+static int getRandomNumberInRange(int low, int high)
+{
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(25, 63); // define the range
+    return distr(gen);
+}
+
+void BasicScene::spawnEntity(int index)
+{
+    if (index == -1)
+        index = getRandomNumberInRange(0, entities.size());
+    int x_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+    int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+    int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+    initEntity(viableEntities[index], basicMaterial);
+    entities[entities.size() - 1].model.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
+}
+
+void BasicScene::generateViableEntities()
+{
+    viableEntities.push_back({ "Bunny", "data/bunny.off", 3.0f,EntityType::ITEM, 1000, 100 });
+    viableEntities.push_back({ "Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80 });
+    viableEntities.push_back({ "Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80 });
+    viableEntities.push_back({ "Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100 });
+    viableEntities.push_back({ "Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80 });
+    viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
 }
 
 /**
@@ -309,14 +390,6 @@ void BasicScene::SetCamera(int index)
     viewport->camera = camera;
 }
 
-void BasicScene::formatScore()
-{
-    if (currentScoreFormatted != nullptr)
-        delete currentScoreFormatted;
-    std::string currentScoreString = std::to_string(currentScore);
-    currentScoreFormatted = strcpy(new char[currentScoreString.length() + 1], currentScoreString.c_str());
-}
-
 void BasicScene::startTimer()
 {
     if (started)
@@ -372,7 +445,7 @@ void BasicScene::Scoreboard()
     ShowLargeText("SCORE:");
     ImGui::SameLine(0.0f, 50.0f);
     if (currentScoreFormatted == nullptr)
-        formatScore();
+        currentScoreFormatted = formatScore(0);
     ShowLargeText(currentScoreFormatted);
 
     ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
@@ -489,7 +562,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             break;
         case GLFW_KEY_J:
             currentScore += 1000;
-            formatScore();
+            currentScoreFormatted = formatScore(currentScore);
             break;
         case GLFW_KEY_T:
             //startTimer();

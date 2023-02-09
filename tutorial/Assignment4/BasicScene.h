@@ -48,12 +48,9 @@ private:
     std::shared_ptr<cg3d::Material> red;
     std::shared_ptr<cg3d::Material> snakeSkin;
 
-
-
     // cameras
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};
     cg3d::Viewport* viewport = nullptr;
-
 
     // models init methods
     void InitMaterials();
@@ -63,6 +60,12 @@ private:
     void InitSnake();
 
     void initObjects();
+
+    void generateViableEntities();
+
+    void initEntity(Entity ent, std::shared_ptr<cg3d::Material> material);
+
+    void spawnEntity(int index);
 
     // collision detection
     igl::AABB<Eigen::MatrixXd, 3> InitAABB(std::shared_ptr<cg3d::Mesh> mesh);
@@ -76,12 +79,13 @@ private:
     // camera managing methods
     void SetCamera(int index);
 
+    const int MAP_SIZE = 50;
 
-
-    void formatScore();
+    //void formatScore();
 
     bool gaming = false;
     bool started = true;
+    int currentLevel = 1;
 
     bool *mainMenuToggle = nullptr;
     bool showMainMenu = true;
@@ -94,10 +98,6 @@ private:
     bool* startTimerToggle = nullptr;
     std::chrono::time_point<std::chrono::steady_clock> startTimerDeadline;
     bool timerRunning = false;
-
-
-    // camera[0] = top down view
-    // camera[1] = snake view
 
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |

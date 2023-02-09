@@ -54,6 +54,8 @@ public:
     std::shared_ptr<cg3d::Movable> root;
     std::shared_ptr<cg3d::Mesh> coordsys;
     std::vector<model_data> cyls, objects;
+    std::vector<entity_data> entities;
+    std::vector<Entity> viableEntities;
     model_data head;
     model_data snake;
 
