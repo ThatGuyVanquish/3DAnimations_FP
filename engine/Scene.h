@@ -16,8 +16,10 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <AABB.h>
 
 #include "glfw/Viewer.h"
+#include "common.h"
 
 
 namespace cg3d
@@ -36,9 +38,25 @@ public:
 
     virtual void Init(Visitor* visitor);
     virtual void Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model);
-//    virtual void nextCyclicDescentStep() = 0;
+    virtual void nextCyclicDescentStep() {};
+    virtual void checkForCollision() {};
     std::shared_ptr<Model> pickedModel;
     std::shared_ptr<Camera> camera;
+
+
+    /*
+     * fields for project
+     */
+    bool animate;
+    int numOfCyls = 16;
+
+    // models
+    std::shared_ptr<cg3d::Movable> root;
+    std::shared_ptr<cg3d::Mesh> coordsys;
+    std::vector<model_data> cyls, objects;
+    model_data head;
+    model_data snake;
+
 
     virtual void MouseCallback(Viewport* viewport, int x, int y, int button, int action, int mods, int buttonState[]);
     virtual void ScrollCallback(Viewport* viewport, int x, int y, int xoffset, int yoffset, bool dragging, int buttonState[]);

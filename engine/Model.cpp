@@ -3,6 +3,7 @@
 #include "ViewerData.h"
 #include "Movable.h"
 #include "ObjLoader.h"
+#include "igl/opengl/MeshGL.h"
 #include <filesystem>
 #include <utility>
 
