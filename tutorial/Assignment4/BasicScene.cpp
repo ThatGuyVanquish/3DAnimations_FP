@@ -142,8 +142,8 @@ void BasicScene::InitSnake()
     auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
     igl::AABB<Eigen::MatrixXd, 3> snake_aabb = InitAABB(snakeMesh);
     snake = {snakeModel, 16.0f, snake_aabb};
-    snakeModel->Translate(1.6*(numOfCyls/2), Axis::Z);
-    snakeModel->Scale(4.0f, Axis::Z);
+    snakeModel->Translate(1.6*(numOfCyls/2)-0.8, Axis::Z);
+    snakeModel->Scale(16.0f, Axis::Z);
     snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
     cyls[0].model->AddChild(snakeModel);
