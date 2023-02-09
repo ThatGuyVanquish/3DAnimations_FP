@@ -2,7 +2,7 @@
 
 #include "Visitor.h"
 #include "Camera.h"
-
+#include "Skinning.cpp"
 #include <utility>
 #include <memory>
 
@@ -13,19 +13,21 @@ namespace cg3d
     class AnimationVisitor : public Visitor
     {
     public:
+//        explicit AnimationVisitor(Scene *scene);
+
         void Run(Scene* scene, Camera* camera) override;
         void Visit(Model* model) override;
-        void Visit(Scene* _scene) override;
-        void Init() override;
-        bool drawOutline = true;
-        float outlineLineWidth = 5;
+//        void Visit(Scene* _scene) override;
 
-        Eigen::Vector4f outlineLineColor{ 1, 1, 1, 1 };
 
     private:
-        void DrawOutline();
-
         Scene* scene;
+        int prevRotatedCylIndex = 0;
+        Eigen::Quaternionf prev_quat_x, prev_quat_y, prev_quat_z;
+        float slerpFactor = 0.99f;
+        Eigen::MatrixXd W;
+        bool calc_w = true;
+        bool doSkinning = true;
     };
 
 } // namespace cg3d
