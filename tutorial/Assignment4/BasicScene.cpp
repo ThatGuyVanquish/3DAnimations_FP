@@ -146,7 +146,7 @@ void BasicScene::InitSnake()
     snakeModel->Scale(16.0f, Axis::Z);
     snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
-    cyls[0].model->AddChild(snakeModel);
+//    cyls[0].model->AddChild(snakeModel);
     int index_x, index_y, index_z;
     double max_x, max_y, max_z, min_x, min_y, min_z;
     int min_x_index, min_y_index, min_z_index;
@@ -504,11 +504,11 @@ void BasicScene::ShowLargeText(const char* text)
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
 {
     Scene::Update(program, proj, view, model);
-    program.SetUniform4f("lightColor", 0.8f, 0.3f, 0.0f, 0.5f);
-    program.SetUniform4f("Kai", 1.0f, 0.3f, 0.6f, 1.0f);
-    program.SetUniform4f("Kdi", 0.5f, 0.5f, 0.0f, 1.0f);
-    program.SetUniform1f("specular_exponent", 5.0);
-    program.SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+//    program.SetUniform4f("lightColor", 0.8f, 0.3f, 0.0f, 0.5f);
+//    program.SetUniform4f("Kai", 1.0f, 0.3f, 0.6f, 1.0f);
+//    program.SetUniform4f("Kdi", 0.5f, 0.5f, 0.0f, 1.0f);
+//    program.SetUniform1f("specular_exponent", 5.0);
+//    program.SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
 }
 
 void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods)

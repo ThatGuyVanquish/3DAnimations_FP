@@ -39,20 +39,59 @@ std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond> >
 
 static void applySkinning(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake)
 {
+    // W - weights matrix
+    // BE - Edges between joints
+    // C - joints positions
+    // P - parents
+    // M - weights per vertex per joint matrix
+    // U - new vertices position after skinning
+//    Eigen::MatrixXd V,W,C,U,M;
+//    Eigen::MatrixXi BE;
+//    Eigen::VectorXi P;
+//    std::vector<RotationList > poses; // rotations of joints for animation
+
     RotationList vQ;
     std::vector<Eigen::Vector3d> vT;
     Eigen::MatrixXd U, V;
+    Eigen::MatrixXi BE;
+    Eigen::VectorXi P;
+    Eigen::MatrixXd C;
 
-    V = snake.model->GetMesh(0)->data[0].vertices;
+    int joints = cyls.size();
+    float h = (1.6f/joints);
+    float a = -0.8f;
+    C.resize(joints+1, 3);
+    BE.resize(joints, 2);
+    P.resize(joints, 1);
+    RotationList anim_pose(joints);
+    for (int i = 0; i < joints; i++)
+    {
+        C(i, 0) = 0;
+        C(i, 1) = 0;
+        C(i, 2) = a+(i*h);
+        BE(i, 0) = i;
+        BE(i, 1) = i+1;
+        if (i == 0) P(i) = -1;
+        else P(i) = i-1;
+        anim_pose[i] = Eigen::Quaterniond(cyls[i].model->GetTout().rotation().cast<double>());
+    }
+    C(joints, 0) = 0;
+    C(joints, 1) = 0;
+    C(joints, 2) = 0.8;
 
-    vQ.resize(cyls.size());
-    vT.resize(cyls.size());
+    igl::forward_kinematics(C,BE,P,anim_pose,vQ,vT);
+
+//    vQ.resize(cyls.size());
+//    vT.resize(cyls.size());
     for (int cyl = 0; cyl < cyls.size(); cyl++)
     {
-        vQ[cyl] = Eigen::Quaterniond(cyls[cyl].model->GetRotation().cast<double>());
+//        vQ[cyl] = Eigen::Quaterniond(cyls[cyl].model->GetRotation().cast<double>());
+////        vQ[cyl] = Eigen::Quaterniond(cyls)
         // no translation needed
         vT[cyl] = Eigen::Vector3d(0,0,0);
     }
+
+    V = snake.model->GetMesh(0)->data[0].vertices;
 
     // activate Dual Quaternion Skinning
     igl::dqs(V,W,vQ,vT,U);
@@ -78,8 +117,8 @@ static void calculateWeights(Eigen::MatrixXd &W, std::vector<model_data> &cyls, 
 
     // calculate center of joints rest position
     std::vector<Eigen::Vector3d> jointsPos;
-    int h = (1.6f/joints);
-    float a = -0.75f;
+    float h = (1.6f/joints);
+    float a = -0.8f + h/2;
     for ( int i = 0; i < joints; i++)
     {
         jointsPos.push_back({0, 0, a + (i * h)});
@@ -91,11 +130,17 @@ static void calculateWeights(Eigen::MatrixXd &W, std::vector<model_data> &cyls, 
         double totalWeight = 0.0;
         Eigen::Vector3d vertex_pos = V.row(i);
         Eigen::Vector3d joint_pos;
+        double variance = 0.002;
         for (int j = 0; j < W.cols(); j++)
         {
             joint_pos = jointsPos[j];
             double distance = (vertex_pos - joint_pos).norm();
-            W(i,j) = exp(-distance * distance);
+            if (abs(vertex_pos[2] - joint_pos[2]) <= h)
+            {
+                W(i,j) = exp((-distance * distance) / (2.0 * variance));
+            } else {
+                W(i,j) = 0.0;
+            }
             totalWeight += W(i,j);
         }
 
@@ -104,6 +149,9 @@ static void calculateWeights(Eigen::MatrixXd &W, std::vector<model_data> &cyls, 
             W(i, j) /= totalWeight;
         }
     }
+//    std::cout << "W: " << W << std::endl;
+    std::cout << "W.row(145): " << W.row(145) << std::endl;
+
 
 }
 
@@ -245,4 +293,4 @@ static void calculateWeights(Eigen::MatrixXd &W, std::vector<model_data> &cyls, 
 //        "Press [space] to toggle animation"<<endl;
 //    viewer.launch();
 //}
-
+//
