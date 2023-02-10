@@ -1,3 +1,4 @@
+#pragma once
 #include "BasicScene.h"
 #include "stb_image.h"
 #include <chrono>
@@ -21,16 +22,8 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     InitMaterials();
     AddChild(root = Movable::Create("root")); // a common invisible parent object for all the shapes
     InitSnake();
-    initObjects();
     InitCameras(fov, width, height, near, far);
-    /* auto underwater{ std::make_shared<Material>("underwater", "shaders/cubemapShader") };
-     underwater->AddTexture(0, "textures/cubemaps/Underwater_", 3);
-     auto bg{ Model::Create("background", Mesh::Cube(), underwater) };
-     AddChild(bg);
-     bg->Scale(120, Axis::XYZ);
-     bg->SetPickable(false);
-     bg->SetStatic();*/
-
+    FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
     auto daylight{ std::make_shared<Material>("daylight", "shaders/cubemapShader") };
     daylight->AddTexture(0, "textures/cubemaps/Daylight Box_", 3);
     auto background{ Model::Create("background", Mesh::Cube(), daylight) };
@@ -49,7 +42,6 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     camera->Translate(30, Axis::Z);
     camera->Translate(15, Axis::Y);
     camera->Rotate(-M_PI_4/2.0, Axis::X);
-    //cube->Scale(3);
 
     // Creation of axis mesh
     Eigen::MatrixXd vertices(6, 3);
@@ -63,38 +55,9 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     axis->mode = 1;
     axis->Scale(20);
     AddChild(axis);
-    generateViableEntities();
-    spawnEntity(0);
-    //auto test = IglLoader::MeshFromFiles("test", "data/Sword01.off");
-    //auto testmodel = Model::Create("apple", test, basicMaterial);
-    //testmodel->Translate({ 0.0, 0.0, -5.0 });
-    ////testmodel->RotateByDegree(M_PI_2, Axis::Y);
-    //testmodel->Scale(0.03f);
-    //testmodel->showFaces = true;
-    //testmodel->showWireframe = true;
-    //testmodel->showTextures = true;
-    //root->AddChild(testmodel);
-
-    //auto test2 = IglLoader::MeshFromFiles("test", "data/Apple.off");
-    //auto testmodel2 = Model::Create("apple", test2, basicMaterial);
-    //testmodel2->Translate({ 0.0, 0.0, -20.0 });
-    //testmodel->RotateByDegree(-M_PI_2, Axis::Z);
-    //testmodel2->Scale(0.05f);
-    //testmodel2->showFaces = true;
-    //testmodel2->showWireframe = true;
-    //testmodel2->showTextures = true;
-    //root->AddChild(testmodel2);
-
-    //auto test2 = IglLoader::MeshFromFiles("test", "data/bumpy-cube.obj");
-    //auto testmodel2 = Model::Create("apple", test2, basicMaterial);
-    //testmodel2->Translate({ 0.0, 0.0, -30.0f });
-    ////testmodel2->RotateByDegree(M_PI_2, Axis::Y);
-    //testmodel2->Scale(5.0f);
-    //testmodel2->showFaces = true;
-    //testmodel2->showWireframe = true;
-    //testmodel2->showTextures = true;
-    //root->AddChild(testmodel2);
-
+    generateViableEntities(viableEntities);
+    currentLevel = 1;
+    //InitLevel(viableEntities, entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
 }
 
 /**
@@ -185,6 +148,25 @@ void BasicScene::InitSnake()
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
 //    cyls[0].model->AddChild(snakeModel);
 
+}
+
+void BasicScene::Reset(bool mainMenu)
+{
+    /*
+        1. Delete the snake 
+        2. Delete all of the entities
+        3. Initiate the snake
+        4. Delete the cameras
+        5. Initialize cameras
+        *6. Level should be initialized after call for start level so that
+        *   entities won't pass away too quickly
+    */
+    root->RemoveChild(snake.model);
+    clearEntities(entities, root);
+    InitSnake();
+    cameras.clear();
+    InitCameras(FOV, WIDTH, HEIGHT, NEAR, FAR);
+    InitLevel(viableEntities, entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
 }
 
 /**
@@ -286,7 +268,8 @@ void BasicScene::startTimer()
         return;
     if (!timerRunning)
     {
-        startTimerDeadline = std::chrono::high_resolution_clock::now() + std::chrono::seconds(3);
+        startTimerDeadline = time(nullptr) + 3;
+
         timerRunning = true;
     }
     /*
@@ -297,25 +280,75 @@ void BasicScene::startTimer()
     ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
     ImGui::SetWindowPos(ImVec2(675.0f, 275.0f));
-    auto now = std::chrono::high_resolution_clock::now();
+    auto now = time(nullptr);
     if (now < startTimerDeadline)
     {
-        auto delta = std::chrono::duration_cast<std::chrono::seconds>(startTimerDeadline - now);
-        std::string deltaStr = std::to_string(delta.count() + 1);
+        startOfTimer = time(nullptr);
+        auto delta = startTimerDeadline - now;
+        std::string deltaStr = std::to_string(delta);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-        ShowXLText(deltaStr.c_str());
+        ShowXLText(deltaStr.c_str(), "snap");
         ImGui::PopStyleColor();
     }
     else
     {
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - startTimerDeadline).count() <= 500)
-            ShowXLText("GO!");
+        if (now - startTimerDeadline < 1)
+            ShowXLText("GO!", "arial");
         else
         {
+            gaming = true;
             started = true;
             timerRunning = false;
-            startOfTimer = std::chrono::high_resolution_clock::now();
+            startOfTimer = time(nullptr);
         }
+    }
+    ImGui::End();
+}
+
+static void displayLives(int lives, int MENU_FLAGS)
+{
+    ImGui::CreateContext();
+    bool* livesToggle = nullptr;
+    ImGui::Begin("Lives", livesToggle, MENU_FLAGS);
+
+    int heartWidth, heartHeight, heart_nrChannels;
+    char* imgPath = getResource("heart.png");
+    unsigned char* data = stbi_load(imgPath, &heartWidth, &heartHeight, &heart_nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int heart;
+    glGenTextures(1, &heart);
+    glBindTexture(GL_TEXTURE_2D, heart);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, heartWidth, heartHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    imgPath = getResource("missing_heart.png");
+    data = stbi_load(imgPath, &heartWidth, &heartHeight, &heart_nrChannels, 0);
+    delete imgPath;
+    unsigned int missing_heart;
+    glGenTextures(1, &missing_heart);
+    glBindTexture(GL_TEXTURE_2D, missing_heart);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, heartWidth, heartHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::SetWindowPos("Lives", ImVec2(737.0f, 65.0f), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Lives", ImVec2(heartWidth * 3 + 30, heartHeight + 20), ImGuiCond_Always);
+    //ImGui::SetCursorPos(ImVec2(850.0f, 100.0f));
+    for (int i = 0; i < 3; i++)
+    {
+        if (lives > i)
+            ImGui::Image((void*)heart, ImVec2(heartWidth, heartHeight));
+        else
+            ImGui::Image((void*)missing_heart, ImVec2(heartWidth, heartHeight));
+        if (i == 0) ImGui::SameLine(heartWidth + 14, 0.0f);
+        if (i == 1) ImGui::SameLine(2 * (heartWidth + 10), 0.0f);
+        std::cout << "heart " << std::to_string(i + 1) << std::endl;
     }
     ImGui::End();
 }
@@ -324,29 +357,46 @@ void BasicScene::Scoreboard()
 {
     if (!gaming)
         return;
-    float width = 1920.0, height = 100.0;
     ImGui::CreateContext();
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.12f));
-    ImGui::Begin("Scoreboard", scoreboardToggle,(MENU_FLAGS - ImGuiWindowFlags_NoBackground));
-    ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
-    ImGui::PopStyleColor();
-    ImGui::SameLine(200.0f, 3.0f);
-    ImGui::SetCursorPos(ImVec2(120.0f, 30.0f));
-    ShowLargeText("SCORE:");
-    ImGui::SameLine(0.0f, 50.0f);
+    bool* scoreboardToggle = nullptr;
+    ImGui::Begin("Scoreboard", scoreboardToggle, MENU_FLAGS);
+
+    int width, height, nrChannels;
+    char* imgPath = getResource("scoreboard_bg.png");
+    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::Image((void*)textureID, ImVec2(width, height));
+    ImGui::SetWindowPos("Scoreboard", ImVec2(50.0f, -20.0f), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Scoreboard", ImVec2(width, height), ImGuiCond_Always);
+    //ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
+    //ImGui::SetWindowFontScale(1.3f);
+    ImGui::SetCursorPos(ImVec2(120.0f, 130.0f));
     if (currentScoreFormatted == nullptr)
         currentScoreFormatted = formatScore(0);
-    ShowLargeText(currentScoreFormatted);
-
-    ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
-    ShowLargeText("TIMER:");
-    auto now = std::chrono::high_resolution_clock::now();
-    auto delta = std::chrono::duration_cast<std::chrono::seconds>(now - startOfTimer);
-    std::string deltaStr = std::to_string(delta.count() + 1);
-    ImGui::SameLine(0.0f, 50.0f);
-    ShowLargeText(deltaStr.c_str());
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,100,0,255));
+    ShowMediumText(currentScoreFormatted, "snap");
+    
+    //ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
+   
+    auto now = time(nullptr);
+    auto delta = now - startOfTimer;
+    std::string deltaStr = std::to_string(delta + 1);
+    ImGui::SameLine(1235.0f, 0.0f);
+    ShowMediumText(deltaStr.c_str(), "snap");
+    ImGui::PopStyleColor();
     ImGui::End();
+    displayLives(currentLives, MENU_FLAGS);
 }
 
 void BasicScene::MainMenu()
@@ -378,7 +428,7 @@ void BasicScene::MainMenu()
     if (ImGui::Button("START GAME"))
     {
         showMainMenu = false;
-        gaming = true;
+        //gaming = true;
         started = false;
     }
     ImGui::End();
@@ -459,6 +509,12 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_T:
             //startTimer();
             started = false;
+            break;
+        case GLFW_KEY_RIGHT_BRACKET:
+            currentLives++;
+            break;
+        case GLFW_KEY_LEFT_BRACKET:
+            currentLives--;
             break;
         }
         

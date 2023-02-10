@@ -13,37 +13,54 @@ static char* getResource(const char* fileName)
 static void initFonts()
 {
     ImGuiIO io = ImGui::GetIO();
-    char* arial = getResource("ARIAL.TTF");
+    char* arial = getResource("fonts/ARIAL.TTF");
     io.Fonts->AddFontFromFileTTF(arial, 16.0f);
     io.Fonts->AddFontFromFileTTF(arial, 32.0f);
     io.Fonts->AddFontFromFileTTF(arial, 64.0f);
     io.Fonts->AddFontFromFileTTF(arial, 128.0f);
+    char* snap = getResource("fonts/SNAP.TTF");
+    io.Fonts->AddFontFromFileTTF(snap, 16.0f);
+    io.Fonts->AddFontFromFileTTF(snap, 32.0f);
+    io.Fonts->AddFontFromFileTTF(snap, 64.0f);
+    io.Fonts->AddFontFromFileTTF(snap, 128.0f);
 }
 
-static void ShowSmallText(const char* text)
+static void ShowSmallText(const char* text, std::string font)
 {
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    if (font == "arial")
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    else
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[4]);
     ImGui::Text(text);
     ImGui::PopFont();
 }
 
-static void ShowMediumText(const char* text)
+static void ShowMediumText(const char* text, std::string font)
 {
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+    if (font == "arial")
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+    else 
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[5]);
     ImGui::Text(text);
     ImGui::PopFont();
 }
 
-static void ShowLargeText(const char* text)
+static void ShowLargeText(const char* text, std::string font)
 {
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+    if (font == "arial")
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+    else
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[6]);
     ImGui::Text(text);
     ImGui::PopFont();
 }
 
-static void ShowXLText(const char* text)
+static void ShowXLText(const char* text, std::string font)
 {
-    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
+    if (font == "arial")
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
+    else
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[7]);
     ImGui::Text(text);
     ImGui::PopFont();
 }

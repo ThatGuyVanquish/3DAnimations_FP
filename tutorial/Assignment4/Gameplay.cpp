@@ -69,6 +69,14 @@ static void spawnEntities(int index, int amount,
             root, currentLevel);
 }
 
+static void clearEntities(std::vector<entity_data>& entities, std::shared_ptr<cg3d::Movable>& root)
+{
+    for (entity_data entity : entities)
+    {
+        root->RemoveChild(entity.modelData.model);
+    }
+    entities.clear();
+}
 
 static void InitLevel(
     std::vector<Entity>& viableEntities,
@@ -150,10 +158,30 @@ static void shouldLevelUp(int& currentLevel, int currentScore)
     }
 }
 
-static void deleteEntityIfTimedOut(entity_data entity)
+static int getRandomEntityOfType(EntityType type, std::vector<Entity>& viableEntities)
+{
+    do 
+    {
+        int index = getRandomNumberInRange(0, viableEntities.size());
+        if (viableEntities[index].type == type)
+            return index;
+    } while (true);
+}
+
+static void deleteEntityIfTimedOut(entity_data entity, 
+    std::vector<Entity>& viableEntities,
+    std::vector<entity_data>& entities, const int MAP_SIZE,
+    std::shared_ptr<cg3d::Material>& basicMaterial,
+    std::shared_ptr<cg3d::Material>& frameColor,
+    std::shared_ptr<cg3d::Material>& collisionColor,
+    std::shared_ptr<cg3d::Movable>& root, int currentLevel
+    )
 {
     time_t now = time(nullptr);
     if (now - entity.ent.lifeTime < entity.creationTime)
         return;
     //insert Lior's method
+    // should insert new entity of the same type:
+    spawnEntity(getRandomEntityOfType(entity.ent.type, viableEntities), viableEntities,
+        entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
 }

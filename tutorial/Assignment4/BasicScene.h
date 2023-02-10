@@ -59,7 +59,11 @@ private:
 
     void InitSnake();
 
-    void initObjects(); // possibly unnecessary
+    void Reset(bool mainMenu = false);
+    float FOV = 0, NEAR = 0, FAR = 0;
+    int WIDTH = 0, HEIGHT = 0;
+
+
 
     // collision detection
     void checkForCollision() override;
@@ -72,16 +76,18 @@ private:
     bool gaming = false;
     bool started = true;
     int currentLevel = 1;
+    int currentLives = 3;
+
 
     bool showMainMenu = true;
 
     int currentScore = 0;
     char* currentScoreFormatted = nullptr;
     bool* scoreboardToggle = nullptr;
-    std::chrono::time_point<std::chrono::steady_clock> startOfTimer;
+    time_t startOfTimer;
 
     bool* startTimerToggle = nullptr;
-    std::chrono::time_point<std::chrono::steady_clock> startTimerDeadline;
+    time_t startTimerDeadline;
     bool timerRunning = false;
 
     static const int MENU_FLAGS =
