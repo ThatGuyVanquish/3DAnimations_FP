@@ -55,9 +55,10 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     axis->mode = 1;
     axis->Scale(20);
     AddChild(axis);
-    generateViableEntities(viableEntities);
+    generateViableEntities(viableItems, viableEnemies, viableBonuses);
     currentLevel = 1;
-    //InitLevel(viableEntities, entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
+    InitLevel(viableItems, viableEnemies, viableBonuses, entities,
+       MAP_SIZE, basicMaterial, green, red, root, currentLevel);
 }
 
 /**
@@ -166,7 +167,8 @@ void BasicScene::Reset(bool mainMenu)
     InitSnake();
     cameras.clear();
     InitCameras(FOV, WIDTH, HEIGHT, NEAR, FAR);
-    InitLevel(viableEntities, entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
+    InitLevel(viableItems, viableEnemies, viableBonuses, 
+        entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
 }
 
 /**
@@ -348,7 +350,6 @@ static void displayLives(int lives, int MENU_FLAGS)
             ImGui::Image((void*)missing_heart, ImVec2(heartWidth, heartHeight));
         if (i == 0) ImGui::SameLine(heartWidth + 14, 0.0f);
         if (i == 1) ImGui::SameLine(2 * (heartWidth + 10), 0.0f);
-        std::cout << "heart " << std::to_string(i + 1) << std::endl;
     }
     ImGui::End();
 }

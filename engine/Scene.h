@@ -55,7 +55,9 @@ public:
     std::shared_ptr<cg3d::Mesh> coordsys;
     std::vector<model_data> cyls, objects;
     std::vector<entity_data> entities;
-    std::vector<Entity> viableEntities;
+    std::vector<Entity> viableItems;
+    std::vector<Entity> viableEnemies;
+    std::vector<Entity> viableBonuses;
     model_data head;
     model_data snake;
 

@@ -4,16 +4,18 @@
 #include "CollisionDetection.cpp"
 
 
-static void generateViableEntities(std::vector<Entity>& viableEntities)
+static void generateViableEntities(std::vector<Entity>& viableItems, 
+    std::vector<Entity>& viableEnemies, 
+    std::vector<Entity>& viableBonuses)
 {
-    viableEntities.push_back({ "Bunny", "data/bunny.off", 6.0f,EntityType::ITEM, 1000, 100 });
-    viableEntities.push_back({ "Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80 });
-    viableEntities.push_back({ "Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80 });
-    viableEntities.push_back({ "Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100 });
-    viableEntities.push_back({ "Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80 });
-    viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
-    viableEntities.push_back({ "Sword", "data/Sword01.off", 0.05f, EntityType::ENEMY, -1000, 100 });
-    viableEntities.push_back({ "Sword", "data/Apple.off", 0.05f, EntityType::ITEM, 500, 100 });
+    viableItems.push_back({ "Bunny", "data/bunny.off", 6.0f,EntityType::ITEM, 1000, 100 });
+    viableItems.push_back({ "Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80 });
+    viableItems.push_back({ "Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80 });
+    viableEnemies.push_back({ "Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100 });
+    viableEnemies.push_back({ "Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80 });
+    viableEnemies.push_back({ "Sword", "data/Sword01.off", 0.0005f, EntityType::ENEMY, -1000, 100 });
+    viableBonuses.push_back({ "Apple", "data/Apple.off", 0.005f, EntityType::BONUS, 0, 100 });
+    //viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
     // maybe add magnet bonus
 }
 
@@ -56,17 +58,20 @@ static void spawnEntity(int index, std::vector<Entity>& viableEntities,
     entities[entities.size() - 1].modelData.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
 }
 
-static void spawnEntities(int index, int amount,
+static void spawnEntities(int amount,
     std::vector<Entity>& viableEntities,
     std::vector<entity_data>& entities, const int MAP_SIZE,
-    std::shared_ptr<cg3d::Material> &basicMaterial,
-    std::shared_ptr<cg3d::Material> &frameColor,
-    std::shared_ptr<cg3d::Material> &collisionColor,
-    std::shared_ptr<cg3d::Movable> &root, int currentLevel)
+    std::shared_ptr<cg3d::Material>& basicMaterial,
+    std::shared_ptr<cg3d::Material>& frameColor,
+    std::shared_ptr<cg3d::Material>& collisionColor,
+    std::shared_ptr<cg3d::Movable>& root, int currentLevel)
 {
-    for (; amount > 0; amount--)
-        spawnEntity(index, viableEntities, entities, MAP_SIZE, basicMaterial, frameColor, collisionColor,
-            root, currentLevel);
+    while (amount > 0)
+    {
+        spawnEntity(getRandomNumberInRange(0, viableEntities.size()), viableEntities,
+            entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
+        amount--;
+    }
 }
 
 static void clearEntities(std::vector<entity_data>& entities, std::shared_ptr<cg3d::Movable>& root)
@@ -79,7 +84,9 @@ static void clearEntities(std::vector<entity_data>& entities, std::shared_ptr<cg
 }
 
 static void InitLevel(
-    std::vector<Entity>& viableEntities,
+    std::vector<Entity>& viableItems,
+    std::vector<Entity>& viableEnemies,
+    std::vector<Entity>& viableBonuses,
     std::vector<entity_data>& entities, const int MAP_SIZE,
     std::shared_ptr<cg3d::Material> &basicMaterial,
     std::shared_ptr<cg3d::Material> &frameColor,
@@ -98,33 +105,15 @@ static void InitLevel(
     case 3:
         enemies = 7;
         break;
+    default:
+        enemies = 10;
     }
-    bool spawnedEnemies = false, spawnedItems = false, spawnedBonuses = false;
-    while (!(spawnedEnemies && spawnedItems && spawnedBonuses))
-    {
-        int index = getRandomNumberInRange(0, viableEntities.size());
-        if (viableEntities[index].type == EntityType::ITEM && !spawnedItems)
-        {
-            spawnEntities(index, items, viableEntities, entities, MAP_SIZE, basicMaterial,
-                frameColor, collisionColor, root, currentLevel);
-            spawnedItems = true;
-            continue;
-        }
-        if (viableEntities[index].type == EntityType::ENEMY && !spawnedEnemies)
-        {
-            spawnEntities(index, items, viableEntities, entities, MAP_SIZE, basicMaterial,
-                frameColor, collisionColor, root, currentLevel);
-            spawnedEnemies = true;
-            continue;
-        }
-        if (viableEntities[index].type == EntityType::BONUS && !spawnedBonuses)
-        {
-            spawnEntities(index, items, viableEntities, entities, MAP_SIZE, basicMaterial,
-                frameColor, collisionColor, root, currentLevel);
-            spawnedBonuses = true;
-            continue;
-        }
-    }
+    spawnEntities(items, viableItems, entities, MAP_SIZE, basicMaterial, frameColor,
+        collisionColor, root, currentLevel);
+    spawnEntities(enemies, viableEnemies, entities, MAP_SIZE, basicMaterial, frameColor,
+        collisionColor, root, currentLevel);
+    spawnEntities(bonuses, viableBonuses, entities, MAP_SIZE, basicMaterial, frameColor,
+        collisionColor, root, currentLevel);
 }
 
 static void shouldLevelUp(int& currentLevel, int currentScore)
@@ -158,18 +147,10 @@ static void shouldLevelUp(int& currentLevel, int currentScore)
     }
 }
 
-static int getRandomEntityOfType(EntityType type, std::vector<Entity>& viableEntities)
-{
-    do 
-    {
-        int index = getRandomNumberInRange(0, viableEntities.size());
-        if (viableEntities[index].type == type)
-            return index;
-    } while (true);
-}
-
 static void deleteEntityIfTimedOut(entity_data entity, 
-    std::vector<Entity>& viableEntities,
+    std::vector<Entity>& viableItems,
+    std::vector<Entity>& viableEnemies,
+    std::vector<Entity>& viableBonuses,
     std::vector<entity_data>& entities, const int MAP_SIZE,
     std::shared_ptr<cg3d::Material>& basicMaterial,
     std::shared_ptr<cg3d::Material>& frameColor,
@@ -182,6 +163,19 @@ static void deleteEntityIfTimedOut(entity_data entity,
         return;
     //insert Lior's method
     // should insert new entity of the same type:
-    spawnEntity(getRandomEntityOfType(entity.ent.type, viableEntities), viableEntities,
-        entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
+    switch (entity.ent.type)
+    {
+    case EntityType::ITEM:
+        spawnEntity(getRandomNumberInRange(0, viableItems.size()), viableItems,
+            entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
+        break;
+    case EntityType::ENEMY:
+        spawnEntity(getRandomNumberInRange(0, viableEnemies.size()), viableEnemies,
+            entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
+        break;
+    case EntityType::BONUS:
+        spawnEntity(getRandomNumberInRange(0, viableBonuses.size()), viableBonuses,
+            entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
+        break;
+    }
 }
