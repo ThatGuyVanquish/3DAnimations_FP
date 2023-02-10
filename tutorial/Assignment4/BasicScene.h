@@ -59,21 +59,9 @@ private:
 
     void InitSnake();
 
-    void initObjects();
-
-    void generateViableEntities();
-
-    void initEntity(Entity ent, std::shared_ptr<cg3d::Material> material);
-
-    void spawnEntity(int index);
+    void initObjects(); // possibly unnecessary
 
     // collision detection
-    igl::AABB<Eigen::MatrixXd, 3> InitAABB(std::shared_ptr<cg3d::Mesh> mesh);
-
-    void InitCollisionModels(model_data &modelData);
-
-    void SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box);
-
     void checkForCollision() override;
 
     // camera managing methods
@@ -81,18 +69,10 @@ private:
 
     const int MAP_SIZE = 50;
 
-    //void formatScore();
-
-    // Gameplay
-    void InitLevel();
-
-
-
     bool gaming = false;
     bool started = true;
     int currentLevel = 1;
 
-    bool *mainMenuToggle = nullptr;
     bool showMainMenu = true;
 
     int currentScore = 0;

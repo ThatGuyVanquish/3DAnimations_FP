@@ -3,6 +3,7 @@
 #include <chrono>
 #include <filesystem>
 #include <random>
+#include "Gameplay.cpp"
 
 using namespace cg3d;
 
@@ -133,12 +134,12 @@ void BasicScene::InitSnake()
     //init cylinders
     auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/zCylinder.obj");
     float scaleFactor = 1.0f;
-    igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = InitAABB(cylMesh);
+    igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = CollisionDetection::InitAABB(cylMesh);
     for(int i = 0; i < numOfCyls; i++)
     {
         auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
-        InitCollisionModels(cyls[i]);
+        CollisionDetection::InitCollisionModels(cyls[i], green, red);
         cyls[i].model->showFaces = false;
 
         if (i == 0) // first axis and cylinder depend on scene's root
@@ -159,9 +160,9 @@ void BasicScene::InitSnake()
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/camelhead.off");
     auto headModel = Model::Create("head", headMesh, basicMaterial);
-    igl::AABB<Eigen::MatrixXd, 3> head_aabb = InitAABB(headMesh);
+    igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 1.0f, head_aabb};
-    InitCollisionModels(head);
+    CollisionDetection::InitCollisionModels(head, green, red);
     headModel->Scale(head.scaleFactor);
     headModel->Rotate(-M_PI, Axis::Y);
     headModel->Translate(-1.6f, Axis::Z);
@@ -176,7 +177,7 @@ void BasicScene::InitSnake()
 //    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
     auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
     auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
-    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = InitAABB(snakeMesh);
+    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
     snake = {snakeModel, 16.0f, snake_aabb};
     snakeModel->Translate(1.6*(numOfCyls/2)-0.8, Axis::Z);
     snakeModel->Scale(16.0f, Axis::Z);
@@ -184,133 +185,6 @@ void BasicScene::InitSnake()
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
 //    cyls[0].model->AddChild(snakeModel);
 
-}
-
-void BasicScene::initObjects()
-{
-    auto bunnyMesh = IglLoader::MeshFromFiles("bunny", "data/bunny.off");
-    auto bunnyModel = Model::Create("bunny", bunnyMesh, basicMaterial);
-    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(bunnyMesh);
-    objects.push_back({bunnyModel, 3.0f, aabb});
-    InitCollisionModels(objects[0]);
-    root->AddChild(bunnyModel);
-    bunnyModel->Translate({0.0, 0.0, -5.0});
-    bunnyModel->Scale(objects[0].scaleFactor);
-    bunnyModel->showFaces = false;
-    bunnyModel->showWireframe = true;
-}
-
-void BasicScene::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material)
-{
-    auto mesh = cg3d::IglLoader::MeshFromFiles("Entity_" + entityTypeToString(ent.type) + ent.name, ent.pathToMesh);
-    auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
-    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(mesh);
-    model_data currentModel = {model, ent.scale, aabb};
-    //objects.push_back(currentModel);
-    InitCollisionModels(currentModel);
-    root->AddChild(model);
-    model->Translate({ 0.0, 0.0, -5.0 });
-    model->Scale(ent.scale);
-    model->showFaces = false;
-    model->showWireframe = true;
-    entity_data currentEntity = { currentModel, std::chrono::high_resolution_clock::now(), 
-        {ent.name, ent.pathToMesh, ent.scale ,ent.type, ent.points, ent.lifeTime / currentLevel} };
-    entities.push_back(currentEntity);
-}
-
-static int getRandomNumberInRange(int low, int high)
-{
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(low, high); // define the range
-    return distr(gen);
-}
-
-void BasicScene::spawnEntity(int index)
-{
-    if (index == -1)
-        index = getRandomNumberInRange(0, entities.size());
-    int x_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    initEntity(viableEntities[index], basicMaterial);
-    entities[entities.size() - 1].model.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
-}
-
-void BasicScene::generateViableEntities()
-{
-    viableEntities.push_back({ "Bunny", "data/bunny.off", 6.0f,EntityType::ITEM, 1000, 100 });
-    viableEntities.push_back({ "Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80 });
-    viableEntities.push_back({ "Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80 });
-    viableEntities.push_back({ "Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100 });
-    viableEntities.push_back({ "Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80 });
-    viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
-    viableEntities.push_back({ "Sword", "data/Sword01.off", 0.05f, EntityType::ENEMY, -1000, 100 });
-    viableEntities.push_back({ "Sword", "data/Apple.off", 0.05f, EntityType::ITEM, 500, 100 });
-    // maybe add magnet bonus
-}
-
-void BasicScene::InitLevel()
-{
-    int enemies, items, bonuses;
-    switch (currentLevel) 
-    {
-        case 1:
-            enemies = 3;
-            items = 10;
-            bonuses = 2;
-            break;
-
-    }
-}
-
-/**
- * collision detection methods:
- * 1. InitAABB - AABB init method for a given mesh object
- * 2. InitCollisionModels
- * 3. checkForCollision
- */
-igl::AABB<Eigen::MatrixXd, 3> BasicScene::InitAABB(std::shared_ptr<Mesh> mesh)
-{
-    Eigen::MatrixXd V = mesh->data[0].vertices;
-    Eigen::MatrixXi F = mesh->data[0].faces;
-    igl::AABB<Eigen::MatrixXd, 3> axisAligned;
-    axisAligned.init(V, F);
-    return axisAligned;
-}
-
-void BasicScene::InitCollisionModels(model_data &modelData) {
-    auto collisionFrame = cg3d::Model::Create(
-            "collisionFrame "+modelData.model->name,
-            CollisionDetection::meshifyBoundingBox(modelData.aabb.m_box),
-            green
-    );
-    collisionFrame->showFaces = false;
-    collisionFrame->showWireframe = true;
-    collisionFrame->Scale(modelData.scaleFactor);
-    modelData.model->AddChild(collisionFrame);
-    modelData.collisionFrame = collisionFrame;
-
-    auto collisionBox = cg3d::Model::Create(
-            "collisionBox "+modelData.model->name,
-            cg3d::Mesh::Cube(),
-            red
-    );
-    collisionBox->showFaces = false;
-    collisionBox->showWireframe = false;
-    collisionBox->isHidden = true;
-    collisionBox->isPickable = false;
-    modelData.model->AddChild(collisionBox);
-    modelData.collisionBox = collisionBox;
-}
-
-void BasicScene::SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box)
-{
-    std::vector<std::shared_ptr<cg3d::Mesh>> meshVec;
-    meshVec.push_back(CollisionDetection::meshifyBoundingBox(box));
-    modelData.collisionBox->SetMeshList(meshVec);
-    modelData.collisionBox->showWireframe = true;
-    modelData.collisionBox->isHidden = false;
 }
 
 /**
@@ -336,8 +210,8 @@ void BasicScene::checkForCollision()
         ))
         {
             animate = false;
-            SetCollisionBox(head, box_camel);
-            SetCollisionBox(cyls[i], box_i);
+            CollisionDetection::SetCollisionBox(head, box_camel);
+            CollisionDetection::SetCollisionBox(cyls[i], box_i);
         }
     }
     for (int i = 0; i < objects.size(); i++)
@@ -354,8 +228,8 @@ void BasicScene::checkForCollision()
         ))
         {
             animate = false;
-            SetCollisionBox(head, box_camel);
-            SetCollisionBox(objects[i], box_i);
+            CollisionDetection::SetCollisionBox(head, box_camel);
+            CollisionDetection::SetCollisionBox(objects[i], box_i);
         }
     }
 
@@ -374,8 +248,8 @@ void BasicScene::checkForCollision()
             ))
             {
                 animate = false;
-                SetCollisionBox(cyls[i], box_i);
-                SetCollisionBox(cyls[j], box_j);
+                CollisionDetection::SetCollisionBox(cyls[i], box_i);
+                CollisionDetection::SetCollisionBox(cyls[j], box_j);
             }
         }
 
@@ -393,8 +267,8 @@ void BasicScene::checkForCollision()
             ))
             {
                 animate = false;
-                SetCollisionBox(cyls[i], box_i);
-                SetCollisionBox(objects[j], box_j);
+                CollisionDetection::SetCollisionBox(cyls[i], box_i);
+                CollisionDetection::SetCollisionBox(objects[j], box_j);
             }
         }
     }
@@ -419,6 +293,7 @@ void BasicScene::startTimer()
         Initiate 3 second timer then set animate to true and start scoreboard timer
     */
     float width = 1000.0f, height = 500.0f;
+    bool* mainMenuToggle = nullptr;
     ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
     ImGui::SetWindowPos(ImVec2(675.0f, 275.0f));
@@ -477,6 +352,7 @@ void BasicScene::Scoreboard()
 void BasicScene::MainMenu()
 {
     ImGui::CreateContext();
+    bool* mainMenuToggle = nullptr;
     ImGui::Begin("Main Menu", mainMenuToggle, MENU_FLAGS);
     
     int width, height, nrChannels;
