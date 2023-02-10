@@ -2,7 +2,6 @@
 #include "stb_image.h"
 #include <chrono>
 #include <filesystem>
-#include "corecrt_math_defines.h"
 #include <random>
 
 using namespace cg3d;
@@ -251,6 +250,19 @@ void BasicScene::generateViableEntities()
     // maybe add magnet bonus
 }
 
+void BasicScene::InitLevel()
+{
+    int enemies, items, bonuses;
+    switch (currentLevel) 
+    {
+        case 1:
+            enemies = 3;
+            items = 10;
+            bonuses = 2;
+            break;
+
+    }
+}
 
 /**
  * collision detection methods:

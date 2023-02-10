@@ -83,6 +83,11 @@ private:
 
     //void formatScore();
 
+    // Gameplay
+    void InitLevel();
+
+
+
     bool gaming = false;
     bool started = true;
     int currentLevel = 1;
