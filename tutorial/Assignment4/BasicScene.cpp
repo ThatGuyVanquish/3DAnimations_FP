@@ -206,14 +206,13 @@ void BasicScene::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material
     auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
     igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(mesh);
     model_data currentModel = {model, ent.scale, aabb};
-    //objects.push_back(currentModel);
     InitCollisionModels(currentModel);
     root->AddChild(model);
     model->Translate({ 0.0, 0.0, -5.0 });
     model->Scale(ent.scale);
     model->showFaces = false;
     model->showWireframe = true;
-    entity_data currentEntity = { currentModel, std::chrono::high_resolution_clock::now(), 
+    entity_data currentEntity = { currentModel, time(nullptr),
         {ent.name, ent.pathToMesh, ent.scale ,ent.type, ent.points, ent.lifeTime / currentLevel} };
     entities.push_back(currentEntity);
 }
@@ -234,7 +233,7 @@ void BasicScene::spawnEntity(int index)
     int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     initEntity(viableEntities[index], basicMaterial);
-    entities[entities.size() - 1].model.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
+    entities[entities.size() - 1].modelData.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
 }
 
 void BasicScene::generateViableEntities()
@@ -321,7 +320,7 @@ void BasicScene::SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box)
  */
 void BasicScene::checkForCollision()
 {
-    // collision with the head:
+    // collision with the head and cylinders:
     for (int i = 1; i < cyls.size(); i++)
     {
         Eigen::AlignedBox3d box_camel, box_i;
@@ -340,22 +339,25 @@ void BasicScene::checkForCollision()
             SetCollisionBox(cyls[i], box_i);
         }
     }
-    for (int i = 0; i < objects.size(); i++)
+    // collision with head and entities
+    for (int i = 0; i < entities.size(); i++)
     {
         Eigen::AlignedBox3d box_camel, box_i;
         if (CollisionDetection::intersects(
                 head.scaleFactor,
                 head.aabb,
                 head.model->GetAggregatedTransform(),
-                objects[i].scaleFactor,
-                objects[i].aabb,
-                objects[i].model->GetAggregatedTransform(),
+                entities[i].modelData.scaleFactor,
+                entities[i].modelData.aabb,
+                entities[i].modelData.model->GetAggregatedTransform(),
                 box_camel, box_i
         ))
         {
-            animate = false;
-            SetCollisionBox(head, box_camel);
-            SetCollisionBox(objects[i], box_i);
+            if (entities[i].ent.type == EntityType::ITEM)
+            {
+                UpdateScore(entities[i].ent.points);
+                DeleteEntity(i);
+            }
         }
     }
 
@@ -400,122 +402,37 @@ void BasicScene::checkForCollision()
     }
 }
 
+void BasicScene::DeleteEntity(int index)
+{
+    root->RemoveChild(entities[index].modelData.model);
+    std::vector<entity_data> newEntities;
+    for (int i=0; i < entities.size(); i++)
+    {
+        if (i != index) newEntities.push_back(entities[i]);
+    }
+    entities = newEntities;
+}
+
 void BasicScene::SetCamera(int index)
 {
     camera = cameras[index];
     viewport->camera = camera;
 }
 
-void BasicScene::startTimer()
-{
-    if (started)
-        return;
-    if (!timerRunning)
-    {
-        startTimerDeadline = std::chrono::high_resolution_clock::now() + std::chrono::seconds(3);
-        timerRunning = true;
-    }
-    /*
-        Initiate 3 second timer then set animate to true and start scoreboard timer
-    */
-    float width = 1000.0f, height = 500.0f;
-    ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
-    ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetWindowPos(ImVec2(675.0f, 275.0f));
-    auto now = std::chrono::high_resolution_clock::now();
-    if (now < startTimerDeadline)
-    {
-        auto delta = std::chrono::duration_cast<std::chrono::seconds>(startTimerDeadline - now);
-        std::string deltaStr = std::to_string(delta.count() + 1);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-        ShowXLText(deltaStr.c_str());
-        ImGui::PopStyleColor();
-    }
-    else
-    {
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - startTimerDeadline).count() <= 500)
-            ShowXLText("GO!");
-        else
-        {
-            started = true;
-            timerRunning = false;
-            startOfTimer = std::chrono::high_resolution_clock::now();
-        }
-    }
-    ImGui::End();
-}
-
-void BasicScene::Scoreboard()
-{
-    if (!gaming)
-        return;
-    float width = 1920.0, height = 100.0;
-    ImGui::CreateContext();
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.12f));
-    ImGui::Begin("Scoreboard", scoreboardToggle,(MENU_FLAGS - ImGuiWindowFlags_NoBackground));
-    ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
-    ImGui::PopStyleColor();
-    ImGui::SameLine(200.0f, 3.0f);
-    ImGui::SetCursorPos(ImVec2(120.0f, 30.0f));
-    ShowLargeText("SCORE:");
-    ImGui::SameLine(0.0f, 50.0f);
-    if (currentScoreFormatted == nullptr)
-        currentScoreFormatted = formatScore(0);
-    ShowLargeText(currentScoreFormatted);
-
-    ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
-    ShowLargeText("TIMER:");
-    auto now = std::chrono::high_resolution_clock::now();
-    auto delta = std::chrono::duration_cast<std::chrono::seconds>(now - startOfTimer);
-    std::string deltaStr = std::to_string(delta.count() + 1);
-    ImGui::SameLine(0.0f, 50.0f);
-    ShowLargeText(deltaStr.c_str());
-    ImGui::End();
-}
-
-void BasicScene::MainMenu()
-{
-    ImGui::CreateContext();
-    ImGui::Begin("Main Menu", mainMenuToggle, MENU_FLAGS);
-    
-    int width, height, nrChannels;
-    char* imgPath = getResource("mainmenu_bg.png");
-    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
-    delete imgPath;
-
-    // Generate the OpenGL texture
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    stbi_image_free(data);
-
-    ImGui::Image((void*)textureID, ImVec2(width,height));
-    ImGui::SetWindowPos("Main Menu", ImVec2(675.0f, 275.0f), ImGuiCond_Always);
-    ImGui::SetItemAllowOverlap();
-    ImGui::SetWindowSize("Main Menu", ImVec2(width + 20, height + 20), ImGuiCond_Always);
-    ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
-    ImGui::SetWindowFontScale(1.3f);
-    if (ImGui::Button("START GAME"))
-    {
-        showMainMenu = false;
-        gaming = true;
-        started = false;
-    }
-    ImGui::End();
-}
-
 void BasicScene::BuildImGui()
 {
     if (showMainMenu)
-        MainMenu();
+        MainMenu(showMainMenu, gaming, started);
     if (gaming)
-        Scoreboard();
+        Scoreboard(gaming, currentScoreFormatted, startOfTimer);
     if (!started)
-        startTimer();
+        startTimer(started, timerRunning, startTimerDeadline, startOfTimer);
+}
+
+void BasicScene::UpdateScore(int score)
+{
+    currentScore += score;
+    currentScoreFormatted = formatScore(currentScore);
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -577,8 +494,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             animate = !animate;
             break;
         case GLFW_KEY_J:
-            currentScore += 1000;
-            currentScoreFormatted = formatScore(currentScore);
+            UpdateScore(1000);
             break;
         case GLFW_KEY_T:
             //startTimer();

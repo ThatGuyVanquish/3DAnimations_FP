@@ -32,11 +32,14 @@ public:
 
     void BuildImGui() override;
 
-    void MainMenu();
+    void UpdateScore(int score);
 
-    void Scoreboard();
 
-    void startTimer();
+//    void MainMenu();
+
+//    void Scoreboard();
+
+//    void startTimer();
 
 private:
 
@@ -76,6 +79,8 @@ private:
 
     void checkForCollision() override;
 
+    void DeleteEntity(int index);
+
     // camera managing methods
     void SetCamera(int index);
 
@@ -98,15 +103,13 @@ private:
     int currentScore = 0;
     char* currentScoreFormatted = nullptr;
     bool* scoreboardToggle = nullptr;
-    std::chrono::time_point<std::chrono::steady_clock> startOfTimer;
+    time_t startOfTimer;
 
     bool* startTimerToggle = nullptr;
-    std::chrono::time_point<std::chrono::steady_clock> startTimerDeadline;
+    time_t startTimerDeadline;
     bool timerRunning = false;
 
-    static const int MENU_FLAGS =
-            ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+
 
 
     void KeyCallback(cg3d::Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods) override;

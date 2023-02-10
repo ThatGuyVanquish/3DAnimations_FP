@@ -34,18 +34,18 @@ typedef struct {
 enum class EntityType { ITEM, BONUS, ENEMY };
 
 typedef struct {
-    const std::string name;
-    const std::string pathToMesh;
-    const float scale;
-    const EntityType type;
-    const int points;
-    const int lifeTime;
+    std::string name;
+    std::string pathToMesh;
+    float scale;
+    EntityType type;
+    int points;
+    int lifeTime;
 } Entity;
 
 typedef struct {
-    model_data model;
-    const std::chrono::time_point<std::chrono::steady_clock> creationTime;
-    const Entity ent;
+    model_data modelData;
+    time_t creationTime;
+    Entity ent;
 } entity_data;
 
 static std::string entityTypeToString(EntityType type)
