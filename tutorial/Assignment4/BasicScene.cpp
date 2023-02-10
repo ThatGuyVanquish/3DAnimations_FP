@@ -207,8 +207,8 @@ void BasicScene::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material
     auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
     igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(mesh);
     model_data currentModel = {model, ent.scale, aabb};
-    objects.push_back(currentModel);
-    InitCollisionModels(objects[objects.size() - 1]);
+    //objects.push_back(currentModel);
+    InitCollisionModels(currentModel);
     root->AddChild(model);
     model->Translate({ 0.0, 0.0, -5.0 });
     model->Scale(ent.scale);
@@ -223,7 +223,7 @@ static int getRandomNumberInRange(int low, int high)
 {
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(25, 63); // define the range
+    std::uniform_int_distribution<> distr(low, high); // define the range
     return distr(gen);
 }
 
@@ -240,13 +240,17 @@ void BasicScene::spawnEntity(int index)
 
 void BasicScene::generateViableEntities()
 {
-    viableEntities.push_back({ "Bunny", "data/bunny.off", 3.0f,EntityType::ITEM, 1000, 100 });
+    viableEntities.push_back({ "Bunny", "data/bunny.off", 6.0f,EntityType::ITEM, 1000, 100 });
     viableEntities.push_back({ "Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80 });
     viableEntities.push_back({ "Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80 });
     viableEntities.push_back({ "Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100 });
     viableEntities.push_back({ "Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80 });
     viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
+    viableEntities.push_back({ "Sword", "data/Sword01.off", 0.05f, EntityType::ENEMY, -1000, 100 });
+    viableEntities.push_back({ "Sword", "data/Apple.off", 0.05f, EntityType::ITEM, 500, 100 });
+    // maybe add magnet bonus
 }
+
 
 /**
  * collision detection methods:
