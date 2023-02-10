@@ -162,6 +162,12 @@ void BasicScene::Reset(bool mainMenu)
         *6. Level should be initialized after call for start level so that
         *   entities won't pass away too quickly
     */
+    if (mainMenu)
+    {
+        gaming = false;
+        showMainMenu = true;
+        started = false;
+    }
     root->RemoveChild(snake.model);
     clearEntities(entities, root);
     InitSnake();
@@ -492,7 +498,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             snake.model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_R:
-            showMainMenu = true;
+            Reset(true);
             break;
         case GLFW_KEY_1:
             SetCamera(1);
