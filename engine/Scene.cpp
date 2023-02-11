@@ -11,7 +11,7 @@
 namespace cg3d
 {
 
-Scene::Scene(std::string name, Display* display) : Movable(std::move(name)), renderer(display->renderer)
+Scene::Scene(std::string name, Display* display) : Movable(std::move(name)), renderer(display->renderer), gameplay()
 {
     window = display->window;
 }

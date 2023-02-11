@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../tutorial/Assignment4/IglMeshLoader.h"
+#include "IglMeshLoader.h"
 #include <AABB.h>
 #include "Model.h"
 #include <chrono>

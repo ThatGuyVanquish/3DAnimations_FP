@@ -5,13 +5,13 @@
 #include <Eigen/LU>
 #include <igl/opengl/glfw/Viewer.h>
 #include <iostream>
-#include "../engine/Mesh.h"
-#include "../engine/common.h"
+#include "Mesh.h"
+#include "common.h"
 //#include "MeshSimplification.h"
 #include <igl/AABB.h>
-#include <GLFW/glfw3.h>
+#include <glfw/include/GLFW/glfw3.h>
 #include <igl/per_vertex_normals.h>
-#include <Movable.h>
+#include "Movable.h"
 /*
 
 	Helper functions for collision detection
@@ -241,6 +241,18 @@ namespace CollisionDetection {
                 intersects(scale0, *obb0.m_right, transform0, scale1, *obb1.m_right, transform1, collidedBox0, collidedBox1);
     }
 
+    static bool intersects(model_data &model0, model_data &model1, Eigen::AlignedBox3d &collidedBox0, Eigen::AlignedBox3d &collidedBox1)
+    {
+        return intersects(
+                model0.scaleFactor,
+                model0.aabb,
+                model0.model->GetAggregatedTransform(),
+                model1.scaleFactor,
+                model1.aabb,
+                model1.model->GetAggregatedTransform(),
+                collidedBox0, collidedBox1);
+    }
+
     /**
      * collision detection methods:
      * 1. InitAABB - AABB init method for a given mesh object
@@ -292,6 +304,8 @@ namespace CollisionDetection {
         modelData.collisionBox->showWireframe = true;
         modelData.collisionBox->isHidden = false;
     }
+
+
 
 
 

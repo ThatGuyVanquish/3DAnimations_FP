@@ -20,6 +20,7 @@
 
 #include "glfw/Viewer.h"
 #include "common.h"
+#include "Gameplay.h"
 
 
 namespace cg3d
@@ -39,7 +40,7 @@ public:
     virtual void Init(Visitor* visitor);
     virtual void Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model);
     virtual void nextCyclicDescentStep() {};
-    virtual void checkForCollision() {};
+    virtual void updateGameplay() {};
     std::shared_ptr<Model> pickedModel;
     std::shared_ptr<Camera> camera;
 
@@ -47,19 +48,7 @@ public:
     /*
      * fields for project
      */
-    bool animate = false;
-    int numOfCyls = 16;
-
-    // models
-    std::shared_ptr<cg3d::Movable> root;
-    std::shared_ptr<cg3d::Mesh> coordsys;
-    std::vector<model_data> cyls, objects;
-    std::vector<entity_data> entities;
-    std::vector<Entity> viableItems;
-    std::vector<Entity> viableEnemies;
-    std::vector<Entity> viableBonuses;
-    model_data head;
-    model_data snake;
+    Gameplay gameplay;
 
 
     virtual void MouseCallback(Viewport* viewport, int x, int y, int button, int action, int mods, int buttonState[]);
