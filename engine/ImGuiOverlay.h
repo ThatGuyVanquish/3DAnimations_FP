@@ -82,6 +82,7 @@ public:
     void Scoreboard(bool &animate);
     char* formatScore();
     void MainMenu(bool &animate);
+    void DeathScreen(bool &animate);
 
 
     static const int MENU_FLAGS =
@@ -92,6 +93,8 @@ public:
     time_t countdownTimerEnd, gameTimer, accumulatedTime;
     char* currentScoreFormatted;
     int currentLives = 3, currentLevel = 1, currentScore = 0;
+    time_t deathTimerEnd = 0;
+    bool died = false;
 
 private:
 

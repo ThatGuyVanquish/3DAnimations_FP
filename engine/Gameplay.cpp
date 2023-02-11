@@ -202,9 +202,9 @@ void Gameplay::checkForCollision()
         Eigen::AlignedBox3d box_camel, box_i;
         if (CollisionDetection::intersects(head, cyls[i], box_camel, box_i)) {
             imGuiOverlay.currentLives--;
+            imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
-                // display death screen
                 Reset(true);
             } else {
                 Reset(false);
@@ -226,9 +226,9 @@ void Gameplay::checkForCollision()
             Eigen::AlignedBox3d box_i, box_j;
             if (CollisionDetection::intersects(cyls[i], cyls[j], box_i, box_j)) {
                 imGuiOverlay.currentLives--;
+                imGuiOverlay.died = true;
                 if (imGuiOverlay.currentLives == 0)
                 {
-                    // display death screen
                     Reset(true);
                 } else {
                     Reset(false);

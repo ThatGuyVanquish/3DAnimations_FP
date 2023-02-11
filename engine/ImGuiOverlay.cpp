@@ -179,6 +179,48 @@ void ImGuiOverlay::MainMenu(bool &animate)
     ImGui::End();
 }
 
+
+
+void ImGuiOverlay::DeathScreen(bool &animate)
+{
+    if (animate || !died)
+        return;
+    if (deathTimerEnd == 0)
+        deathTimerEnd = time(nullptr) + 2;
+
+    float width = 1600.0f, height = 900.0f;
+    bool* deathScreenToggle = nullptr;
+    ImGui::Begin("DeathScreen", deathScreenToggle, MENU_FLAGS);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
+    auto now = time(nullptr);
+    if (now < deathTimerEnd)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        std::string msg = "Score: " + std::to_string(currentScore);
+        ShowXLText(msg.c_str(), "snap");
+        if (currentLives == 0)
+        {
+            ImGui::SetCursorPos(ImVec2(350.0f, 75.0f));
+            ShowXLText("GAME OVER!", "snap");
+            // maybe add scoreboard function
+        }
+        else
+        {
+            ImGui::SetCursorPos(ImVec2(450.0f, 325.0f));
+            msg = "Lives: " + std::to_string(currentLives);
+            ShowXLText(msg.c_str(), "snap");
+        }
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        deathTimerEnd = 0;
+        died = false;
+    }
+    ImGui::End();
+}
+
 //static void splashScreen(const char* msg1, const char* msg2, ImVec4 col = { 0,0,0,255 })
 //{
 //    float width = 1600.0f, height = 900.0f;
