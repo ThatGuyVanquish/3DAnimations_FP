@@ -1,5 +1,5 @@
 #include "SceneWithCameras.h"
-
+#pragma once
 #include <utility>
 
 #include "ObjLoader.h"

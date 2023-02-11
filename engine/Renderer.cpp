@@ -48,7 +48,7 @@ void Renderer::RenderAllViewports()
     defaultVisitor.Init();
     animationVisitor.Init();
 //    viewports[0]->scene->nextCyclicDescentStep();
-    viewports[0]->scene->checkForCollision();
+    viewports[0]->scene->updateGameplay();
 
     for (auto& viewport: viewports)
         RenderViewport(viewport.get());
