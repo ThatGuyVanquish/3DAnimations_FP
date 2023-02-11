@@ -47,7 +47,7 @@ public:
     /*
      * fields for project
      */
-    bool animate;
+    bool animate = false;
     int numOfCyls = 16;
 
     // models

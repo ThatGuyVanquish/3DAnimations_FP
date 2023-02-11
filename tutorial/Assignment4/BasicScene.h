@@ -51,6 +51,9 @@ private:
     // cameras
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};
     cg3d::Viewport* viewport = nullptr;
+    float FOV = 0, NEAR = 0, FAR = 0;
+    int WIDTH = 0, HEIGHT = 0;
+    void SetCamera(int index);
 
     // models init methods
     void InitMaterials();
@@ -59,36 +62,29 @@ private:
 
     void InitSnake();
 
+    void DeleteSnake();
+
     void Reset(bool mainMenu = false);
-    float FOV = 0, NEAR = 0, FAR = 0;
-    int WIDTH = 0, HEIGHT = 0;
-
-
+    
 
     // collision detection
     void checkForCollision() override;
 
-    // camera managing methods
-    void SetCamera(int index);
 
+    /****** Gameplay fieldsand methods ******/
     const int MAP_SIZE = 50;
-
-    bool gaming = false;
-    bool started = true;
     int currentLevel = 1;
     int currentLives = 3;
-
-
-    bool showMainMenu = true;
-
     int currentScore = 0;
     char* currentScoreFormatted = nullptr;
-    bool* scoreboardToggle = nullptr;
-    time_t startOfTimer;
+    time_t gameTimer = 0;
+    time_t accumulatedTime = 0;
 
-    bool* startTimerToggle = nullptr;
-    time_t startTimerDeadline;
-    bool timerRunning = false;
+    time_t countdownTimer = 0;
+    time_t countdownTimerEnd = 0;
+    bool countdown = false;
+
+
 
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |

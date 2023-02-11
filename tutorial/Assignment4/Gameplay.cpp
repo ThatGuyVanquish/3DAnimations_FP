@@ -50,7 +50,7 @@ static void spawnEntity(int index, std::vector<Entity>& viableEntities,
     )
 {
     if (index == -1)
-        index = getRandomNumberInRange(0, entities.size());
+        index = getRandomNumberInRange(0, (int)entities.size());
     int x_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
@@ -68,7 +68,7 @@ static void spawnEntities(int amount,
 {
     while (amount > 0)
     {
-        spawnEntity(getRandomNumberInRange(0, viableEntities.size()), viableEntities,
+        spawnEntity(getRandomNumberInRange(0, (int)viableEntities.size()), viableEntities,
             entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
         amount--;
     }
@@ -166,15 +166,15 @@ static void deleteEntityIfTimedOut(entity_data entity,
     switch (entity.ent.type)
     {
     case EntityType::ITEM:
-        spawnEntity(getRandomNumberInRange(0, viableItems.size()), viableItems,
+        spawnEntity(getRandomNumberInRange(0, (int)viableItems.size()), viableItems,
             entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
         break;
     case EntityType::ENEMY:
-        spawnEntity(getRandomNumberInRange(0, viableEnemies.size()), viableEnemies,
+        spawnEntity(getRandomNumberInRange(0, (int)viableEnemies.size()), viableEnemies,
             entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
         break;
     case EntityType::BONUS:
-        spawnEntity(getRandomNumberInRange(0, viableBonuses.size()), viableBonuses,
+        spawnEntity(getRandomNumberInRange(0, (int)viableBonuses.size()), viableBonuses,
             entities, MAP_SIZE, basicMaterial, frameColor, collisionColor, root, currentLevel);
         break;
     }

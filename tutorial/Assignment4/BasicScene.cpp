@@ -32,16 +32,9 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     background->SetPickable(false);
     background->SetStatic();
 
-    //auto snakeShader = std::make_shared<Program>("shaders/overlay");
-    //auto snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-    //snakeSkin->AddTexture(0, "textures/snake1.png", 2);
-    //auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-    //auto snake = Model::Create("SSSSSSSSSSSSSSSSSSSNAKE", snakeMesh, snakeSkin);
-    //AddChild(snake);
-    //snake->Scale(0.5);
     camera->Translate(30, Axis::Z);
     camera->Translate(15, Axis::Y);
-    camera->Rotate(-M_PI_4/2.0, Axis::X);
+    camera->Rotate((float)-M_PI_4/2.0, Axis::X);
 
     // Creation of axis mesh
     Eigen::MatrixXd vertices(6, 3);
@@ -90,7 +83,7 @@ void BasicScene::InitCameras(float fov, int width, int height, float near, float
     cyls[0].model->AddChild(cameras[1]);
     cameras[1]->Translate(0.5f, Axis::Y);
     cameras[1]->Translate(0.5, Axis::X);
-    cameras[1]->Rotate(M_PI_2, Axis::Y);
+    cameras[1]->Rotate((float)M_PI_2, Axis::Y);
 }
 
 void BasicScene::InitSnake()
@@ -128,7 +121,7 @@ void BasicScene::InitSnake()
     head = {headModel, 1.0f, head_aabb};
     CollisionDetection::InitCollisionModels(head, green, red);
     headModel->Scale(head.scaleFactor);
-    headModel->Rotate(-M_PI, Axis::Y);
+    headModel->Rotate((float)-M_PI, Axis::Y);
     headModel->Translate(-1.6f, Axis::Z);
     headModel->showFaces = false;
     headModel->showWireframe = true;
@@ -143,12 +136,27 @@ void BasicScene::InitSnake()
     auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
     igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
     snake = {snakeModel, 16.0f, snake_aabb};
-    snakeModel->Translate(1.6*(numOfCyls/2)-0.8, Axis::Z);
+    snakeModel->Translate(1.6f*(numOfCyls/2)-0.8f, Axis::Z);
     snakeModel->Scale(16.0f, Axis::Z);
     snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
 //    cyls[0].model->AddChild(snakeModel);
 
+}
+
+void BasicScene::DeleteSnake()
+{
+    // Remove all of the cylinders from the scene
+    for (long i = cyls.size() - 1; i > 0; i--) {
+        cyls[i - 1].model->RemoveChild(cyls[i].model);
+        cyls.pop_back();
+    }
+    root->RemoveChild(cyls[0].model);
+    cyls.pop_back();
+
+    // Remove the snake itself
+    root->RemoveChild(head.model);
+    root->RemoveChild(snake.model);
 }
 
 void BasicScene::Reset(bool mainMenu)
@@ -162,16 +170,23 @@ void BasicScene::Reset(bool mainMenu)
         *6. Level should be initialized after call for start level so that
         *   entities won't pass away too quickly
     */
+    animate = false;
     if (mainMenu)
     {
-        gaming = false;
-        showMainMenu = true;
-        started = false;
+        countdown = false;
+        countdownTimerEnd = 0;
+        accumulatedTime = 0;
     }
-    root->RemoveChild(snake.model);
+    //root->RemoveChild(snake.model); need to create a method to remove the snake
+    else
+    {
+        countdown = true;
+        countdownTimerEnd = 0;
+        accumulatedTime += time(nullptr) - gameTimer;
+    }
+    DeleteSnake();
     clearEntities(entities, root);
     InitSnake();
-    cameras.clear();
     InitCameras(FOV, WIDTH, HEIGHT, NEAR, FAR);
     InitLevel(viableItems, viableEnemies, viableBonuses, 
         entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
@@ -272,27 +287,21 @@ void BasicScene::SetCamera(int index)
 
 void BasicScene::startTimer()
 {
-    if (started)
+    if (animate || !countdown)
         return;
-    if (!timerRunning)
-    {
-        startTimerDeadline = time(nullptr) + 3;
+    if (countdownTimerEnd == 0)
+        countdownTimerEnd = time(nullptr) + 3;
 
-        timerRunning = true;
-    }
-    /*
-        Initiate 3 second timer then set animate to true and start scoreboard timer
-    */
     float width = 1000.0f, height = 500.0f;
     bool* mainMenuToggle = nullptr;
     ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
     ImGui::SetWindowPos(ImVec2(675.0f, 275.0f));
     auto now = time(nullptr);
-    if (now < startTimerDeadline)
+    if (now < countdownTimerEnd)
     {
-        startOfTimer = time(nullptr);
-        auto delta = startTimerDeadline - now;
+        countdownTimer = time(nullptr);
+        auto delta = countdownTimerEnd - now;
         std::string deltaStr = std::to_string(delta);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         ShowXLText(deltaStr.c_str(), "snap");
@@ -300,14 +309,13 @@ void BasicScene::startTimer()
     }
     else
     {
-        if (now - startTimerDeadline < 1)
+        if (now - countdownTimerEnd < 1)
             ShowXLText("GO!", "arial");
         else
         {
-            gaming = true;
-            started = true;
-            timerRunning = false;
-            startOfTimer = time(nullptr);
+            gameTimer = time(nullptr);
+            animate = true;
+            countdown = false;
         }
     }
     ImGui::End();
@@ -346,7 +354,7 @@ static void displayLives(int lives, int MENU_FLAGS)
 
     ImGui::SetWindowPos("Lives", ImVec2(737.0f, 65.0f), ImGuiCond_Always);
     ImGui::SetItemAllowOverlap();
-    ImGui::SetWindowSize("Lives", ImVec2(heartWidth * 3 + 30, heartHeight + 20), ImGuiCond_Always);
+    ImGui::SetWindowSize("Lives", ImVec2(heartWidth * 3 + 30.0f, heartHeight + 20.0f), ImGuiCond_Always);
     //ImGui::SetCursorPos(ImVec2(850.0f, 100.0f));
     for (int i = 0; i < 3; i++)
     {
@@ -362,7 +370,7 @@ static void displayLives(int lives, int MENU_FLAGS)
 
 void BasicScene::Scoreboard()
 {
-    if (!gaming)
+    if (!animate)
         return;
     ImGui::CreateContext();
     bool* scoreboardToggle = nullptr;
@@ -397,7 +405,7 @@ void BasicScene::Scoreboard()
     //ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
    
     auto now = time(nullptr);
-    auto delta = now - startOfTimer;
+    auto delta = now - gameTimer + accumulatedTime; // add mechanism to pause timer until next level start?
     std::string deltaStr = std::to_string(delta + 1);
     ImGui::SameLine(1235.0f, 0.0f);
     ShowMediumText(deltaStr.c_str(), "snap");
@@ -408,6 +416,8 @@ void BasicScene::Scoreboard()
 
 void BasicScene::MainMenu()
 {
+    if (animate || countdownTimerEnd > 0)
+        return;
     ImGui::CreateContext();
     bool* mainMenuToggle = nullptr;
     ImGui::Begin("Main Menu", mainMenuToggle, MENU_FLAGS);
@@ -434,21 +444,17 @@ void BasicScene::MainMenu()
     ImGui::SetWindowFontScale(1.3f);
     if (ImGui::Button("START GAME"))
     {
-        showMainMenu = false;
-        //gaming = true;
-        started = false;
+        countdown = true;
+        countdownTimerEnd = 0;
     }
     ImGui::End();
 }
 
 void BasicScene::BuildImGui()
 {
-    if (showMainMenu)
-        MainMenu();
-    if (gaming)
-        Scoreboard();
-    if (!started)
-        startTimer();
+    MainMenu();
+    Scoreboard();
+    startTimer();
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -509,13 +515,13 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_S:
             animate = !animate;
             break;
+        case GLFW_KEY_T: // Simulating level up
+            currentLevel++;
+            Reset(false);
+            break;
         case GLFW_KEY_J:
             currentScore += 1000;
             currentScoreFormatted = formatScore(currentScore);
-            break;
-        case GLFW_KEY_T:
-            //startTimer();
-            started = false;
             break;
         case GLFW_KEY_RIGHT_BRACKET:
             currentLives++;
