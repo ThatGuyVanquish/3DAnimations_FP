@@ -292,11 +292,11 @@ void BasicScene::startTimer()
     if (countdownTimerEnd == 0)
         countdownTimerEnd = time(nullptr) + 3;
 
-    float width = 1000.0f, height = 500.0f;
+    float width = 1600.0f, height = 900.0f;
     bool* mainMenuToggle = nullptr;
     ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetWindowPos(ImVec2(675.0f, 275.0f));
+    ImGui::SetCursorPos(ImVec2(700.0f, 275.0f));
     auto now = time(nullptr);
     if (now < countdownTimerEnd)
     {
@@ -310,7 +310,10 @@ void BasicScene::startTimer()
     else
     {
         if (now - countdownTimerEnd < 1)
+        {
+            ImGui::SetCursorPos(ImVec2(650.0f, 275.0f));
             ShowXLText("GO!", "arial");
+        }
         else
         {
             gameTimer = time(nullptr);
@@ -444,6 +447,8 @@ void BasicScene::MainMenu()
     ImGui::SetWindowFontScale(1.3f);
     if (ImGui::Button("START GAME"))
     {
+        currentLevel = 1;
+        currentLives = 3;
         countdown = true;
         countdownTimerEnd = 0;
     }

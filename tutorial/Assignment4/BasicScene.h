@@ -76,6 +76,7 @@ private:
     int currentLevel = 1;
     int currentLives = 3;
     int currentScore = 0;
+    bool died = false;
     char* currentScoreFormatted = nullptr;
     time_t gameTimer = 0;
     time_t accumulatedTime = 0;
@@ -83,8 +84,6 @@ private:
     time_t countdownTimer = 0;
     time_t countdownTimerEnd = 0;
     bool countdown = false;
-
-
 
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
