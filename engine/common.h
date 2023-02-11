@@ -8,6 +8,7 @@
 #include <AABB.h>
 #include "Model.h"
 #include <chrono>
+#include <random>
 
 #define M_E        2.71828182845904523536   // e
 #define M_LOG2E    1.44269504088896340736   // log2(e)
@@ -57,4 +58,12 @@ static std::string entityTypeToString(EntityType type)
     case EntityType::ENEMY: return "Enemy_";
     }
     return "";
+}
+
+static int getRandomNumberInRange(int low, int high)
+{
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(low, high - 1); // define the range
+    return distr(gen);
 }

@@ -6,6 +6,7 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <iostream>
 #include "../engine/Mesh.h"
+#include "../engine/common.h"
 //#include "MeshSimplification.h"
 #include <igl/AABB.h>
 #include <GLFW/glfw3.h>
@@ -239,5 +240,60 @@ namespace CollisionDetection {
                 intersects(scale0, *obb0.m_right, transform0, scale1, *obb1.m_left, transform1, collidedBox0, collidedBox1) ||
                 intersects(scale0, *obb0.m_right, transform0, scale1, *obb1.m_right, transform1, collidedBox0, collidedBox1);
     }
+
+    /**
+     * collision detection methods:
+     * 1. InitAABB - AABB init method for a given mesh object
+     * 2. InitCollisionModels
+     * 3. checkForCollision
+     */
+    static igl::AABB<Eigen::MatrixXd, 3> InitAABB(std::shared_ptr<cg3d::Mesh> mesh)
+    {
+        Eigen::MatrixXd V = mesh->data[0].vertices;
+        Eigen::MatrixXi F = mesh->data[0].faces;
+        igl::AABB<Eigen::MatrixXd, 3> axisAligned;
+        axisAligned.init(V, F);
+        return axisAligned;
+    }
+
+    static void InitCollisionModels(model_data& modelData, 
+        std::shared_ptr<cg3d::Material> frameColor,
+        std::shared_ptr<cg3d::Material> collisionColor
+        ) {
+        auto collisionFrame = cg3d::Model::Create(
+            "collisionFrame " + modelData.model->name,
+            CollisionDetection::meshifyBoundingBox(modelData.aabb.m_box),
+            frameColor
+        );
+        collisionFrame->showFaces = false;
+        collisionFrame->showWireframe = true;
+        collisionFrame->Scale(modelData.scaleFactor);
+        modelData.model->AddChild(collisionFrame);
+        modelData.collisionFrame = collisionFrame;
+
+        auto collisionBox = cg3d::Model::Create(
+            "collisionBox " + modelData.model->name,
+            cg3d::Mesh::Cube(),
+            collisionColor
+        );
+        collisionBox->showFaces = false;
+        collisionBox->showWireframe = false;
+        collisionBox->isHidden = true;
+        collisionBox->isPickable = false;
+        modelData.model->AddChild(collisionBox);
+        modelData.collisionBox = collisionBox;
+    }
+
+    static void SetCollisionBox(model_data& modelData, Eigen::AlignedBox3d box)
+    {
+        std::vector<std::shared_ptr<cg3d::Mesh>> meshVec;
+        meshVec.push_back(CollisionDetection::meshifyBoundingBox(box));
+        modelData.collisionBox->SetMeshList(meshVec);
+        modelData.collisionBox->showWireframe = true;
+        modelData.collisionBox->isHidden = false;
+    }
+
+
+
 }
 

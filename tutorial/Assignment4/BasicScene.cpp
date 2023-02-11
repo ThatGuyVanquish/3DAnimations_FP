@@ -3,6 +3,7 @@
 #include <chrono>
 #include <filesystem>
 #include <random>
+#include "Gameplay.cpp"
 
 using namespace cg3d;
 
@@ -20,16 +21,8 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     InitMaterials();
     AddChild(root = Movable::Create("root")); // a common invisible parent object for all the shapes
     InitSnake();
-    initObjects();
     InitCameras(fov, width, height, near, far);
-    /* auto underwater{ std::make_shared<Material>("underwater", "shaders/cubemapShader") };
-     underwater->AddTexture(0, "textures/cubemaps/Underwater_", 3);
-     auto bg{ Model::Create("background", Mesh::Cube(), underwater) };
-     AddChild(bg);
-     bg->Scale(120, Axis::XYZ);
-     bg->SetPickable(false);
-     bg->SetStatic();*/
-
+    FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
     auto daylight{ std::make_shared<Material>("daylight", "shaders/cubemapShader") };
     daylight->AddTexture(0, "textures/cubemaps/Daylight Box_", 3);
     auto background{ Model::Create("background", Mesh::Cube(), daylight) };
@@ -38,17 +31,9 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     background->SetPickable(false);
     background->SetStatic();
 
-    //auto snakeShader = std::make_shared<Program>("shaders/overlay");
-    //auto snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-    //snakeSkin->AddTexture(0, "textures/snake1.png", 2);
-    //auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-    //auto snake = Model::Create("SSSSSSSSSSSSSSSSSSSNAKE", snakeMesh, snakeSkin);
-    //AddChild(snake);
-    //snake->Scale(0.5);
     camera->Translate(30, Axis::Z);
     camera->Translate(15, Axis::Y);
-    camera->Rotate(-M_PI_4/2.0, Axis::X);
-    //cube->Scale(3);
+    camera->Rotate((float)-M_PI_4/2.0, Axis::X);
 
     // Creation of axis mesh
     Eigen::MatrixXd vertices(6, 3);
@@ -62,38 +47,10 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     axis->mode = 1;
     axis->Scale(20);
     AddChild(axis);
-    generateViableEntities();
-    spawnEntity(0);
-    //auto test = IglLoader::MeshFromFiles("test", "data/Sword01.off");
-    //auto testmodel = Model::Create("apple", test, basicMaterial);
-    //testmodel->Translate({ 0.0, 0.0, -5.0 });
-    ////testmodel->RotateByDegree(M_PI_2, Axis::Y);
-    //testmodel->Scale(0.03f);
-    //testmodel->showFaces = true;
-    //testmodel->showWireframe = true;
-    //testmodel->showTextures = true;
-    //root->AddChild(testmodel);
-
-    //auto test2 = IglLoader::MeshFromFiles("test", "data/Apple.off");
-    //auto testmodel2 = Model::Create("apple", test2, basicMaterial);
-    //testmodel2->Translate({ 0.0, 0.0, -20.0 });
-    //testmodel->RotateByDegree(-M_PI_2, Axis::Z);
-    //testmodel2->Scale(0.05f);
-    //testmodel2->showFaces = true;
-    //testmodel2->showWireframe = true;
-    //testmodel2->showTextures = true;
-    //root->AddChild(testmodel2);
-
-    //auto test2 = IglLoader::MeshFromFiles("test", "data/bumpy-cube.obj");
-    //auto testmodel2 = Model::Create("apple", test2, basicMaterial);
-    //testmodel2->Translate({ 0.0, 0.0, -30.0f });
-    ////testmodel2->RotateByDegree(M_PI_2, Axis::Y);
-    //testmodel2->Scale(5.0f);
-    //testmodel2->showFaces = true;
-    //testmodel2->showWireframe = true;
-    //testmodel2->showTextures = true;
-    //root->AddChild(testmodel2);
-
+    generateViableEntities(viableItems, viableEnemies, viableBonuses);
+    currentLevel = 1;
+    InitLevel(viableItems, viableEnemies, viableBonuses, entities,
+       MAP_SIZE, basicMaterial, green, red, root, currentLevel);
 }
 
 /**
@@ -125,7 +82,7 @@ void BasicScene::InitCameras(float fov, int width, int height, float near, float
     cyls[0].model->AddChild(cameras[1]);
     cameras[1]->Translate(0.5f, Axis::Y);
     cameras[1]->Translate(0.5, Axis::X);
-    cameras[1]->Rotate(M_PI_2, Axis::Y);
+    cameras[1]->Rotate((float)M_PI_2, Axis::Y);
 }
 
 void BasicScene::InitSnake()
@@ -133,12 +90,12 @@ void BasicScene::InitSnake()
     //init cylinders
     auto cylMesh = IglLoader::MeshFromFiles("cyl_igl","data/zCylinder.obj");
     float scaleFactor = 1.0f;
-    igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = InitAABB(cylMesh);
+    igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = CollisionDetection::InitAABB(cylMesh);
     for(int i = 0; i < numOfCyls; i++)
     {
         auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
-        InitCollisionModels(cyls[i]);
+        CollisionDetection::InitCollisionModels(cyls[i], green, red);
         cyls[i].model->showFaces = false;
 
         if (i == 0) // first axis and cylinder depend on scene's root
@@ -159,11 +116,11 @@ void BasicScene::InitSnake()
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/camelhead.off");
     auto headModel = Model::Create("head", headMesh, basicMaterial);
-    igl::AABB<Eigen::MatrixXd, 3> head_aabb = InitAABB(headMesh);
+    igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 1.0f, head_aabb};
-    InitCollisionModels(head);
+    CollisionDetection::InitCollisionModels(head, green, red);
     headModel->Scale(head.scaleFactor);
-    headModel->Rotate(-M_PI, Axis::Y);
+    headModel->Rotate((float)-M_PI, Axis::Y);
     headModel->Translate(-1.6f, Axis::Z);
     headModel->showFaces = false;
     headModel->showWireframe = true;
@@ -176,9 +133,9 @@ void BasicScene::InitSnake()
 //    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
     auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
     auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
-    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = InitAABB(snakeMesh);
+    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
     snake = {snakeModel, 16.0f, snake_aabb};
-    snakeModel->Translate(1.6*(numOfCyls/2)-0.8, Axis::Z);
+    snakeModel->Translate(1.6f*(numOfCyls/2)-0.8f, Axis::Z);
     snakeModel->Scale(16.0f, Axis::Z);
     snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 //    InitCollisionModels(head); // should we fix cylinder collision or use snake mesh? (problem with scaling in only one axis)
@@ -186,130 +143,52 @@ void BasicScene::InitSnake()
 
 }
 
-void BasicScene::initObjects()
+void BasicScene::DeleteSnake()
 {
-    auto bunnyMesh = IglLoader::MeshFromFiles("bunny", "data/bunny.off");
-    auto bunnyModel = Model::Create("bunny", bunnyMesh, basicMaterial);
-    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(bunnyMesh);
-    objects.push_back({bunnyModel, 3.0f, aabb});
-    InitCollisionModels(objects[0]);
-    root->AddChild(bunnyModel);
-    bunnyModel->Translate({0.0, 0.0, -5.0});
-    bunnyModel->Scale(objects[0].scaleFactor);
-    bunnyModel->showFaces = false;
-    bunnyModel->showWireframe = true;
-}
-
-void BasicScene::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material)
-{
-    auto mesh = cg3d::IglLoader::MeshFromFiles("Entity_" + entityTypeToString(ent.type) + ent.name, ent.pathToMesh);
-    auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
-    igl::AABB<Eigen::MatrixXd, 3> aabb = InitAABB(mesh);
-    model_data currentModel = {model, ent.scale, aabb};
-    InitCollisionModels(currentModel);
-    root->AddChild(model);
-    model->Translate({ 0.0, 0.0, -5.0 });
-    model->Scale(ent.scale);
-    model->showFaces = false;
-    model->showWireframe = true;
-    entity_data currentEntity = { currentModel, time(nullptr),
-        {ent.name, ent.pathToMesh, ent.scale ,ent.type, ent.points, ent.lifeTime / currentLevel} };
-    entities.push_back(currentEntity);
-}
-
-static int getRandomNumberInRange(int low, int high)
-{
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(low, high); // define the range
-    return distr(gen);
-}
-
-void BasicScene::spawnEntity(int index)
-{
-    if (index == -1)
-        index = getRandomNumberInRange(0, entities.size());
-    int x_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    initEntity(viableEntities[index], basicMaterial);
-    entities[entities.size() - 1].modelData.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
-}
-
-void BasicScene::generateViableEntities()
-{
-    viableEntities.push_back({ "Bunny", "data/bunny.off", 6.0f,EntityType::ITEM, 1000, 100 });
-    viableEntities.push_back({ "Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80 });
-    viableEntities.push_back({ "Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80 });
-    viableEntities.push_back({ "Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100 });
-    viableEntities.push_back({ "Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80 });
-    viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
-    viableEntities.push_back({ "Sword", "data/Sword01.off", 0.05f, EntityType::ENEMY, -1000, 100 });
-    viableEntities.push_back({ "Sword", "data/Apple.off", 0.05f, EntityType::ITEM, 500, 100 });
-    // maybe add magnet bonus
-}
-
-void BasicScene::InitLevel()
-{
-    int enemies, items, bonuses;
-    switch (currentLevel) 
-    {
-        case 1:
-            enemies = 3;
-            items = 10;
-            bonuses = 2;
-            break;
-
+    // Remove all of the cylinders from the scene
+    for (long i = cyls.size() - 1; i > 0; i--) {
+        cyls[i - 1].model->RemoveChild(cyls[i].model);
+        cyls.pop_back();
     }
+    root->RemoveChild(cyls[0].model);
+    cyls.pop_back();
+
+    // Remove the snake itself
+    root->RemoveChild(head.model);
+    root->RemoveChild(snake.model);
 }
 
-/**
- * collision detection methods:
- * 1. InitAABB - AABB init method for a given mesh object
- * 2. InitCollisionModels
- * 3. checkForCollision
- */
-igl::AABB<Eigen::MatrixXd, 3> BasicScene::InitAABB(std::shared_ptr<Mesh> mesh)
+void BasicScene::Reset(bool mainMenu)
 {
-    Eigen::MatrixXd V = mesh->data[0].vertices;
-    Eigen::MatrixXi F = mesh->data[0].faces;
-    igl::AABB<Eigen::MatrixXd, 3> axisAligned;
-    axisAligned.init(V, F);
-    return axisAligned;
-}
-
-void BasicScene::InitCollisionModels(model_data &modelData) {
-    auto collisionFrame = cg3d::Model::Create(
-            "collisionFrame "+modelData.model->name,
-            CollisionDetection::meshifyBoundingBox(modelData.aabb.m_box),
-            green
-    );
-    collisionFrame->showFaces = false;
-    collisionFrame->showWireframe = true;
-    collisionFrame->Scale(modelData.scaleFactor);
-    modelData.model->AddChild(collisionFrame);
-    modelData.collisionFrame = collisionFrame;
-
-    auto collisionBox = cg3d::Model::Create(
-            "collisionBox "+modelData.model->name,
-            cg3d::Mesh::Cube(),
-            red
-    );
-    collisionBox->showFaces = false;
-    collisionBox->showWireframe = false;
-    collisionBox->isHidden = true;
-    collisionBox->isPickable = false;
-    modelData.model->AddChild(collisionBox);
-    modelData.collisionBox = collisionBox;
-}
-
-void BasicScene::SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box)
-{
-    std::vector<std::shared_ptr<cg3d::Mesh>> meshVec;
-    meshVec.push_back(CollisionDetection::meshifyBoundingBox(box));
-    modelData.collisionBox->SetMeshList(meshVec);
-    modelData.collisionBox->showWireframe = true;
-    modelData.collisionBox->isHidden = false;
+    /*
+        1. Delete the snake
+        2. Delete all of the entities
+        3. Initiate the snake
+        4. Delete the cameras
+        5. Initialize cameras
+        *6. Level should be initialized after call for start level so that
+        *   entities won't pass away too quickly
+    */
+    animate = false;
+    if (mainMenu)
+    {
+        countdown = false;
+        countdownTimerEnd = 0;
+        accumulatedTime = 0;
+    }
+    //root->RemoveChild(snake.model); need to create a method to remove the snake
+    else
+    {
+        countdown = true;
+        countdownTimerEnd = 0;
+        accumulatedTime += time(nullptr) - gameTimer;
+    }
+    DeleteSnake();
+    clearEntities(entities, root);
+    InitSnake();
+    InitCameras(FOV, WIDTH, HEIGHT, NEAR, FAR);
+    InitLevel(viableItems, viableEnemies, viableBonuses,
+        entities, MAP_SIZE, basicMaterial, green, red, root, currentLevel);
 }
 
 /**
@@ -335,8 +214,8 @@ void BasicScene::checkForCollision()
         ))
         {
             animate = false;
-            SetCollisionBox(head, box_camel);
-            SetCollisionBox(cyls[i], box_i);
+            CollisionDetection::SetCollisionBox(head, box_camel);
+            CollisionDetection::SetCollisionBox(cyls[i], box_i);
         }
     }
     // collision with head and entities
@@ -376,8 +255,8 @@ void BasicScene::checkForCollision()
             ))
             {
                 animate = false;
-                SetCollisionBox(cyls[i], box_i);
-                SetCollisionBox(cyls[j], box_j);
+                CollisionDetection::SetCollisionBox(cyls[i], box_i);
+                CollisionDetection::SetCollisionBox(cyls[j], box_j);
             }
         }
 
@@ -395,8 +274,8 @@ void BasicScene::checkForCollision()
             ))
             {
                 animate = false;
-                SetCollisionBox(cyls[i], box_i);
-                SetCollisionBox(objects[j], box_j);
+                CollisionDetection::SetCollisionBox(cyls[i], box_i);
+                CollisionDetection::SetCollisionBox(objects[j], box_j);
             }
         }
     }
@@ -419,14 +298,181 @@ void BasicScene::SetCamera(int index)
     viewport->camera = camera;
 }
 
+void BasicScene::startTimer()
+{
+    if (animate || !countdown)
+        return;
+    if (countdownTimerEnd == 0)
+        countdownTimerEnd = time(nullptr) + 3;
+
+    float width = 1600.0f, height = 900.0f;
+    bool* mainMenuToggle = nullptr;
+    ImGui::Begin("StartTimer", mainMenuToggle, MENU_FLAGS);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    ImGui::SetCursorPos(ImVec2(700.0f, 275.0f));
+    auto now = time(nullptr);
+    if (now < countdownTimerEnd)
+    {
+        countdownTimer = time(nullptr);
+        auto delta = countdownTimerEnd - now;
+        std::string deltaStr = std::to_string(delta);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ShowXLText(deltaStr.c_str(), "snap");
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        if (now - countdownTimerEnd < 1)
+        {
+            ImGui::SetCursorPos(ImVec2(650.0f, 275.0f));
+            ShowXLText("GO!", "arial");
+        }
+        else
+        {
+            gameTimer = time(nullptr);
+            animate = true;
+            countdown = false;
+        }
+    }
+    ImGui::End();
+}
+
+static void displayLives(int lives, int MENU_FLAGS)
+{
+    ImGui::CreateContext();
+    bool* livesToggle = nullptr;
+    ImGui::Begin("Lives", livesToggle, MENU_FLAGS);
+
+    int heartWidth, heartHeight, heart_nrChannels;
+    char* imgPath = getResource("heart.png");
+    unsigned char* data = stbi_load(imgPath, &heartWidth, &heartHeight, &heart_nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int heart;
+    glGenTextures(1, &heart);
+    glBindTexture(GL_TEXTURE_2D, heart);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, heartWidth, heartHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    imgPath = getResource("missing_heart.png");
+    data = stbi_load(imgPath, &heartWidth, &heartHeight, &heart_nrChannels, 0);
+    delete imgPath;
+    unsigned int missing_heart;
+    glGenTextures(1, &missing_heart);
+    glBindTexture(GL_TEXTURE_2D, missing_heart);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, heartWidth, heartHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::SetWindowPos("Lives", ImVec2(737.0f, 65.0f), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Lives", ImVec2(heartWidth * 3 + 30.0f, heartHeight + 20.0f), ImGuiCond_Always);
+    //ImGui::SetCursorPos(ImVec2(850.0f, 100.0f));
+    for (int i = 0; i < 3; i++)
+    {
+        if (lives > i)
+            ImGui::Image((void*)heart, ImVec2(heartWidth, heartHeight));
+        else
+            ImGui::Image((void*)missing_heart, ImVec2(heartWidth, heartHeight));
+        if (i == 0) ImGui::SameLine(heartWidth + 14, 0.0f);
+        if (i == 1) ImGui::SameLine(2 * (heartWidth + 10), 0.0f);
+    }
+    ImGui::End();
+}
+
+void BasicScene::Scoreboard()
+{
+    if (!animate)
+        return;
+    ImGui::CreateContext();
+    bool* scoreboardToggle = nullptr;
+    ImGui::Begin("Scoreboard", scoreboardToggle, MENU_FLAGS);
+
+    int width, height, nrChannels;
+    char* imgPath = getResource("scoreboard_bg.png");
+    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::Image((void*)textureID, ImVec2(width, height));
+    ImGui::SetWindowPos("Scoreboard", ImVec2(50.0f, -20.0f), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Scoreboard", ImVec2(width, height), ImGuiCond_Always);
+    //ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
+    //ImGui::SetWindowFontScale(1.3f);
+    ImGui::SetCursorPos(ImVec2(120.0f, 130.0f));
+    if (currentScoreFormatted == nullptr)
+        currentScoreFormatted = formatScore(0);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,100,0,255));
+    ShowMediumText(currentScoreFormatted, "snap");
+
+    //ImGui::SetCursorPos(ImVec2(1500.0f, 30.0f));
+
+    auto now = time(nullptr);
+    auto delta = now - gameTimer + accumulatedTime; // add mechanism to pause timer until next level start?
+    std::string deltaStr = std::to_string(delta + 1);
+    ImGui::SameLine(1235.0f, 0.0f);
+    ShowMediumText(deltaStr.c_str(), "snap");
+    ImGui::PopStyleColor();
+    ImGui::End();
+    displayLives(currentLives, MENU_FLAGS);
+}
+
+void BasicScene::MainMenu()
+{
+    if (animate || countdownTimerEnd > 0)
+        return;
+    ImGui::CreateContext();
+    bool* mainMenuToggle = nullptr;
+    ImGui::Begin("Main Menu", mainMenuToggle, MENU_FLAGS);
+
+    int width, height, nrChannels;
+    char* imgPath = getResource("mainmenu_bg.png");
+    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::Image((void*)textureID, ImVec2(width,height));
+    ImGui::SetWindowPos("Main Menu", ImVec2(675.0f, 275.0f), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Main Menu", ImVec2(width + 20, height + 20), ImGuiCond_Always);
+    ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
+    ImGui::SetWindowFontScale(1.3f);
+    if (ImGui::Button("START GAME"))
+    {
+        currentLevel = 1;
+        currentLives = 3;
+        countdown = true;
+        countdownTimerEnd = 0;
+    }
+    ImGui::End();
+}
+
 void BasicScene::BuildImGui()
 {
-    if (showMainMenu)
-        MainMenu(showMainMenu, gaming, started);
-    if (gaming)
-        Scoreboard(gaming, currentScoreFormatted, startOfTimer);
-    if (!started)
-        startTimer(started, timerRunning, startTimerDeadline, startOfTimer);
+    MainMenu();
+    Scoreboard();
+    startTimer();
 }
 
 void BasicScene::UpdateScore(int score)
@@ -482,7 +528,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             snake.model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_R:
-            showMainMenu = true;
+            Reset(true);
             break;
         case GLFW_KEY_1:
             SetCamera(1);
@@ -493,12 +539,18 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_S:
             animate = !animate;
             break;
+        case GLFW_KEY_T: // Simulating level up
+            currentLevel++;
+            Reset(false);
+            break;
         case GLFW_KEY_J:
             UpdateScore(1000);
             break;
-        case GLFW_KEY_T:
-            //startTimer();
-            started = false;
+        case GLFW_KEY_RIGHT_BRACKET:
+            currentLives++;
+            break;
+        case GLFW_KEY_LEFT_BRACKET:
+            currentLives--;
             break;
         }
         

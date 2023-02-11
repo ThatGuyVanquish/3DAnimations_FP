@@ -35,11 +35,11 @@ public:
     void UpdateScore(int score);
 
 
-//    void MainMenu();
+    void MainMenu();
 
-//    void Scoreboard();
+    void Scoreboard();
 
-//    void startTimer();
+    void startTimer();
 
 private:
 
@@ -54,6 +54,9 @@ private:
     // cameras
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};
     cg3d::Viewport* viewport = nullptr;
+    float FOV = 0, NEAR = 0, FAR = 0;
+    int WIDTH = 0, HEIGHT = 0;
+    void SetCamera(int index);
 
     // models init methods
     void InitMaterials();
@@ -62,54 +65,32 @@ private:
 
     void InitSnake();
 
-    void initObjects();
+    void DeleteSnake();
 
-    void generateViableEntities();
+    void Reset(bool mainMenu = false);
 
-    void initEntity(Entity ent, std::shared_ptr<cg3d::Material> material);
-
-    void spawnEntity(int index);
 
     // collision detection
-    igl::AABB<Eigen::MatrixXd, 3> InitAABB(std::shared_ptr<cg3d::Mesh> mesh);
-
-    void InitCollisionModels(model_data &modelData);
-
-    void SetCollisionBox(model_data &modelData, Eigen::AlignedBox3d box);
-
     void checkForCollision() override;
 
     void DeleteEntity(int index);
 
-    // camera managing methods
-    void SetCamera(int index);
-
+    /****** Gameplay fieldsand methods ******/
     const int MAP_SIZE = 50;
-
-    //void formatScore();
-
-    // Gameplay
-    void InitLevel();
-
-
-
-    bool gaming = false;
-    bool started = true;
     int currentLevel = 1;
-
-    bool *mainMenuToggle = nullptr;
-    bool showMainMenu = true;
-
+    int currentLives = 3;
     int currentScore = 0;
     char* currentScoreFormatted = nullptr;
-    bool* scoreboardToggle = nullptr;
-    time_t startOfTimer;
+    time_t gameTimer = 0;
+    time_t accumulatedTime = 0;
 
-    bool* startTimerToggle = nullptr;
-    time_t startTimerDeadline;
-    bool timerRunning = false;
+    time_t countdownTimer = 0;
+    time_t countdownTimerEnd = 0;
+    bool countdown = false;
 
-
+    static const int MENU_FLAGS =
+            ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
 
     void KeyCallback(cg3d::Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods) override;
