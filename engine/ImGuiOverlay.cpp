@@ -142,7 +142,7 @@ void ImGuiOverlay::Scoreboard(bool &animate)
 
 void ImGuiOverlay::MainMenu(bool &animate)
 {
-    if (animate || countdownTimerEnd > 0 || died || leveledUp)
+    if (animate || countdownTimerEnd > 0 || (died && !displayGameOver) || leveledUp)
         return;
     ImGui::CreateContext();
     bool* mainMenuToggle = nullptr;
@@ -174,12 +174,12 @@ void ImGuiOverlay::MainMenu(bool &animate)
         currentLives = 3;
         currentScore = 0;
         countdown = true;
+        displayGameOver = false;
+        died = false;
         countdownTimerEnd = 0;
     }
     ImGui::End();
 }
-
-
 
 void ImGuiOverlay::DeathScreen(bool &animate)
 {
@@ -192,10 +192,19 @@ void ImGuiOverlay::DeathScreen(bool &animate)
     bool* deathScreenToggle = nullptr;
     ImGui::Begin("DeathScreen", deathScreenToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
+    if (displayGameOver)
+    {
+        ImGui::SetCursorPos(ImVec2(350.0f, 75.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ShowXLText("GAME OVER!", "snap");
+        ImGui::PopStyleColor();
+        ImGui::End();
+        return;
+    }
     auto now = time(nullptr);
     if (now < deathTimerEnd)
     {
+        ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         std::string msg = "Score: " + std::to_string(currentScore);
         ShowXLText(msg.c_str(), "snap");
@@ -216,7 +225,10 @@ void ImGuiOverlay::DeathScreen(bool &animate)
     else
     {
         deathTimerEnd = 0;
-        died = false;
+        if (currentLives == 0)
+            displayGameOver = true;
+        else 
+            died = false;
     }
     ImGui::End();
 }
