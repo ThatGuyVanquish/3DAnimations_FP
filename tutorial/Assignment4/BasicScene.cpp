@@ -90,6 +90,7 @@ void BasicScene::BuildImGui()
     gameplay.imGuiOverlay.Scoreboard(gameplay.animate);
     gameplay.imGuiOverlay.startTimer(gameplay.animate);
     gameplay.imGuiOverlay.DeathScreen(gameplay.animate);
+    gameplay.imGuiOverlay.LevelUpScreen(gameplay.animate);
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)

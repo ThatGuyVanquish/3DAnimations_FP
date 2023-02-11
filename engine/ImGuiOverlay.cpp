@@ -11,7 +11,7 @@ char* ImGuiOverlay::formatScore()
 
 void ImGuiOverlay::startTimer(bool &animate)
 {
-    if (animate || !countdown)
+    if (animate || !countdown || died || leveledUp)
         return;
     if (countdownTimerEnd == 0)
         countdownTimerEnd = time(nullptr) + 3;
@@ -96,7 +96,7 @@ void ImGuiOverlay::displayLives(int lives)
 
 void ImGuiOverlay::Scoreboard(bool &animate)
 {
-    if (!animate)
+    if (!animate || died)
         return;
     ImGui::CreateContext();
     bool* scoreboardToggle = nullptr;
@@ -142,7 +142,7 @@ void ImGuiOverlay::Scoreboard(bool &animate)
 
 void ImGuiOverlay::MainMenu(bool &animate)
 {
-    if (animate || countdownTimerEnd > 0)
+    if (animate || countdownTimerEnd > 0 || died || leveledUp)
         return;
     ImGui::CreateContext();
     bool* mainMenuToggle = nullptr;
@@ -217,6 +217,35 @@ void ImGuiOverlay::DeathScreen(bool &animate)
     {
         deathTimerEnd = 0;
         died = false;
+    }
+    ImGui::End();
+}
+
+void ImGuiOverlay::LevelUpScreen(bool& animate)
+{
+    if (animate || !leveledUp)
+        return;
+    if (levelUpEnd == 0)
+        levelUpEnd = time(nullptr) + 2;
+
+    float width = 1600.0f, height = 900.0f;
+    bool* levelUpToggle = nullptr;
+    ImGui::Begin("Level Up", levelUpToggle, MENU_FLAGS);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
+    auto now = time(nullptr);
+    if (now < levelUpEnd)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        std::string msg = "Leveled Up!";
+        ShowXLText(msg.c_str(), "snap");
+        ImGui::SetCursorPos(ImVec2(450.0f, 325.0f));
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        levelUpEnd = 0;
+        leveledUp = false;
     }
     ImGui::End();
 }

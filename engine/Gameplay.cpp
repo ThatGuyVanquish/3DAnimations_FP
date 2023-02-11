@@ -205,6 +205,7 @@ void Gameplay::checkForCollision()
             imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
+                imGuiOverlay.displayGameOver = true;
                 Reset(true);
             } else {
                 Reset(false);
@@ -229,6 +230,7 @@ void Gameplay::checkForCollision()
                 imGuiOverlay.died = true;
                 if (imGuiOverlay.currentLives == 0)
                 {
+                    imGuiOverlay.displayGameOver = true;
                     Reset(true);
                 } else {
                     Reset(false);
@@ -417,6 +419,7 @@ bool Gameplay::shouldLevelUp() {
         default:
             break;
     }
+    imGuiOverlay.leveledUp = leveledUp;
     return leveledUp;
 }
 

@@ -7,8 +7,8 @@
 
 static char* getResource(const char* fileName)
 {
-//    std::filesystem::path cwd = std::filesystem::current_path() / "../../../tutorial/Assignment4/resources";
-    std::filesystem::path cwd = std::filesystem::current_path() / "../tutorial/Assignment4/resources"; // works for lior
+    std::filesystem::path cwd = std::filesystem::current_path() / "../../../tutorial/Assignment4/resources";
+    //std::filesystem::path cwd = std::filesystem::current_path() / "../tutorial/Assignment4/resources"; // works for lior
     std::filesystem::path filePath = cwd / fileName;
     std::string filePathString = filePath.string();
     return strcpy(new char[filePathString.length() + 1], filePathString.c_str());
@@ -74,16 +74,14 @@ class ImGuiOverlay {
 
 public:
 
-
-
-
     void startTimer(bool &animate);
     static void displayLives(int lives);
     void Scoreboard(bool &animate);
     char* formatScore();
     void MainMenu(bool &animate);
     void DeathScreen(bool &animate);
-
+    void LevelUpScreen(bool& animate);
+    //void GameOverOverlay();
 
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
@@ -94,7 +92,10 @@ public:
     char* currentScoreFormatted;
     int currentLives = 3, currentLevel = 1, currentScore = 0;
     time_t deathTimerEnd = 0;
+    time_t levelUpEnd = 0;
     bool died = false;
+    bool leveledUp = false;
+    bool displayGameOver = false;
 
 private:
 
