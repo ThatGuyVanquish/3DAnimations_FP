@@ -49,7 +49,7 @@ public:
 
     void DeleteEntity(int index);
 
-    void DeleteSnake();
+    void ResetSnake();
 
     void Reset(bool mainMenu);
 
@@ -57,7 +57,7 @@ public:
 
     bool shouldLevelUp();
 
-    void updateGameplay(bool &callInitCameras);
+    void updateGameplay();
 
     void HandleEntityCollision(int index);
 
@@ -65,7 +65,9 @@ public:
     ImGuiOverlay imGuiOverlay;
     const int MAP_SIZE = 50;
     int numOfCyls = 16;
-    bool animate, callInitCameras;
+    bool animate, callResetCameras;
+
+    int currentEnemies = 0, currentItems = 0, currentBonuses = 0;
 
     // models
     std::shared_ptr<cg3d::Movable> root;

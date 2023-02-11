@@ -123,7 +123,7 @@ void Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material) 
     model->showWireframe = true;
     entity_data currentEntity = {currentModel, time(nullptr),
                                  {ent.name, ent.pathToMesh, ent.scale, ent.type, ent.points,
-                                  ent.lifeTime / imGuiOverlay.currentLevel}};
+                                  ent.lifeTime}};
     entities.push_back(currentEntity);
 }
 
@@ -135,6 +135,17 @@ void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {
     int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     initEntity(viableEntities[index], basicMaterial);
     entities[entities.size() - 1].modelData.model->Translate({(float) x_value, (float) y_value, (float) z_value});
+    switch (viableEntities[index].type) {
+        case EntityType::ENEMY:
+            currentEnemies++;
+            break;
+        case EntityType::ITEM:
+            currentItems++;
+            break;
+        case EntityType::BONUS:
+            currentBonuses++;
+            break;
+    }
 }
 
 void Gameplay::spawnEntities(int amount, std::vector<Entity> &viableEntities) {
@@ -152,7 +163,7 @@ void Gameplay::clearEntities() {
 }
 
 void Gameplay::InitLevel() {
-    int enemies, items = 10, bonuses = 2;
+    int enemies, items = 10 - currentItems, bonuses = 2 - currentBonuses;
     switch (imGuiOverlay.currentLevel) {
         case 1:
             enemies = 3;
@@ -166,6 +177,7 @@ void Gameplay::InitLevel() {
         default:
             enemies = 10;
     }
+    enemies = enemies - currentEnemies;
     spawnEntities(items, viableItems);
     spawnEntities(enemies, viableEnemies);
     spawnEntities(bonuses, viableBonuses);
@@ -274,7 +286,7 @@ void Gameplay::checkTimedOutEntities() {
 void Gameplay::deleteEntityIfTimedOut(int index) {
     entity_data entity = entities[index];
     time_t now = time(nullptr);
-    if (now - entity.ent.lifeTime < entity.creationTime)
+    if (now - entity.creationTime < entity.ent.lifeTime / imGuiOverlay.currentLevel)
         return;
     DeleteEntity(index);
     // should insert new entity of the same type:
@@ -292,6 +304,17 @@ void Gameplay::deleteEntityIfTimedOut(int index) {
 }
 
 void Gameplay::DeleteEntity(int index) {
+    switch (entities[index].ent.type) {
+        case EntityType::ENEMY:
+            currentEnemies--;
+            break;
+        case EntityType::ITEM:
+            currentItems--;
+            break;
+        case EntityType::BONUS:
+            currentBonuses--;
+            break;
+    }
     root->RemoveChild(entities[index].modelData.model);
     std::vector<entity_data> newEntities;
     for (int i = 0; i < entities.size(); i++) {
@@ -302,21 +325,42 @@ void Gameplay::DeleteEntity(int index) {
 
 /**
  * model delete methods:
- * 1. DeleteSnake
+ * 1. ResetSnake
  * 2. Reset
  */
-void Gameplay::DeleteSnake() {
-    // Remove all the cylinders from the scene
-    for (long i = cyls.size() - 1; i > 0; i--) {
-        cyls[i - 1].model->RemoveChild(cyls[i].model);
-        cyls.pop_back();
+void Gameplay::ResetSnake() {
+    // reset all the cylinders
+    for (int i = 0; i < cyls.size(); i++) {
+        cyls[i].model->SetTout(Eigen::Affine3f::Identity());
+        cyls[i].model->SetTin(Eigen::Affine3f::Identity());
+        cyls[i].model->PropagateTransform();
+        if (i == 0) // first axis and cylinder depend on scene's root
+        {
+            root->AddChild(cyls[0].model);
+            cyls[0].model->Translate({0, 0, 0.8f});
+            cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+        } else {
+            cyls[i - 1].model->AddChild(cyls[i].model);
+            //cyls[i].model->Scale(1, Axis::X);
+            cyls[i].model->Translate(1.6f, Movable::Axis::Z);
+            cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+        }
     }
-    root->RemoveChild(cyls[0].model);
-    cyls.pop_back();
+    // reset head
+    head.model->SetTout(Eigen::Affine3f::Identity());
+    head.model->SetTin(Eigen::Affine3f::Identity());
+    head.model->PropagateTransform();
+    head.model->Scale(head.scaleFactor);
+    head.model->Rotate((float) -M_PI, Movable::Axis::Y);
+    head.model->Translate(-1.6f, Movable::Axis::Z);
 
-    // Remove the snake itself
-    root->RemoveChild(head.model);
-    root->RemoveChild(snake.model);
+    // reset snake model
+    snake.model->SetTout(Eigen::Affine3f::Identity());
+    snake.model->SetTin(Eigen::Affine3f::Identity());
+    snake.model->PropagateTransform();
+    snake.model->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
+    snake.model->Scale(16.0f, Movable::Axis::Z);
+    snake.model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
 }
 
 void Gameplay::Reset(bool mainMenu) {
@@ -341,10 +385,11 @@ void Gameplay::Reset(bool mainMenu) {
         imGuiOverlay.countdownTimerEnd = 0;
         imGuiOverlay.accumulatedTime += time(nullptr) - imGuiOverlay.gameTimer;
     }
-    DeleteSnake();
-    clearEntities();
-    InitSnake();
+    ResetSnake();
+//    clearEntities();
+//    InitSnake();
     InitLevel();
+    callResetCameras = true;
 
 }
 
@@ -375,13 +420,10 @@ bool Gameplay::shouldLevelUp() {
     return leveledUp;
 }
 
-void Gameplay::updateGameplay(bool &callInitCameras)
+void Gameplay::updateGameplay()
 {
-    checkTimedOutEntities();
+//    checkTimedOutEntities();
     checkForCollision();
 
-
-
-    callInitCameras = this->callInitCameras;
 }
 

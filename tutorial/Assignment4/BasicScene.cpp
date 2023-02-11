@@ -38,21 +38,44 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
 
 void BasicScene::InitCameras()
 {
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < cameras.size(); i++)
     {
         cameras[i] = Camera::Create("camera " + std::to_string(i), FOV, float(WIDTH) / float(HEIGHT), NEAR, FAR);
     }
-    //set up camera location
-    camera = cameras[0];
-    //maybe place snake then have camera[1] relative to it based on being a child of snake's root
-    gameplay.cyls[0].model->AddChild(cameras[1]);
-    cameras[1]->Translate(0.5f, Axis::Y);
-    cameras[1]->Translate(0.5, Axis::X);
-    cameras[1]->Rotate((float)M_PI_2, Axis::Y);
 
-    camera->Translate(30, Axis::Z);
-    camera->Translate(15, Axis::Y);
-    camera->Rotate((float)-M_PI_4/2.0, Axis::X);
+    SetCamerasView();
+
+    camera = cameras[0];
+    gameplay.cyls[0].model->AddChild(cameras[1]);
+    gameplay.cyls[0].model->AddChild(cameras[2]);
+
+}
+
+void BasicScene::ResetCameras()
+{
+    for (int i = 0; i < cameras.size(); i++)
+    {
+        cameras[i]->SetTout(Eigen::Affine3f::Identity());
+        cameras[i]->SetTin(Eigen::Affine3f::Identity());
+        cameras[i]->PropagateTransform();
+    }
+    SetCamerasView();
+    SetCamera(0);
+}
+
+void BasicScene::SetCamerasView()
+{
+    Eigen::Matrix3f rotation;
+
+    cameras[0]->Translate(30, Axis::Z);
+    cameras[0]->Translate(15, Axis::Y);
+    cameras[0]->Rotate((float)-M_PI_4/2.0, Axis::X);
+
+    cameras[1]->Translate({0, 0, -2});
+
+    rotation << 0.999981f, 0.00187451f, 0.0059422f, -0.00398497f, 0.925535f, 0.378641f, -0.00478994f,   -0.378658f,    0.925524f;
+    cameras[2]->Translate({0, 4.88115, 10.5869});
+    cameras[2]->Rotate(rotation);
 }
 
 void BasicScene::SetCamera(int index)
@@ -80,9 +103,12 @@ void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, con
 
 void BasicScene::updateGameplay()
 {
-    bool callInitCameras;
-    gameplay.updateGameplay(callInitCameras);
-    if (callInitCameras) InitCameras();
+    gameplay.updateGameplay();
+    if (gameplay.callResetCameras)
+    {
+        ResetCameras();
+        gameplay.callResetCameras = false;
+    }
 }
 
 void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods)
@@ -123,12 +149,23 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             break;
         case GLFW_KEY_R:
             gameplay.Reset(true);
+            if (gameplay.callResetCameras)
+            {
+                ResetCameras();
+                gameplay.callResetCameras = false;
+            }
+            break;
+        case GLFW_KEY_3:
+            SetCamera(2);
+            gameplay.head.model->showWireframe = true;
             break;
         case GLFW_KEY_1:
             SetCamera(1);
+            gameplay.head.model->showWireframe = false;
             break;
         case GLFW_KEY_0:
             SetCamera(0);
+            gameplay.head.model->showWireframe = true;
             break;
         case GLFW_KEY_S:
             gameplay.animate = !gameplay.animate;
@@ -146,6 +183,11 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_LEFT_BRACKET:
             gameplay.imGuiOverlay.currentLives--;
             break;
+        case GLFW_KEY_P:
+            std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
+            std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
+
+
         }
         
     }

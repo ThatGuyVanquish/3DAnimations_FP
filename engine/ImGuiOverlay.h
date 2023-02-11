@@ -91,7 +91,7 @@ public:
     bool countdown;
     time_t countdownTimerEnd, gameTimer, accumulatedTime;
     char* currentScoreFormatted;
-    int currentLives, currentLevel, currentScore;
+    int currentLives = 3, currentLevel = 1, currentScore = 0;
 
 private:
 

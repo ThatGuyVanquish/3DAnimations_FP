@@ -21,14 +21,15 @@ public:
 
 private:
     // cameras
-    std::vector<std::shared_ptr<cg3d::Camera>> cameras{2};
+    std::vector<std::shared_ptr<cg3d::Camera>> cameras{3};
     cg3d::Viewport* viewport = nullptr;
     float FOV = 0, NEAR = 0, FAR = 0;
     int WIDTH = 0, HEIGHT = 0;
     void SetCamera(int index);
 
-    // models init methods
     void InitCameras();
+    void ResetCameras();
+    void SetCamerasView();
 
     void updateGameplay() override;
 
