@@ -8,6 +8,7 @@
 #include "GLFW/glfw3.h"
 #include <AABB.h>
 #include "Movable.h"
+#include "Skinning.cpp"
 
 // header for common structures like model_data
 #include "common.h"
@@ -87,4 +88,8 @@ public:
     std::shared_ptr<cg3d::Material> frameColor;
     std::shared_ptr<cg3d::Material> collisionColor;
     std::shared_ptr<cg3d::Material> snakeSkin;
+
+    // skinning
+    bool initSnake = true;
+    Eigen::MatrixXd W, V;
 };

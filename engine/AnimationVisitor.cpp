@@ -18,20 +18,26 @@ namespace cg3d
     void AnimationVisitor::Visit(Model* model)
     {
         Eigen::Matrix3f system = model->GetRotation().transpose();
-        Eigen::Vector3f rotation_z, rotation_vec;
+        Eigen::Vector3f rotation_z, rotation_x, rotation_y, rotation_vec;
         rotation_z = Eigen::Vector3f(0, 0, 1);
+        rotation_x = Eigen::Vector3f(1, 0, 0);
+        rotation_y = Eigen::Vector3f(0, 1, 0);
 
         if (scene->gameplay.animate)
         {
             std::string modelsName = model->name;
             if (modelsName.starts_with("SNAKE"))
             {
-//                if (calc_w)
-//                {
-//                    calculateWeights(W, scene->cyls, scene->snake);
-//                    calc_w = false;
-//                }
-//                applySkinning(W, scene->cyls, scene->snake);
+////                if (scene->gameplay.initSnake)
+////                {
+////                    InitSkinning(scene->gameplay.snake, scene->gameplay.W, scene->gameplay.numOfCyls);
+////                    scene->gameplay.V = scene->gameplay.snake.model->GetMesh(0)->data[0].vertices;
+////
+//////                    calculateWeights(W, scene->gameplay.cyls, scene->gameplay.snake);
+////                    scene->gameplay.initSnake = false;
+////                }
+//                moveSnake(scene->gameplay.W, scene->gameplay.cyls, scene->gameplay.snake, scene->gameplay.V);
+////                applySkinning(W, scene->gameplay.cyls, scene->gameplay.snake);
 ////                doSkinning = false;
             }
             else if (modelsName.starts_with("Cyl"))
@@ -42,17 +48,35 @@ namespace cg3d
                     model->TranslateInSystem(system, velocityVec);
                 }
                 else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
-                    rotation_vec = model->Tout.rotation() * rotation_z;
-                    prev_quat_z = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_z);
-                    prev_quat_z = prev_quat_z.slerp(slerpFactor, Eigen::Quaternionf::Identity());
-                    model->Rotate(prev_quat_z); //might need rotate in system
+//                    rotation_vec = model->Tout.rotation() * rotation_z;
+//                    prev_quat_z = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_z);
+//                    prev_quat_z = prev_quat_z.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+//                    model->Rotate(prev_quat_z); //might need rotate in system
+                    rotation_vec = model->Tout.rotation() * rotation_x;
+                    prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
+                    prev_quat_x = prev_quat_x.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    model->Rotate(prev_quat_x); //might need rotate in system
+                    rotation_vec = model->Tout.rotation() * rotation_y;
+                    prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
+                    prev_quat_y = prev_quat_y.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    model->Rotate(prev_quat_y); //might need rotate in system
                     prevRotatedCylIndex++;
                 } else if (cylIndex == prevRotatedCylIndex + 1) {
-                    model->Rotate(prev_quat_z.conjugate());
-                    rotation_vec = model->Tout.rotation() * rotation_z;
-                    prev_quat_z = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_z);
-                    prev_quat_z = prev_quat_z.slerp(slerpFactor, Eigen::Quaternionf::Identity());
-                    model->Rotate(prev_quat_z); //might need rotate in system
+                    model->Rotate(prev_quat_x.conjugate());
+                    model->Rotate(prev_quat_y.conjugate());
+//                    model->Rotate(prev_quat_z.conjugate());
+                    rotation_vec = model->Tout.rotation() * rotation_x;
+                    prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
+                    prev_quat_x = prev_quat_x.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    model->Rotate(prev_quat_x); //might need rotate in system
+                    rotation_vec = model->Tout.rotation() * rotation_y;
+                    prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
+                    prev_quat_y = prev_quat_y.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    model->Rotate(prev_quat_y); //might need rotate in system
+//                    rotation_vec = model->Tout.rotation() * rotation_z;
+//                    prev_quat_z = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_z);
+//                    prev_quat_z = prev_quat_z.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+//                    model->Rotate(prev_quat_z); //might need rotate in system
                     prevRotatedCylIndex++;
                 }
                 if (prevRotatedCylIndex >= scene->gameplay.numOfCyls-1)
