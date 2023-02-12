@@ -436,7 +436,6 @@ void Gameplay::updateGameplay()
 {
 //    checkTimedOutEntities();
     checkForCollision();
-
 }
 
 void Gameplay::handleBonus()
@@ -451,10 +450,16 @@ void Gameplay::handleBonus()
         UpdateScore(getRandomNumberInRange(0, 2000));
         break;
     case Bonus::SPEED_PLUS:
-        // increase speed somehow? ask lior
+        if (velocityVec.z() > -0.55f)
+            velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+        if (slerpFactor > 0.8f)
+            slerpFactor -= 0.02f;
         break;
     case Bonus::SPEED_MINUS:
-        // increase speed somehow? ask lior
+        if (velocityVec.z() < -0.05f)
+            velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+        if (slerpFactor < 1.0f)
+            slerpFactor += 0.02f;
         break;
     }
 }

@@ -199,7 +199,15 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_P:
             std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
             std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
-
+            break;
+        case GLFW_KEY_I:
+            gameplay.velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+            gameplay.slerpFactor -= 0.02f;
+            break;
+        case GLFW_KEY_O:
+            gameplay.velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+            gameplay.slerpFactor += 0.02f;
+            break;
 
         }
         

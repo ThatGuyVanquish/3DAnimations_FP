@@ -24,9 +24,6 @@ namespace cg3d
         Scene* scene;
         int prevRotatedCylIndex = 0;
         Eigen::Quaternionf prev_quat_x, prev_quat_y, prev_quat_z;
-        float slerpFactor = 0.9f;
-        Eigen::Vector3f velocityVec = {0, 0, -0.05f};
-
     };
 
 } // namespace cg3d

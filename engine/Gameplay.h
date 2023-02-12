@@ -91,6 +91,9 @@ public:
         Bonus::SPEED_PLUS, Bonus::SPEED_PLUS, Bonus::SPEED_PLUS, Bonus::SPEED_PLUS,
         Bonus::SPEED_MINUS, Bonus::SPEED_MINUS, Bonus::SPEED_MINUS, Bonus::SPEED_MINUS };
 
+    float slerpFactor = 0.9f;
+    Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
+
     // materials
     std::shared_ptr<cg3d::Program> program;
     std::shared_ptr<cg3d::Program> snakeShader;
