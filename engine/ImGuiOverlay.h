@@ -69,6 +69,11 @@ static void ShowXLText(const char* text, std::string font)
     ImGui::PopFont();
 }
 
+static void insertIntoScoreboard(char* name, int score)
+{
+
+}
+
 
 class ImGuiOverlay {
 
@@ -81,6 +86,7 @@ public:
     void MainMenu(bool &animate);
     void DeathScreen(bool &animate);
     void LevelUpScreen(bool& animate);
+    void insertIntoLeaderboard();
     //void GameOverOverlay();
 
     static const int MENU_FLAGS =

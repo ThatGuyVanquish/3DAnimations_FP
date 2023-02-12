@@ -177,7 +177,31 @@ void ImGuiOverlay::MainMenu(bool &animate)
         displayGameOver = false;
         died = false;
         countdownTimerEnd = 0;
+        deathTimerEnd = 0;
     }
+    ImGui::End();
+}
+
+void ImGuiOverlay::insertIntoLeaderboard()
+{
+    ImGui::CreateContext();
+    bool* leaderboardInput = nullptr;
+    ImGui::Begin("LeaderboardInput", leaderboardInput, MENU_FLAGS);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("LeaderboardInput",ImVec2(300.0f, 10.0f));
+    ImGui::SetWindowPos(ImVec2(750.0f, 425.0f));
+    //ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
+    char name[20] = "INSERT NAME HERE";
+    int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+    if (!ImGui::InputText("", name, 20, flags))
+        deathTimerEnd += 2;
+    else
+    {
+        deathTimerEnd = time(nullptr);
+        displayGameOver = true;
+    }
+    if (name != "INSERT NAME HERE")
+        insertIntoScoreboard(name, currentScore);
     ImGui::End();
 }
 
@@ -212,7 +236,22 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         {
             ImGui::SetCursorPos(ImVec2(350.0f, 75.0f));
             ShowXLText("GAME OVER!", "snap");
-            // maybe add scoreboard function
+            //insertIntoLeaderboard();
+            //ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
+            /*ImGui::SetNextItemWidth(300.0f);
+            char name[20] = "INSERT NAME HERE";
+            int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+            if (!ImGui::InputText("Leaderboard name", name, 20, flags))
+            {
+                deathTimerEnd = time(nullptr) + 5;
+                animate = false;
+            }
+            else
+            {
+                deathTimerEnd = time(nullptr);
+                displayGameOver = true;
+            }
+            insertIntoScoreboard(name, currentScore);*/
         }
         else
         {
@@ -261,20 +300,3 @@ void ImGuiOverlay::LevelUpScreen(bool& animate)
     }
     ImGui::End();
 }
-
-//static void splashScreen(const char* msg1, const char* msg2, ImVec4 col = { 0,0,0,255 })
-//{
-//    float width = 1600.0f, height = 900.0f;
-//    bool* splashScreenToggle = nullptr;
-//    ImGui::CreateContext();
-//    ImGui::Begin("Splash Screen", splashScreenToggle, MENU_FLAGS);
-//    ImGui::SetWindowSize("Splash Screen", ImVec2(width, height));
-//    ImGui::SetWindowPos("Splash Screen", ImVec2(0, 0), ImGuiCond_Always);
-//    ImGui::SetCursorPos(ImVec2(400.0f, 275.0f));
-//    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(col.w, col.x, col.y, col.z));
-//    ShowXLText(msg1, "arial");
-//    ImGui::SetCursorPos(ImVec2(400.0f, 375.0f));
-//    ShowXLText(msg2, "arial");
-//    ImGui::PopStyleColor();
-//    ImGui::End();
-//}
