@@ -26,19 +26,11 @@ namespace cg3d
         if (scene->gameplay.animate)
         {
             std::string modelsName = model->name;
-            if (modelsName.starts_with("SNAKE"))
+            if (scene->gameplay.useSnake && modelsName.starts_with("SNAKE"))
             {
-////                if (scene->gameplay.initSnake)
-////                {
-////                    InitSkinning(scene->gameplay.snake, scene->gameplay.W, scene->gameplay.numOfCyls);
-////                    scene->gameplay.V = scene->gameplay.snake.model->GetMesh(0)->data[0].vertices;
-////
-//////                    calculateWeights(W, scene->gameplay.cyls, scene->gameplay.snake);
-////                    scene->gameplay.initSnake = false;
-////                }
-//                moveSnake(scene->gameplay.W, scene->gameplay.cyls, scene->gameplay.snake, scene->gameplay.V);
-////                applySkinning(W, scene->gameplay.cyls, scene->gameplay.snake);
-////                doSkinning = false;
+                moveSnake(scene->gameplay.W, scene->gameplay.cyls, scene->gameplay.snake, scene->gameplay.V);
+//                applySkinning(W, scene->gameplay.cyls, scene->gameplay.snake);
+//                doSkinning = false;
             }
             else if (modelsName.starts_with("Cyl"))
             {

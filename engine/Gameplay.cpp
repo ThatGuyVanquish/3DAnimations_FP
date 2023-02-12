@@ -82,21 +82,25 @@ void Gameplay::InitSnake() {
     headModel->showWireframe = true;
     cyls[0].model->AddChild(headModel);
 
-//
-//    // init snake
-//    snakeShader = std::make_shared<Program>("shaders/overlay");
-//    snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-////    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
-//    auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-//    auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
-//    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
-//    snake = {snakeModel, 16.0f, snake_aabb};
-//    InitSkinning(snake, W, numOfCyls);
-////    snakeModel->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
-////    snakeModel->Scale(16.0f, Movable::Axis::Z);
-////    snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
-////    cyls[0].model->AddChild(snakeModel);
-//    root->AddChild(snakeModel);
+    if (useSnake)
+    {
+        // init snake
+        snakeShader = std::make_shared<Program>("shaders/overlay");
+        snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+//        snakeSkin->AddTexture(0, "textures/snake1.png", 2);
+        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
+        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+        igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
+        snake = {snakeModel, 16.0f, snake_aabb};
+        InitSkinning(snake, W, numOfCyls);
+        V = snake.model->GetMesh(0)->data[0].vertices;
+//        snakeModel->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
+//        snakeModel->Scale(16.0f, Movable::Axis::Z);
+//        snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+//        cyls[0].model->AddChild(snakeModel);
+        root->AddChild(snakeModel);
+    }
+
 
 }
 
@@ -117,7 +121,6 @@ void Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material) 
     auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
     igl::AABB<Eigen::MatrixXd, 3> aabb = CollisionDetection::InitAABB(mesh);
     model_data currentModel = {model, ent.scale, aabb};
-    //objects.push_back(currentModel);
     CollisionDetection::InitCollisionModels(currentModel, frameColor, collisionColor);
     root->AddChild(model);
     model->Translate({0.0, 0.0, -5.0});
@@ -358,20 +361,24 @@ void Gameplay::ResetSnake() {
     head.model->Rotate((float) -M_PI, Movable::Axis::Y);
     head.model->Translate(-1.6f, Movable::Axis::Z);
 
-//    // reset snake model
-//    std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-//                                                                            V,
-//                                                                            snake.model->GetMesh(0)->data[0].faces,
-//                                                                            snake.model->GetMesh(0)->data[0].vertexNormals,
-//                                                                            snake.model->GetMesh(0)->data[0].textureCoords
-//    );
-//    snake.model->SetMeshList({deformedMesh});
-////    snake.model->SetTout(Eigen::Affine3f::Identity());
-////    snake.model->SetTin(Eigen::Affine3f::Identity());
-////    snake.model->PropagateTransform();
-////    snake.model->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
-////    snake.model->Scale(16.0f, Movable::Axis::Z);
-////    snake.model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+    if (useSnake)
+    {
+        // reset snake model
+        std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+                                                                                V,
+                                                                                snake.model->GetMesh(0)->data[0].faces,
+                                                                                snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                                snake.model->GetMesh(0)->data[0].textureCoords
+        );
+//        snake.model->SetMeshList({deformedMesh});
+//        snake.model->SetTout(Eigen::Affine3f::Identity());
+//        snake.model->SetTin(Eigen::Affine3f::Identity());
+//        snake.model->PropagateTransform();
+//        snake.model->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
+//        snake.model->Scale(16.0f, Movable::Axis::Z);
+//        snake.model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+    }
+
 }
 
 void Gameplay::Reset(bool mainMenu) {
@@ -397,8 +404,6 @@ void Gameplay::Reset(bool mainMenu) {
         imGuiOverlay.accumulatedTime += time(nullptr) - imGuiOverlay.gameTimer;
     }
     ResetSnake();
-//    clearEntities();
-//    InitSnake();
     InitLevel();
     callResetCameras = true;
 

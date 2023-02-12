@@ -100,6 +100,7 @@ public:
     std::shared_ptr<cg3d::Material> snakeSkin;
 
     // skinning
+    bool useSnake = true;
     bool initSnake = true;
     Eigen::MatrixXd W, V;
 };

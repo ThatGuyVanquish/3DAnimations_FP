@@ -45,11 +45,26 @@ static void InitSkinning(model_data &snake, Eigen::MatrixXd &W, int numOfJoint)
     Eigen::MatrixXd U, V;
     V = snake.model->GetMesh(0)->data[0].vertices;
     U = Eigen::MatrixXd::Zero(V.rows(), V.cols());
+
+    Eigen::Matrix4d transform{Eigen::Matrix4d::Identity()};
+    Eigen::Affine3d Tout{Eigen::Affine3d::Identity()}, Tin{Eigen::Affine3d::Identity()};
+    Eigen::Vector3d translate, scale;
+    translate = {0, 0, (1.6 * (numOfJoint / 2) - 0.8)};
+    scale = {1.0, 1.0, 16.0};
+    Tout.pretranslate(translate);
+    Tin.scale(scale);
+    transform = Tout.matrix() * Tin.matrix();
+
     // scale and translate snake in axis z
     for (int i = 0; i < V.rows(); i++)
     {
-        U(i, 2) = V(i, 2) + (1.6f * (numOfJoint / 2) - 0.8f);
-        U(i, 2) = U(i, 2) * numOfJoint;
+        Eigen::Vector4d vertex = {V(i, 0), V(i, 1), V(i, 2) ,1};
+        vertex = transform * vertex;
+        U(i, 0) = vertex[0];
+        U(i, 1) = vertex[1];
+        U(i, 2) = vertex[2];
+//        U(i, 2) = V(i, 2) + (1.6f * (numOfJoint / 2) - 0.8f);
+//        U(i, 2) = U(i, 2) * numOfJoint;
     }
 
     int n = U.rows();
