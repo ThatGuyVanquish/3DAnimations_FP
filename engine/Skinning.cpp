@@ -34,8 +34,101 @@ typedef
 std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond> >
         RotationList;
 
+static void InitSkinning(model_data &snake, Eigen::MatrixXd &W, int numOfJoint);
+static void calcWeight(Eigen::MatrixXd &W, Eigen::MatrixXd &V);
+static void moveSnake(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake, Eigen::MatrixXd &V);
+static Eigen::Vector3f getTipPosition(model_data & cyl, float offset);
 
 
+static void InitSkinning(model_data &snake, Eigen::MatrixXd &W, int numOfJoint)
+{
+    Eigen::MatrixXd U, V;
+    V = snake.model->GetMesh(0)->data[0].vertices;
+    U = Eigen::MatrixXd::Zero(V.rows(), V.cols());
+    // scale and translate snake in axis z
+    for (int i = 0; i < V.rows(); i++)
+    {
+        U(i, 2) = V(i, 2) + (1.6f * (numOfJoint / 2) - 0.8f);
+        U(i, 2) = U(i, 2) * numOfJoint;
+    }
+
+    int n = U.rows();
+    W = Eigen::MatrixXd::Zero(n, numOfJoint + 1);
+    calcWeight(W, U);
+
+    // create new mesh based on transformed vertices
+    std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+                                                                            U,
+                                                                            snake.model->GetMesh(0)->data[0].faces,
+                                                                            snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                            snake.model->GetMesh(0)->data[0].textureCoords
+    );
+    // change snake mesh to the transformed one
+    snake.model->SetMeshList({deformedMesh});
+}
+
+static void calcWeight(Eigen::MatrixXd &W, Eigen::MatrixXd &V)
+{
+    int n = V.rows();
+    int numberOfJoints = W.cols() - 1;
+    double min_z = V.colwise().minCoeff()[2];
+    float lengthOfSnake = V.colwise().maxCoeff()[2] - V.colwise().minCoeff()[2];
+    float jointLength = lengthOfSnake / numberOfJoints;
+
+    for (int i = 0; i < n; i++) {
+        double curr_z = V.row(i)[2];
+        for (int j = 0; j < numberOfJoints+1; j++) {
+            if (curr_z >= min_z + jointLength * j && curr_z <= min_z + jointLength * (j + 1)) {
+                // my way
+                double dist = abs(curr_z - (min_z + jointLength * j));
+                W.row(i)[j] = dist / jointLength;
+                W.row(i)[j + 1] = 1 - (dist / jointLength);
+                break;
+//                double res = abs(curr_z - (min_z + jointLength * (j + 1))) * 10;
+//                W.row(i)[j] = res;
+//                W.row(i)[j + 1] = 1-res ;
+//                break;
+            }
+        }
+    }
+}
+static void moveSnake(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake, Eigen::MatrixXd &V)
+{
+    std::vector<Eigen::Vector3d> vT;
+    RotationList vQ;
+    Eigen::MatrixXd U;
+    int numberOfJoints = cyls.size();
+    vQ.resize(numberOfJoints+1,Eigen::Quaterniond::Identity());
+    vT.resize(W.cols());
+    for (int i = 0; i < numberOfJoints; i++)
+    {
+        vT[i] = getTipPosition(cyls[i], -0.8f).cast<double>();
+
+    }
+    vT[numberOfJoints] = getTipPosition(cyls[numberOfJoints-1], 0.8f).cast<double>();
+
+    // activate Dual Quaternion Skinning
+    igl::dqs(V,W,vQ,vT,U);
+
+    // create new mesh based on deformed vertex
+    std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+                                                                            U,
+                                                                            snake.model->GetMesh(0)->data[0].faces,
+                                                                            snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                            snake.model->GetMesh(0)->data[0].textureCoords
+    );
+
+    // change snake mesh to the deformed one
+    snake.model->SetMeshList({deformedMesh});
+}
+
+static Eigen::Vector3f getTipPosition(model_data & cyl, float offset)
+{
+    Eigen::Vector3f center = cyl.model->GetAggregatedTransform().col(3).head(3);
+    Eigen::Vector3f translation{ 0, 0, offset };
+    Eigen::Vector3f tipPosition = center + cyl.model->GetRotation() * translation;
+    return tipPosition;
+}
 
 static void applySkinning(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake)
 {
@@ -107,6 +200,8 @@ static void applySkinning(Eigen::MatrixXd &W, std::vector<model_data> &cyls, mod
     // change snake mesh to the deformed one
     snake.model->SetMeshList({deformedMesh});
 }
+
+
 
 static void calculateWeights(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake)
 {
