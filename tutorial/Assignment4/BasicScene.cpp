@@ -117,7 +117,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
 {
 //    auto system = camera->GetRotation().transpose();
     auto system = gameplay.cyls[0].model->GetRotation().transpose();
-    if (action == GLFW_PRESS || action == GLFW_REPEAT)
+    if ((action == GLFW_PRESS || action == GLFW_REPEAT) && gameplay.imGuiOverlay.grabCallbacks)
     {
         switch (key)
         {

@@ -102,7 +102,7 @@ public:
     bool died = false;
     bool leveledUp = false;
     bool displayGameOver = false;
-
+    bool grabCallbacks = false;
 private:
 
 

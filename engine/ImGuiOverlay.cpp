@@ -42,6 +42,7 @@ void ImGuiOverlay::startTimer(bool &animate)
             gameTimer = time(nullptr);
             animate = true;
             countdown = false;
+            grabCallbacks = true;
         }
     }
     ImGui::End();
@@ -182,29 +183,6 @@ void ImGuiOverlay::MainMenu(bool &animate)
     ImGui::End();
 }
 
-void ImGuiOverlay::insertIntoLeaderboard()
-{
-    ImGui::CreateContext();
-    bool* leaderboardInput = nullptr;
-    ImGui::Begin("LeaderboardInput", leaderboardInput, MENU_FLAGS);
-    ImGui::SetItemAllowOverlap();
-    ImGui::SetWindowSize("LeaderboardInput",ImVec2(300.0f, 10.0f));
-    ImGui::SetWindowPos(ImVec2(750.0f, 425.0f));
-    //ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
-    char name[20] = "INSERT NAME HERE";
-    int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
-    if (!ImGui::InputText("", name, 20, flags))
-        deathTimerEnd += 2;
-    else
-    {
-        deathTimerEnd = time(nullptr);
-        displayGameOver = true;
-    }
-    if (name != "INSERT NAME HERE")
-        insertIntoScoreboard(name, currentScore);
-    ImGui::End();
-}
-
 void ImGuiOverlay::DeathScreen(bool &animate)
 {
     if (animate || !died)
@@ -236,12 +214,12 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         {
             ImGui::SetCursorPos(ImVec2(350.0f, 75.0f));
             ShowXLText("GAME OVER!", "snap");
-            //insertIntoLeaderboard();
-            //ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
-            /*ImGui::SetNextItemWidth(300.0f);
+            ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
+            ImGui::SetNextItemWidth(300.0f);
             char name[20] = "INSERT NAME HERE";
             int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
-            if (!ImGui::InputText("Leaderboard name", name, 20, flags))
+            grabCallbacks = false;
+            if (!ImGui::InputText("", name, 20, flags))
             {
                 deathTimerEnd = time(nullptr) + 5;
                 animate = false;
@@ -250,8 +228,9 @@ void ImGuiOverlay::DeathScreen(bool &animate)
             {
                 deathTimerEnd = time(nullptr);
                 displayGameOver = true;
+                grabCallbacks = true;
             }
-            insertIntoScoreboard(name, currentScore);*/
+            //insertIntoScoreboard(name, currentScore);
         }
         else
         {
