@@ -172,7 +172,11 @@ void ImGuiOverlay::showLeaderboard(bool &animate)
     for (int i = 0; i < entries.size(); i++)
     {
         ImGui::SetCursorPos(ImVec2(70.0f, yPos + 20 * i));
+<<<<<<< HEAD
         std::string entry = std::to_string(i + 1) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points);
+=======
+        std::string entry = std::to_string(i+1) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points);
+>>>>>>> 6c7644a7b6cad98ce382c2ca01b04e365b333491
         ShowSmallText(entry.c_str(), "arial");
     }
     ImGui::SetCursorPos(ImVec2(120.0f, 350.0f));
