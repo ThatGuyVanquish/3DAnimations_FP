@@ -56,6 +56,8 @@ public:
 
     void UpdateScore(int score);
 
+    void handleBonus();
+
     bool shouldLevelUp();
 
     void updateGameplay();
@@ -80,6 +82,14 @@ public:
     model_data head;
     model_data snake;
     model_data coordsys;
+
+    enum class Bonus { SPEED_PLUS, SPEED_MINUS, LIFE, POINTS };
+
+    std::vector<Gameplay::Bonus> bonusPercentage = { Bonus::LIFE, Bonus::LIFE,
+        Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS,
+        Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS,
+        Bonus::SPEED_PLUS, Bonus::SPEED_PLUS, Bonus::SPEED_PLUS, Bonus::SPEED_PLUS,
+        Bonus::SPEED_MINUS, Bonus::SPEED_MINUS, Bonus::SPEED_MINUS, Bonus::SPEED_MINUS };
 
     // materials
     std::shared_ptr<cg3d::Program> program;

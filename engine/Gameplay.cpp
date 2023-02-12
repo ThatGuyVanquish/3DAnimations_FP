@@ -186,7 +186,8 @@ void Gameplay::InitLevel() {
     spawnEntities(bonuses, viableBonuses);
 }
 
-void Gameplay::UpdateScore(int score) {
+void Gameplay::UpdateScore(int score) 
+{
     imGuiOverlay.currentScore += score;
     if (imGuiOverlay.currentScore < 0) imGuiOverlay.currentScore = 0;
     imGuiOverlay.currentScoreFormatted = imGuiOverlay.formatScore();
@@ -266,16 +267,16 @@ void Gameplay::HandleEntityCollision(int i)
         case EntityType::ENEMY:
             UpdateScore(entities[i].ent.points);
             imGuiOverlay.currentLives--;
+            imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
-                // display death screen
                 Reset(true);
             } else {
                 Reset(false);
             }
             break;
         case EntityType::BONUS:
-            // apply bonus
+            handleBonus();
             break;
     }
 }
@@ -438,3 +439,22 @@ void Gameplay::updateGameplay()
 
 }
 
+void Gameplay::handleBonus()
+{
+    int bonusIndex = getRandomNumberInRange(0, bonusPercentage.size());
+    switch (bonusPercentage[bonusIndex])
+    {
+    case Bonus::LIFE:
+        imGuiOverlay.currentLives++;
+        break;
+    case Bonus::POINTS:
+        UpdateScore(getRandomNumberInRange(0, 2000));
+        break;
+    case Bonus::SPEED_PLUS:
+        // increase speed somehow? ask lior
+        break;
+    case Bonus::SPEED_MINUS:
+        // increase speed somehow? ask lior
+        break;
+    }
+}
