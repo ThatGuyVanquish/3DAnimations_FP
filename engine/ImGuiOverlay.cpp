@@ -168,13 +168,11 @@ void ImGuiOverlay::showLeaderboard(bool &animate)
     ImGui::SetItemAllowOverlap();
     ImGui::SetWindowSize("Leaderboard", ImVec2(width + 20, height + 20), ImGuiCond_Always);
     auto entries = leaderboard.getEntries();
-    auto entries = leaderboard.getEntries();
-    auto entries = leaderboard.getEntries();
     float yPos = 140.0f;
     for (int i = 0; i < entries.size(); i++)
     {
         ImGui::SetCursorPos(ImVec2(70.0f, yPos + 20 * i));
-        std::string entry = std::to_string(i) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points);
+        std::string entry = std::to_string(i + 1) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points);
         ShowSmallText(entry.c_str(), "arial");
     }
     ImGui::SetCursorPos(ImVec2(120.0f, 350.0f));
