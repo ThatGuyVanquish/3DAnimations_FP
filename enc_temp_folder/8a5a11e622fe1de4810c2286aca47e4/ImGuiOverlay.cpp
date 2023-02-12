@@ -168,8 +168,6 @@ void ImGuiOverlay::showLeaderboard(bool &animate)
     ImGui::SetItemAllowOverlap();
     ImGui::SetWindowSize("Leaderboard", ImVec2(width + 20, height + 20), ImGuiCond_Always);
     auto entries = leaderboard.getEntries();
-    auto entries = leaderboard.getEntries();
-    auto entries = leaderboard.getEntries();
     float yPos = 140.0f;
     for (int i = 0; i < entries.size(); i++)
     {

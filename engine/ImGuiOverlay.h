@@ -3,7 +3,7 @@
 #include "imgui.h"
 #include "gl.h"
 #include "../external/stb/stb_image.h"
-
+#include "Leaderboard.h"
 
 static char* getResource(const char* fileName)
 {
@@ -83,12 +83,12 @@ public:
     static void displayLives(int lives);
     void Scoreboard(bool &animate);
     char* formatScore();
+    void showLeaderboard(bool& animate);
     void MainMenu(bool &animate);
     void DeathScreen(bool &animate);
     void LevelUpScreen(bool& animate);
-    void insertIntoLeaderboard();
-    //void GameOverOverlay();
 
+    
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
@@ -103,6 +103,9 @@ public:
     bool leveledUp = false;
     bool displayGameOver = false;
     bool grabCallbacks = false;
+    bool displayMainMenu = true, displayLeaderboard = false;
+
+    Leaderboard leaderboard;
 private:
 
 

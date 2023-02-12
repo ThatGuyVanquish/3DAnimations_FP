@@ -16,6 +16,7 @@ void Gameplay::Init()
     generateViableEntities();
     InitLevel();
     InitCoordsys();
+    imGuiOverlay.leaderboard.Init(getResource("LEADERBOARD.txt"));
 }
 
 void Gameplay::InitCoordsys() {
