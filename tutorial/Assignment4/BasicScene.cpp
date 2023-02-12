@@ -144,10 +144,20 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_DOWN:
 //            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Z);
 //            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Z);
-                gameplay.cyls[0].model->Rotate(-0.1f, Axis::X);
-                gameplay.cyls[1].model->Rotate(0.1f, Axis::X);
-                gameplay.snake.model->Rotate(0.1f, Axis::X);
+            gameplay.cyls[0].model->Rotate(-0.1f, Axis::X);
+            gameplay.cyls[1].model->Rotate(0.1f, Axis::X);
+            gameplay.snake.model->Rotate(0.1f, Axis::X);
             break;
+//        case GLFW_KEY_Q:
+//            gameplay.cyls[0].model->Rotate(0.1f, Axis::Z);
+//            gameplay.cyls[1].model->Rotate(-0.1f, Axis::Z);
+//            gameplay.snake.model->Rotate(-0.1f, Axis::Z);
+//            break;
+//        case GLFW_KEY_E:
+//            gameplay.cyls[0].model->Rotate(-0.1f, Axis::Z);
+//            gameplay.cyls[1].model->Rotate(0.1f, Axis::Z);
+//            gameplay.snake.model->Rotate(0.1f, Axis::Z);
+//            break;
         case GLFW_KEY_R:
             gameplay.Reset(true);
             if (gameplay.callResetCameras)
