@@ -164,7 +164,7 @@ void ImGuiOverlay::showLeaderboard(bool &animate)
     stbi_image_free(data);
 
     ImGui::Image((void*)textureID, ImVec2(width, height));
-    ImGui::SetWindowPos("Leaderboard", ImVec2(675.0f, 275.0f), ImGuiCond_Always);
+    ImGui::SetWindowPos("Leaderboard", ImVec2(673.0f, 275.0f), ImGuiCond_Always);
     ImGui::SetItemAllowOverlap();
     ImGui::SetWindowSize("Leaderboard", ImVec2(width + 20, height + 20), ImGuiCond_Always);
     auto entries = leaderboard.getEntries();
