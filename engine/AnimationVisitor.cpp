@@ -37,11 +37,11 @@ namespace cg3d
 //                    model->Rotate(prev_quat_z); //might need rotate in system
                     rotation_vec = model->Tout.rotation() * rotation_x;
                     prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
-                    prev_quat_x = prev_quat_x.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_x = prev_quat_x.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_x); //might need rotate in system
                     rotation_vec = model->Tout.rotation() * rotation_y;
                     prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
-                    prev_quat_y = prev_quat_y.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_y = prev_quat_y.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_y); //might need rotate in system
                     prevRotatedCylIndex++;
                 } else if (cylIndex == prevRotatedCylIndex + 1) {
@@ -50,11 +50,11 @@ namespace cg3d
 //                    model->Rotate(prev_quat_z.conjugate());
                     rotation_vec = model->Tout.rotation() * rotation_x;
                     prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
-                    prev_quat_x = prev_quat_x.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_x = prev_quat_x.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_x); //might need rotate in system
                     rotation_vec = model->Tout.rotation() * rotation_y;
                     prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
-                    prev_quat_y = prev_quat_y.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_y = prev_quat_y.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_y); //might need rotate in system
 //                    rotation_vec = model->Tout.rotation() * rotation_z;
 //                    prev_quat_z = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_z);

@@ -16,7 +16,10 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-
+    //std::thread bgmThread([&]() {
+    //    std::system(getPyScript("scripts/bgm.py", "audio/megalovania.mp3", -1).c_str());
+    //    });
+    //bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
@@ -185,7 +188,15 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_P:
             std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
             std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
-
+            break;
+        case GLFW_KEY_I:
+            gameplay.velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+            gameplay.slerpFactor -= 0.02f;
+            break;
+        case GLFW_KEY_O:
+            gameplay.velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+            gameplay.slerpFactor += 0.02f;
+            break;
 
         }
         
