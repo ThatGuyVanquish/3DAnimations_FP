@@ -16,7 +16,10 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-
+    //std::thread bgmThread([&]() {
+    //    std::system(getPyScript("scripts/bgm.py", "audio/megalovania.mp3", -1).c_str());
+    //    });
+    //bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
@@ -90,6 +93,8 @@ void BasicScene::BuildImGui()
     gameplay.imGuiOverlay.Scoreboard(gameplay.animate);
     gameplay.imGuiOverlay.startTimer(gameplay.animate);
     gameplay.imGuiOverlay.DeathScreen(gameplay.animate);
+    gameplay.imGuiOverlay.LevelUpScreen(gameplay.animate);
+    gameplay.imGuiOverlay.showLeaderboard(gameplay.animate);
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -116,47 +121,33 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
 {
 //    auto system = camera->GetRotation().transpose();
     auto system = gameplay.cyls[0].model->GetRotation().transpose();
-    if (action == GLFW_PRESS || action == GLFW_REPEAT)
+    if ((action == GLFW_PRESS || action == GLFW_REPEAT) && gameplay.imGuiOverlay.grabCallbacks)
     {
         switch (key)
         {
         case GLFW_KEY_LEFT:
-//            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Y);
-//            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Y);
                 gameplay.cyls[0].model->Rotate(0.1f, Axis::Y);
                 gameplay.cyls[1].model->Rotate(-0.1f, Axis::Y);
-//                gameplay.snake.model->Rotate(-0.1f, Axis::Y);
             break;
         case GLFW_KEY_RIGHT:
-//            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Y);
-//            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Y);
-                gameplay.cyls[0].model->Rotate(-0.1f, Axis::Y);
-                gameplay.cyls[1].model->Rotate(0.1f, Axis::Y);
-//                gameplay.snake.model->Rotate(0.1f, Axis::Y);
+            gameplay.cyls[0].model->Rotate(-0.1f, Axis::Y);
+            gameplay.cyls[1].model->Rotate(0.1f, Axis::Y);
             break;
         case GLFW_KEY_UP:
-//            cyls[0].model->RotateInSystem(system, 0.1f, Axis::Z);
-//            cyls[1].model->RotateInSystem(system, -0.1f, Axis::Z);
-                gameplay.cyls[0].model->Rotate(0.1f, Axis::X);
-                gameplay.cyls[1].model->Rotate(-0.1f, Axis::X);
-//                gameplay.snake.model->Rotate(-0.1f, Axis::X);
+            gameplay.cyls[0].model->Rotate(0.1f, Axis::X);
+            gameplay.cyls[1].model->Rotate(-0.1f, Axis::X);
             break;
         case GLFW_KEY_DOWN:
-//            cyls[0].model->RotateInSystem(system, -0.1f, Axis::Z);
-//            cyls[1].model->RotateInSystem(system, 0.1f, Axis::Z);
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::X);
-//            gameplay.snake.model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_Q:
             gameplay.cyls[0].model->Rotate(0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::Z);
-//            gameplay.snake.model->Rotate(-0.1f, Axis::Z);
             break;
         case GLFW_KEY_E:
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Z);
-//            gameplay.snake.model->Rotate(0.1f, Axis::Z);
             break;
         case GLFW_KEY_R:
             gameplay.Reset(true);
@@ -197,7 +188,15 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_P:
             std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
             std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
-
+            break;
+        case GLFW_KEY_I:
+            gameplay.velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+            gameplay.slerpFactor -= 0.02f;
+            break;
+        case GLFW_KEY_O:
+            gameplay.velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+            gameplay.slerpFactor += 0.02f;
+            break;
 
         }
         

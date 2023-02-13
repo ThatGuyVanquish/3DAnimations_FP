@@ -8,14 +8,20 @@
 #include "GLFW/glfw3.h"
 #include <AABB.h>
 #include "Movable.h"
-#include "Skinning.cpp"
-
+#include "Skinning.h"
+#include <thread>
 // header for common structures like model_data
 #include "common.h"
 
+static std::string getPyScript(const char* path_to_script, const char* path_to_argv1, int time)
+{
+    char* py_path = getResource(path_to_script);// probably location dependant
+    char* audio_path = getResource(path_to_argv1);
+    std::string py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+    return py_run;
+}
+
 using namespace cg3d;
-
-
 
 class Gameplay
 {
@@ -32,11 +38,19 @@ public:
 
     void generateViableEntities();
 
-    void initEntity(Entity ent, std::shared_ptr<cg3d::Material> material);
+    entity_data initEntity(Entity ent, std::shared_ptr<cg3d::Material> material, bool visible = true);
+
+    void randomizeTranlate(entity_data& entity);
 
     void spawnEntity(int index, std::vector<Entity> &viableEntities);
 
     void spawnEntities(int amount, std::vector<Entity>& viableEntities);
+
+    void spawnExtras();
+
+    void swapEntities(entity_data& entity, std::vector<entity_data> extras);
+
+    void replaceEntity(entity_data& entity);
 
     void clearEntities();
 
@@ -44,17 +58,21 @@ public:
 
     void checkForCollision();
 
-    void checkTimedOutEntities();
+    //void checkTimedOutEntities();
 
-    void deleteEntityIfTimedOut(int index);
+    //void deleteEntityIfTimedOut(int index);
 
     void DeleteEntity(int index);
+
+    void findAndDeleteEntity(entity_data& entity);
 
     void ResetSnake();
 
     void Reset(bool mainMenu);
 
     void UpdateScore(int score);
+
+    void handleBonus();
 
     bool shouldLevelUp();
 
@@ -75,11 +93,21 @@ public:
     std::vector<model_data> cyls;
     std::vector<entity_data> entities;
     std::vector<Entity> viableItems;
+    std::vector<entity_data> extraItems;
     std::vector<Entity> viableEnemies;
+    std::vector<entity_data> extraEnemies;
     std::vector<Entity> viableBonuses;
     model_data head;
     model_data snake;
     model_data coordsys;
+
+    enum class Bonus { SPEED_PLUS, SPEED_MINUS, LIFE, POINTS };
+
+    std::vector<Gameplay::Bonus> bonusPercentage = { Bonus::LIFE, Bonus::LIFE,
+        Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS,
+        Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS, Bonus::POINTS,
+        Bonus::SPEED_PLUS, Bonus::SPEED_PLUS, Bonus::SPEED_PLUS, Bonus::SPEED_PLUS,
+        Bonus::SPEED_MINUS, Bonus::SPEED_MINUS, Bonus::SPEED_MINUS, Bonus::SPEED_MINUS };
 
     // materials
     std::shared_ptr<cg3d::Program> program;
@@ -90,6 +118,11 @@ public:
     std::shared_ptr<cg3d::Material> snakeSkin;
 
     // skinning
-    bool initSnake = true;
-    Eigen::MatrixXd W, V;
+    Skinning snakeSkinning;
+    bool useSnake = true;
+    bool showCyls = false;
+
+    // animation
+    float slerpFactor = 0.9f;
+    Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
 };

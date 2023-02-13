@@ -8,7 +8,7 @@ file(GLOB ENGINE_SOURCES
 	${CMAKE_SOURCE_DIR}/engine/*.cpp
 	${CMAKE_SOURCE_DIR}/engine/*.h*)
 
-add_library(engine STATIC ${ENGINE_SOURCES} ../engine/Gameplay.h)
+add_library(engine STATIC ${ENGINE_SOURCES} ../engine/Gameplay.h ../engine/Skinning.cpp ../engine/Skinning.h)
 
 set_target_properties(engine PROPERTIES
 		CXX_STANDARD 20

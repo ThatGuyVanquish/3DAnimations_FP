@@ -1,8 +1,5 @@
 #include "AnimationVisitor.h"
-#include "Visitor.h"
-#include "Scene.h"
-#include "Movable.h"
-#include "DebugHacks.h"
+
 
 
 namespace cg3d
@@ -26,26 +23,12 @@ namespace cg3d
         if (scene->gameplay.animate)
         {
             std::string modelsName = model->name;
-            if (modelsName.starts_with("SNAKE"))
-            {
-////                if (scene->gameplay.initSnake)
-////                {
-////                    InitSkinning(scene->gameplay.snake, scene->gameplay.W, scene->gameplay.numOfCyls);
-////                    scene->gameplay.V = scene->gameplay.snake.model->GetMesh(0)->data[0].vertices;
-////
-//////                    calculateWeights(W, scene->gameplay.cyls, scene->gameplay.snake);
-////                    scene->gameplay.initSnake = false;
-////                }
-//                moveSnake(scene->gameplay.W, scene->gameplay.cyls, scene->gameplay.snake, scene->gameplay.V);
-////                applySkinning(W, scene->gameplay.cyls, scene->gameplay.snake);
-////                doSkinning = false;
-            }
-            else if (modelsName.starts_with("Cyl"))
+            if (modelsName.starts_with("Cyl"))
             {
                 int cylIndex = std::stoi(modelsName.substr(4));
                 if (cylIndex == 0) // need to check what's the head of the snake
                 {
-                    model->TranslateInSystem(system, velocityVec);
+                    model->TranslateInSystem(system, scene->gameplay.velocityVec);
                 }
                 else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
 //                    rotation_vec = model->Tout.rotation() * rotation_z;
@@ -54,11 +37,11 @@ namespace cg3d
 //                    model->Rotate(prev_quat_z); //might need rotate in system
                     rotation_vec = model->Tout.rotation() * rotation_x;
                     prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
-                    prev_quat_x = prev_quat_x.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_x = prev_quat_x.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_x); //might need rotate in system
                     rotation_vec = model->Tout.rotation() * rotation_y;
                     prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
-                    prev_quat_y = prev_quat_y.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_y = prev_quat_y.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_y); //might need rotate in system
                     prevRotatedCylIndex++;
                 } else if (cylIndex == prevRotatedCylIndex + 1) {
@@ -67,11 +50,11 @@ namespace cg3d
 //                    model->Rotate(prev_quat_z.conjugate());
                     rotation_vec = model->Tout.rotation() * rotation_x;
                     prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
-                    prev_quat_x = prev_quat_x.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_x = prev_quat_x.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_x); //might need rotate in system
                     rotation_vec = model->Tout.rotation() * rotation_y;
                     prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
-                    prev_quat_y = prev_quat_y.slerp(slerpFactor, Eigen::Quaternionf::Identity());
+                    prev_quat_y = prev_quat_y.slerp(scene->gameplay.slerpFactor, Eigen::Quaternionf::Identity());
                     model->Rotate(prev_quat_y); //might need rotate in system
 //                    rotation_vec = model->Tout.rotation() * rotation_z;
 //                    prev_quat_z = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_z);
@@ -82,7 +65,7 @@ namespace cg3d
                 if (prevRotatedCylIndex >= scene->gameplay.numOfCyls-1)
                 {
                     prevRotatedCylIndex = 0;
-//                    doSkinning = true;
+                    scene->gameplay.snakeSkinning.moveModel(scene->gameplay.cyls, scene->gameplay.snake);
                 }
             }
         }

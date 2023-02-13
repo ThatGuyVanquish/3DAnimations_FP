@@ -14,8 +14,10 @@ void Gameplay::Init()
     InitMaterials();
     InitSnake();
     generateViableEntities();
+    spawnExtras();
     InitLevel();
     InitCoordsys();
+    imGuiOverlay.leaderboard.Init(getResource("LEADERBOARD.txt"));
 }
 
 void Gameplay::InitCoordsys() {
@@ -42,6 +44,9 @@ void Gameplay::InitMaterials() {
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
+    snakeShader = std::make_shared<Program>("shaders/overlay");
+    snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+//    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
 
 void Gameplay::InitSnake() {
@@ -54,6 +59,10 @@ void Gameplay::InitSnake() {
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
         cyls[i].model->showFaces = false;
+        if (!showCyls)
+        {
+            cyls[i].model->isHidden = true;
+        }
 
         if (i == 0) // first axis and cylinder depend on scene's root
         {
@@ -81,21 +90,17 @@ void Gameplay::InitSnake() {
     headModel->showWireframe = true;
     cyls[0].model->AddChild(headModel);
 
-//
-//    // init snake
-//    snakeShader = std::make_shared<Program>("shaders/overlay");
-//    snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-////    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
-//    auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-//    auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
-//    igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
-//    snake = {snakeModel, 16.0f, snake_aabb};
-//    InitSkinning(snake, W, numOfCyls);
-////    snakeModel->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
-////    snakeModel->Scale(16.0f, Movable::Axis::Z);
-////    snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
-////    cyls[0].model->AddChild(snakeModel);
-//    root->AddChild(snakeModel);
+    if (useSnake)
+    {
+        // init snake
+        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
+        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+        igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
+        snake = {snakeModel, 16.0f, snake_aabb};
+        snakeSkinning.InitSkinning(snake, cyls);
+        root->AddChild(snakeModel);
+    }
+
 
 }
 
@@ -103,22 +108,19 @@ void Gameplay::generateViableEntities() {
     viableItems.push_back({"Bunny", "data/bunny.off", 6.0f, EntityType::ITEM, 1000, 100});
     viableItems.push_back({"Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80});
     viableItems.push_back({"Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80});
-    viableEnemies.push_back({"Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100});
+    //viableEnemies.push_back({"Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100}); not a good model
     viableEnemies.push_back({"Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80});
-    viableEnemies.push_back({"Sword", "data/Sword01.off", 0.0005f, EntityType::ENEMY, -1000, 100});
+    //viableEnemies.push_back({"Sword", "data/Sword01.off", 0.0005f, EntityType::ENEMY, -1000, 100});
     viableBonuses.push_back({"Apple", "data/Apple.off", 0.005f, EntityType::BONUS, 0, 100});
-    //viableEntities.push_back({ "Torus", "data/torus.obj", 0.3f, EntityType::BONUS, 0, 50 });
-    // maybe add magnet bonus
 }
 
-void Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material) {
+entity_data Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material, bool visible) {
     auto mesh = cg3d::IglLoader::MeshFromFiles("Entity_" + entityTypeToString(ent.type) + ent.name, ent.pathToMesh);
     auto model = cg3d::Model::Create("Entity_" + entityTypeToString(ent.type) + ent.name, mesh, material);
     igl::AABB<Eigen::MatrixXd, 3> aabb = CollisionDetection::InitAABB(mesh);
     model_data currentModel = {model, ent.scale, aabb};
-    //objects.push_back(currentModel);
     CollisionDetection::InitCollisionModels(currentModel, frameColor, collisionColor);
-    root->AddChild(model);
+    if (visible) root->AddChild(model);
     model->Translate({0.0, 0.0, -5.0});
     model->Scale(ent.scale);
     model->showFaces = false;
@@ -126,17 +128,23 @@ void Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material) 
     entity_data currentEntity = {currentModel, time(nullptr),
                                  {ent.name, ent.pathToMesh, ent.scale, ent.type, ent.points,
                                   ent.lifeTime}};
-    entities.push_back(currentEntity);
+    if (visible) entities.push_back(currentEntity);
+    return currentEntity;
+}
+
+void Gameplay::randomizeTranlate(entity_data& entity)
+{
+    int x_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+    int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+    int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+    entity.modelData.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
 }
 
 void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {
     if (index == -1)
-        index = getRandomNumberInRange(0, (int) entities.size());
-    int x_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
-    int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
+        index = getRandomNumberInRange(0, (int)viableEntities.size());
     initEntity(viableEntities[index], basicMaterial);
-    entities[entities.size() - 1].modelData.model->Translate({(float) x_value, (float) y_value, (float) z_value});
+    randomizeTranlate(entities[entities.size() - 1]);
     switch (viableEntities[index].type) {
         case EntityType::ENEMY:
             currentEnemies++;
@@ -152,8 +160,62 @@ void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {
 
 void Gameplay::spawnEntities(int amount, std::vector<Entity> &viableEntities) {
     while (amount > 0) {
-        spawnEntity(getRandomNumberInRange(0, (int) viableEntities.size()), viableEntities);
+        if (viableEntities[0].type == EntityType::ENEMY)
+        {
+            entity_data entityToSpawn = extraEnemies[0];
+            extraEnemies.erase(extraEnemies.begin());
+            randomizeTranlate(entityToSpawn);
+            currentEnemies++;
+            root->AddChild(entityToSpawn.modelData.model);
+            entities.push_back(entityToSpawn);
+        }
+        else
+            spawnEntity(-1, viableEntities);
         amount--;
+    }
+}
+
+void Gameplay::spawnExtras()
+{
+    for (int i = 0; i < viableItems.size(); i++)
+    {
+        auto currentItem = initEntity(viableItems[i], basicMaterial, false);
+        extraItems.push_back(currentItem);
+    }
+    for (int i = 0; i < 10; i++)
+    {
+        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], basicMaterial, false);
+        extraEnemies.push_back(currentEnemy);
+    }
+}
+
+void Gameplay::swapEntities(entity_data& entity, std::vector<entity_data> extras)
+{
+    entity_data entityToSpawn = extras[0];
+    extras.erase(extras.begin());
+    extras.push_back(entity);
+    findAndDeleteEntity(entity);
+    randomizeTranlate(entityToSpawn);
+    root->AddChild(entityToSpawn.modelData.model);
+    entities.push_back(entityToSpawn);
+}
+
+void Gameplay::replaceEntity(entity_data& entity)
+{
+    // If hit a bonus, just randomize it's position, we're not going to respawn it
+    switch (entity.ent.type)
+    {
+    case EntityType::BONUS:
+        randomizeTranlate(entity);
+        return;
+    case EntityType::ITEM:
+        swapEntities(entity, extraItems);
+        currentItems++;
+        break;
+    case EntityType::ENEMY: // theoretically should never happen as we reset once hit an enemy
+        swapEntities(entity, extraEnemies);
+        currentEnemies++;
+        break;
     }
 }
 
@@ -185,7 +247,8 @@ void Gameplay::InitLevel() {
     spawnEntities(bonuses, viableBonuses);
 }
 
-void Gameplay::UpdateScore(int score) {
+void Gameplay::UpdateScore(int score) 
+{
     imGuiOverlay.currentScore += score;
     if (imGuiOverlay.currentScore < 0) imGuiOverlay.currentScore = 0;
     imGuiOverlay.currentScoreFormatted = imGuiOverlay.formatScore();
@@ -207,8 +270,16 @@ void Gameplay::checkForCollision()
             imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
+                std::thread fatalityThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
+                    });
+                fatalityThread.detach();
                 Reset(true);
             } else {
+                std::thread deathThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
+                    });
+                deathThread.detach();
                 Reset(false);
             }
         }
@@ -256,54 +327,72 @@ void Gameplay::HandleEntityCollision(int i)
             UpdateScore(entities[i].ent.points);
             if (shouldLevelUp())
             {
+                std::thread wowThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
+                    });
+                wowThread.detach();
                 Reset(false);
             } else {
-                DeleteEntity(i);
-                spawnEntity(getRandomNumberInRange(0, viableItems.size()), viableItems);
+                /*DeleteEntity(i);
+                spawnEntity(getRandomNumberInRange(0, viableItems.size()), viableItems);*/
+                std::thread ringThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
+                    });
+                ringThread.detach();
+                replaceEntity(entities[i]);
             }
             break;
         case EntityType::ENEMY:
             UpdateScore(entities[i].ent.points);
             imGuiOverlay.currentLives--;
+            imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
-                // display death screen
+                std::thread fatalityThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
+                    });
+                fatalityThread.detach();
                 Reset(true);
             } else {
+                std::thread deathThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
+                    });
+                deathThread.detach();
                 Reset(false);
             }
             break;
         case EntityType::BONUS:
-            // apply bonus
+            replaceEntity(entities[i]);
+            handleBonus();
             break;
     }
 }
 
-void Gameplay::checkTimedOutEntities() {
-    for (int i = 0; i < entities.size(); i++) {
-        deleteEntityIfTimedOut(i);
-    }
-}
+//void Gameplay::checkTimedOutEntities() {
+//    for (int i = 0; i < entities.size(); i++) {
+//        deleteEntityIfTimedOut(i);
+//    }
+//}
 
-void Gameplay::deleteEntityIfTimedOut(int index) {
-    entity_data entity = entities[index];
-    time_t now = time(nullptr);
-    if (now - entity.creationTime < entity.ent.lifeTime / imGuiOverlay.currentLevel)
-        return;
-    DeleteEntity(index);
-    // should insert new entity of the same type:
-    switch (entity.ent.type) {
-        case EntityType::ITEM:
-            spawnEntity(getRandomNumberInRange(0, (int) viableItems.size()), viableItems);
-            break;
-        case EntityType::ENEMY:
-            spawnEntity(getRandomNumberInRange(0, (int) viableEnemies.size()), viableEnemies);
-            break;
-        case EntityType::BONUS:
-            spawnEntity(getRandomNumberInRange(0, (int) viableBonuses.size()), viableBonuses);
-            break;
-    }
-}
+//void Gameplay::deleteEntityIfTimedOut(int index) {
+//    entity_data entity = entities[index];
+//    time_t now = time(nullptr);
+//    if (now - entity.creationTime < entity.ent.lifeTime / imGuiOverlay.currentLevel)
+//        return;
+//    DeleteEntity(index);
+//    // should insert new entity of the same type:
+//    switch (entity.ent.type) {
+//        case EntityType::ITEM:
+//            spawnEntity(getRandomNumberInRange(0, (int) viableItems.size()), viableItems);
+//            break;
+//        case EntityType::ENEMY:
+//            spawnEntity(getRandomNumberInRange(0, (int) viableEnemies.size()), viableEnemies);
+//            break;
+//        case EntityType::BONUS:
+//            spawnEntity(getRandomNumberInRange(0, (int) viableBonuses.size()), viableBonuses);
+//            break;
+//    }
+//}
 
 void Gameplay::DeleteEntity(int index) {
     switch (entities[index].ent.type) {
@@ -323,6 +412,26 @@ void Gameplay::DeleteEntity(int index) {
         if (i != index) newEntities.push_back(entities[i]);
     }
     entities = newEntities;
+}
+
+void Gameplay::findAndDeleteEntity(entity_data& entity)
+{
+    int index = -1;
+    for (int i = 0; i < entities.size(); i++)
+    {
+        auto currentEntityData = entities[i];
+        bool createdAtTheSameTime = entity.creationTime == currentEntityData.creationTime;
+        bool sameType = entity.ent.type == currentEntityData.ent.type;
+        bool sameName = entity.ent.name == currentEntityData.ent.name;
+        if (sameName && sameType && createdAtTheSameTime)
+        {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1)
+        std::cerr << "CANT HAPPEN" << std::endl;
+    DeleteEntity(index);
 }
 
 /**
@@ -356,20 +465,28 @@ void Gameplay::ResetSnake() {
     head.model->Rotate((float) -M_PI, Movable::Axis::Y);
     head.model->Translate(-1.6f, Movable::Axis::Z);
 
-//    // reset snake model
-//    std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-//                                                                            V,
-//                                                                            snake.model->GetMesh(0)->data[0].faces,
-//                                                                            snake.model->GetMesh(0)->data[0].vertexNormals,
-//                                                                            snake.model->GetMesh(0)->data[0].textureCoords
-//    );
-//    snake.model->SetMeshList({deformedMesh});
-////    snake.model->SetTout(Eigen::Affine3f::Identity());
-////    snake.model->SetTin(Eigen::Affine3f::Identity());
-////    snake.model->PropagateTransform();
-////    snake.model->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
-////    snake.model->Scale(16.0f, Movable::Axis::Z);
-////    snake.model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+    if (useSnake)
+    {
+        // reset snake model
+        std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+                                                                                snakeSkinning.V,
+                                                                                snake.model->GetMesh(0)->data[0].faces,
+                                                                                snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                                snake.model->GetMesh(0)->data[0].textureCoords
+        );
+        // change snake mesh to the transformed one
+        snake.model->SetMeshList({deformedMesh});
+        snakeSkinning.InitTransformations(cyls);
+
+//        snake.model->SetMeshList({deformedMesh});
+//        snake.model->SetTout(Eigen::Affine3f::Identity());
+//        snake.model->SetTin(Eigen::Affine3f::Identity());
+//        snake.model->PropagateTransform();
+//        snake.model->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
+//        snake.model->Scale(16.0f, Movable::Axis::Z);
+//        snake.model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
+    }
+
 }
 
 void Gameplay::Reset(bool mainMenu) {
@@ -395,11 +512,8 @@ void Gameplay::Reset(bool mainMenu) {
         imGuiOverlay.accumulatedTime += time(nullptr) - imGuiOverlay.gameTimer;
     }
     ResetSnake();
-//    clearEntities();
-//    InitSnake();
     InitLevel();
     callResetCameras = true;
-
 }
 
 bool Gameplay::shouldLevelUp() {
@@ -426,6 +540,7 @@ bool Gameplay::shouldLevelUp() {
         default:
             break;
     }
+    imGuiOverlay.leveledUp = leveledUp;
     return leveledUp;
 }
 
@@ -433,6 +548,61 @@ void Gameplay::updateGameplay()
 {
 //    checkTimedOutEntities();
     checkForCollision();
-
 }
 
+void Gameplay::handleBonus()
+{
+    int bonusIndex = getRandomNumberInRange(0, bonusPercentage.size());
+    if (bonusPercentage[bonusIndex] == Bonus::LIFE)
+    {
+        imGuiOverlay.currentLives++;
+        std::thread sheeshThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/sheesh.mp3", 3).c_str());
+            });
+        sheeshThread.detach();
+        return;
+    }
+    if (bonusPercentage[bonusIndex] == Bonus::POINTS)
+    {
+        UpdateScore(getRandomNumberInRange(0, 2000));
+        if (shouldLevelUp())
+        {
+            std::thread wowThread([&]() {
+                std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
+                });
+            wowThread.detach();
+            Reset(false);
+        }
+        else {
+            std::thread ringThread([&]() {
+                std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
+                });
+            ringThread.detach();
+        }
+        return;
+    }
+    if (bonusPercentage[bonusIndex] == Bonus::SPEED_PLUS)
+    {
+        if (velocityVec.z() > -0.55f)
+            velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+        if (slerpFactor > 0.8f)
+            slerpFactor -= 0.02f;
+        std::thread neeoomThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/neeoom.mp3", 3).c_str());
+            });
+        neeoomThread.detach();
+        return;
+    }
+    if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
+    {
+        /*std::thread slowThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/FIND_SOMETHING_TO_PUT_HERE.mp3").c_str());
+            });
+        slowThread.detach();*/
+        if (velocityVec.z() < -0.05f)
+            velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
+        if (slerpFactor < 1.0f)
+            slerpFactor += 0.02f;
+        return;
+    }
+}

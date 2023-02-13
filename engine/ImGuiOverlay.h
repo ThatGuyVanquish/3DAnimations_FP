@@ -3,7 +3,7 @@
 #include "imgui.h"
 #include "gl.h"
 #include "../external/stb/stb_image.h"
-
+#include "Leaderboard.h"
 
 static char* getResource(const char* fileName)
 {
@@ -69,22 +69,26 @@ static void ShowXLText(const char* text, std::string font)
     ImGui::PopFont();
 }
 
+static void insertIntoScoreboard(char* name, int score)
+{
+
+}
+
 
 class ImGuiOverlay {
 
 public:
 
-
-
-
     void startTimer(bool &animate);
     static void displayLives(int lives);
     void Scoreboard(bool &animate);
     char* formatScore();
+    void showLeaderboard(bool& animate);
     void MainMenu(bool &animate);
     void DeathScreen(bool &animate);
+    void LevelUpScreen(bool& animate);
 
-
+    
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
@@ -94,8 +98,14 @@ public:
     char* currentScoreFormatted;
     int currentLives = 3, currentLevel = 1, currentScore = 0;
     time_t deathTimerEnd = 0;
+    time_t levelUpEnd = 0;
     bool died = false;
+    bool leveledUp = false;
+    bool displayGameOver = false;
+    bool grabCallbacks = false;
+    bool displayMainMenu = true, displayLeaderboard = false;
 
+    Leaderboard leaderboard;
 private:
 
 

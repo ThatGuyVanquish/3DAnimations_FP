@@ -1,90 +1,109 @@
 //
-// Created by Lior Levi on 06/02/2023.
+// Created by Lior Levi on 13/02/2023.
 //
-#pragma once
 
-#include <utility>
-#include <Eigen/Core>
-#include <Eigen/LU>
-#include <igl/opengl/glfw/Viewer.h>
-#include "../engine/Mesh.h"
-#include <igl/AABB.h>
-#include <GLFW/glfw3.h>
-#include <igl/per_vertex_normals.h>
-#include <Movable.h>
-#include <igl/directed_edge_orientations.h>
-#include <igl/directed_edge_parents.h>
-#include <igl/forward_kinematics.h>
-#include <igl/PI.h>
-#include <igl/lbs_matrix.h>
-#include <igl/deform_skeleton.h>
-#include <igl/dqs.h>
-#include <igl/readDMAT.h>
-#include <igl/readOBJ.h>
-#include <igl/readTGF.h>
-#include <Eigen/Geometry>
-#include <Eigen/StdVector>
-#include <vector>
-#include <algorithm>
-#include <iostream>
-#include "common.h"
+#include "Skinning.h"
 
 
-typedef
-std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond> >
-        RotationList;
-
-static void InitSkinning(model_data &snake, Eigen::MatrixXd &W, int numOfJoint);
-static void calcWeight(Eigen::MatrixXd &W, Eigen::MatrixXd &V);
-static void moveSnake(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake, Eigen::MatrixXd &V);
-static Eigen::Vector3f getTipPosition(model_data & cyl, float offset);
-
-
-static void InitSkinning(model_data &snake, Eigen::MatrixXd &W, int numOfJoint)
+void Skinning::InitSkinning(model_data &snake, std::vector<model_data> &cyls)
 {
-    Eigen::MatrixXd U, V;
-    V = snake.model->GetMesh(0)->data[0].vertices;
-    U = Eigen::MatrixXd::Zero(V.rows(), V.cols());
-    // scale and translate snake in axis z
-    for (int i = 0; i < V.rows(); i++)
+    Eigen::MatrixXd initial_V = snake.model->GetMesh(0)->data[0].vertices;
+    V = Eigen::MatrixXd::Zero(initial_V.rows(), initial_V.cols());
+    numOfCyls = cyls.size();
+
+    // set snake mesh in rest position
+    Eigen::Matrix4d transform{Eigen::Matrix4d::Identity()};
+    Eigen::Affine3d Tout{Eigen::Affine3d::Identity()}, Tin{Eigen::Affine3d::Identity()};
+    Eigen::Vector3d translate, scale;
+    translate = {0, 0, (1.6 * (numOfCyls / 2))};
+    scale = {1.0, 1.0, 16.0};
+    Tout.pretranslate(translate);
+    Tin.scale(scale);
+    transform = Tout.matrix() * Tin.matrix();
+
+    for (int i = 0; i < initial_V.rows(); i++)
     {
-        U(i, 2) = V(i, 2) + (1.6f * (numOfJoint / 2) - 0.8f);
-        U(i, 2) = U(i, 2) * numOfJoint;
+        Eigen::Vector4d vertex = {initial_V(i, 0), initial_V(i, 1), initial_V(i, 2) ,1};
+        vertex = transform * vertex;
+        V(i, 0) = vertex[0];
+        V(i, 1) = vertex[1];
+        V(i, 2) = vertex[2];
     }
 
-    int n = U.rows();
-    W = Eigen::MatrixXd::Zero(n, numOfJoint + 1);
-    calcWeight(W, U);
+//    print_min_max(V);
+//
+//    std::cout << "min x,y,z: " << V.colwise().minCoeff() << std::endl;
+//    std::cout << "max x,y,z: " << V.colwise().maxCoeff() << std::endl;
 
     // create new mesh based on transformed vertices
     std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-                                                                            U,
+                                                                            V,
                                                                             snake.model->GetMesh(0)->data[0].faces,
                                                                             snake.model->GetMesh(0)->data[0].vertexNormals,
                                                                             snake.model->GetMesh(0)->data[0].textureCoords
     );
     // change snake mesh to the transformed one
     snake.model->SetMeshList({deformedMesh});
+
+    // init vT, vQ, Positions
+    InitTransformations(cyls);
+
+    // calculate weights
+    calcWeight();
+//    std::cout << "W: " << W << std::endl;
+//
+//    for (int i = 0; i < vT.size(); i++)
+//    {
+//        std::cout << "vT[" << i << "]: " << vT[i].transpose() << std::endl;
+//    }
+
 }
 
-static void calcWeight(Eigen::MatrixXd &W, Eigen::MatrixXd &V)
+void Skinning::InitTransformations(std::vector<model_data> &cyls)
+{
+    // init vT and vQ
+    vQ.resize(numOfCyls + 1 , Eigen::Quaterniond::Identity());
+    for (int i = 0; i < vQ.size(); i++) {
+        Eigen::Quaterniond quad = vQ[i];
+//        std::cout << "vQ[" << i << "]: " << quad.matrix() << std::endl;
+    }
+    vT.resize(numOfCyls + 1);
+    Positions.resize(numOfCyls + 1);
+    Eigen::Vector3f cylPos;
+    for (int i = 0; i < numOfCyls; i++)
+    {
+        cylPos = getPosition(cyls[i], -0.8f);
+//        std::cout << "cyl[[" << i << "] pos: " << cylPos.transpose() << std::endl;
+//        vT[i] = cylPos.cast<double>();
+        Positions[i] = cylPos.cast<double>();
+    }
+    cylPos = getPosition(cyls[numOfCyls - 1], 0.8f);
+//    std::cout << "cyl[17] pos: " << cylPos.transpose() << std::endl;
+//    vT[numOfCyls] = cylPos.cast<double>();
+    Positions[numOfCyls] = cylPos.cast<double>();
+}
+
+void Skinning::calcWeight()
 {
     int n = V.rows();
-    int numberOfJoints = W.cols() - 1;
+    W = Eigen::MatrixXd::Zero(n, numOfCyls + 1);
+
+    snakeLength = V.colwise().maxCoeff()[2] - V.colwise().minCoeff()[2];
+    jointLength = snakeLength / numOfCyls;
+
     double min_z = V.colwise().minCoeff()[2];
-    float lengthOfSnake = V.colwise().maxCoeff()[2] - V.colwise().minCoeff()[2];
-    float jointLength = lengthOfSnake / numberOfJoints;
 
     for (int i = 0; i < n; i++) {
         double curr_z = V.row(i)[2];
-        for (int j = 0; j < numberOfJoints+1; j++) {
+        for (int j = 0; j < numOfCyls + 1; j++) {
             if (curr_z >= min_z + jointLength * j && curr_z <= min_z + jointLength * (j + 1)) {
                 // my way
                 double dist = abs(curr_z - (min_z + jointLength * j));
-                W.row(i)[j] = dist / jointLength;
-                W.row(i)[j + 1] = 1 - (dist / jointLength);
+                W.row(i)[j] = (jointLength - dist) / jointLength;
+                W.row(i)[j + 1] = 1 - W.row(i)[j];
+//                std::cout << "curr_z: " << curr_z << " i: " << i << " jointLength: " << jointLength << " j: " << j << " dist: " << dist << " W.row(i)[j]: " << W.row(i)[j] << " W.row(i)[j + 1]: " << W.row(i)[j + 1] << std::endl;
                 break;
-//                double res = abs(curr_z - (min_z + jointLength * (j + 1))) * 10;
+//                double res = (abs(curr_z - (min_z + jointLength * (j + 1)))/16) * 10;
 //                W.row(i)[j] = res;
 //                W.row(i)[j + 1] = 1-res ;
 //                break;
@@ -92,23 +111,29 @@ static void calcWeight(Eigen::MatrixXd &W, Eigen::MatrixXd &V)
         }
     }
 }
-static void moveSnake(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake, Eigen::MatrixXd &V)
-{
-    std::vector<Eigen::Vector3d> vT;
-    RotationList vQ;
-    Eigen::MatrixXd U;
-    int numberOfJoints = cyls.size();
-    vQ.resize(numberOfJoints+1,Eigen::Quaterniond::Identity());
-    vT.resize(W.cols());
-    for (int i = 0; i < numberOfJoints; i++)
-    {
-        vT[i] = getTipPosition(cyls[i], -0.8f).cast<double>();
 
+void Skinning::moveModel(std::vector<model_data> &cyls, model_data &snake)
+{
+    // update vT with cylinders' joints positions
+    Eigen::Vector3f jointPos;
+    for (int i = 0; i < numOfCyls; i++)
+    {
+        jointPos = getPosition(cyls[i], -0.8f);
+//        std::cout << "cyl[[" << i << "] pos: " << jointPos.transpose() << std::endl;
+        vT[i] = jointPos.cast<double>() - Positions[i];
+//        Positions[i] = jointPos.cast<double>();
     }
-    vT[numberOfJoints] = getTipPosition(cyls[numberOfJoints-1], 0.8f).cast<double>();
+    jointPos = getPosition(cyls[numOfCyls - 1], 0.8f);
+//    std::cout << "cyl[17] pos: " << jointPos.transpose() << std::endl;
+    vT[numOfCyls] = jointPos.cast<double>() - Positions[numOfCyls];
 
     // activate Dual Quaternion Skinning
     igl::dqs(V,W,vQ,vT,U);
+
+//    print_min_max(U);
+//
+//    std::cout << "min x,y,z: " << U.colwise().minCoeff() << std::endl;
+//    std::cout << "max x,y,z: " << U.colwise().maxCoeff() << std::endl;
 
     // create new mesh based on deformed vertex
     std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
@@ -122,270 +147,54 @@ static void moveSnake(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_d
     snake.model->SetMeshList({deformedMesh});
 }
 
-static Eigen::Vector3f getTipPosition(model_data & cyl, float offset)
-{
-    Eigen::Vector3f center = cyl.model->GetAggregatedTransform().col(3).head(3);
-    Eigen::Vector3f translation{ 0, 0, offset };
-    Eigen::Vector3f tipPosition = center + cyl.model->GetRotation() * translation;
-    return tipPosition;
-}
 
-static void applySkinning(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake)
-{
-    // W - weights matrix
-    // BE - Edges between joints
-    // C - joints positions
-    // P - parents
-    // M - weights per vertex per joint matrix
-    // U - new vertices position after skinning
-//    Eigen::MatrixXd V,W,C,U,M;
-//    Eigen::MatrixXi BE;
-//    Eigen::VectorXi P;
-//    std::vector<RotationList > poses; // rotations of joints for animation
+static void print_min_max(const Eigen::MatrixXd& matrix) {
+    double max_value_x = -std::numeric_limits<double>::infinity();
+    double min_value_x = std::numeric_limits<double>::infinity();
+    double max_value_y = -std::numeric_limits<double>::infinity();
+    double min_value_y = std::numeric_limits<double>::infinity();
+    double max_value_z = -std::numeric_limits<double>::infinity();
+    double min_value_z = std::numeric_limits<double>::infinity();
 
-    RotationList vQ;
-    std::vector<Eigen::Vector3d> vT;
-    Eigen::MatrixXd U, V;
-    Eigen::MatrixXi BE;
-    Eigen::VectorXi P;
-    Eigen::MatrixXd C;
+    int max_row_x = 0;
+    int max_row_y = 0;
+    int max_row_z = 0;
+    int min_row_x = 0;
+    int min_row_y = 0;
+    int min_row_z = 0;
 
-    int joints = cyls.size();
-    float h = (1.6f/joints);
-    float a = -0.8f;
-    C.resize(joints+1, 3);
-    BE.resize(joints, 2);
-    P.resize(joints, 1);
-    RotationList anim_pose(joints);
-    for (int i = 0; i < joints; i++)
-    {
-        C(i, 0) = 0;
-        C(i, 1) = 0;
-        C(i, 2) = a+(i*h);
-        BE(i, 0) = i;
-        BE(i, 1) = i+1;
-        if (i == 0) P(i) = -1;
-        else P(i) = i-1;
-        anim_pose[i] = Eigen::Quaterniond(cyls[i].model->GetTout().rotation().cast<double>());
-    }
-    C(joints, 0) = 0;
-    C(joints, 1) = 0;
-    C(joints, 2) = 0.8;
+    for (int row = 0; row < matrix.rows(); ++row) {
 
-    igl::forward_kinematics(C,BE,P,anim_pose,vQ,vT);
-
-//    vQ.resize(cyls.size());
-//    vT.resize(cyls.size());
-    for (int cyl = 0; cyl < cyls.size(); cyl++)
-    {
-//        vQ[cyl] = Eigen::Quaterniond(cyls[cyl].model->GetRotation().cast<double>());
-////        vQ[cyl] = Eigen::Quaterniond(cyls)
-        // no translation needed
-        vT[cyl] = Eigen::Vector3d(0,0,0);
-    }
-
-    V = snake.model->GetMesh(0)->data[0].vertices;
-
-    // activate Dual Quaternion Skinning
-    igl::dqs(V,W,vQ,vT,U);
-
-    // create new mesh based on deformed vertex
-    std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-                                                                   U,
-                                                                   snake.model->GetMesh(0)->data[0].faces,
-                                                                   snake.model->GetMesh(0)->data[0].vertexNormals,
-                                                                   snake.model->GetMesh(0)->data[0].textureCoords
-                                                                   );
-
-    // change snake mesh to the deformed one
-    snake.model->SetMeshList({deformedMesh});
-}
-
-
-
-static void calculateWeights(Eigen::MatrixXd &W, std::vector<model_data> &cyls, model_data &snake)
-{
-    Eigen::MatrixXd V = snake.model->GetMesh(0)->data[0].vertices;
-    int joints = cyls.size();
-    int vertices = V.rows();
-    W.resize(vertices, joints);
-
-    // calculate center of joints rest position
-    std::vector<Eigen::Vector3d> jointsPos;
-    float h = (1.6f/joints);
-    float a = -0.8f + h/2;
-    for ( int i = 0; i < joints; i++)
-    {
-        jointsPos.push_back({0, 0, a + (i * h)});
-    }
-
-    // calculate weights
-    for (int i = 0; i < W.rows(); i++)
-    {
-        double totalWeight = 0.0;
-        Eigen::Vector3d vertex_pos = V.row(i);
-        Eigen::Vector3d joint_pos;
-        double variance = 0.002;
-        for (int j = 0; j < W.cols(); j++)
-        {
-            joint_pos = jointsPos[j];
-            double distance = (vertex_pos - joint_pos).norm();
-            if (abs(vertex_pos[2] - joint_pos[2]) <= h)
-            {
-                W(i,j) = exp((-distance * distance) / (2.0 * variance));
-            } else {
-                W(i,j) = 0.0;
-            }
-            totalWeight += W(i,j);
+        if (matrix(row, 0) > max_value_x) {
+            max_value_x = matrix(row, 0);
+            max_row_x = row;
+        }
+        if (matrix(row, 1) > max_value_y) {
+            max_value_y = matrix(row, 1);
+            max_row_y = row;
+        }
+        if (matrix(row, 2) > max_value_z) {
+            max_value_z = matrix(row, 2);
+            max_row_z = row;
         }
 
-        for (int j = 0; j < W.cols(); j++)
-        {
-            W(i, j) /= totalWeight;
+        if (matrix(row, 0) < min_value_x) {
+            min_value_x = matrix(row, 0);
+            min_row_x = row;
+        }
+        if (matrix(row, 1) < min_value_y) {
+            min_value_y = matrix(row, 1);
+            min_row_y = row;
+        }
+        if (matrix(row, 2) < min_value_z) {
+            min_value_z = matrix(row, 2);
+            min_row_z = row;
         }
     }
-//    std::cout << "W: " << W << std::endl;
-    std::cout << "W.row(145): " << W.row(145) << std::endl;
 
+    std::cout << "min_value_x: " << min_value_x << " min_row_x: " << min_row_x << " min_value_y: " << min_value_y << " min_row_y: " << min_row_y << " min_value_z: " << min_value_z << " min_row_z: " << min_row_z << std::endl;
+    std::cout << "max_value_x: " << max_value_x << " max_row_x: " << max_row_x << " max_value_y: " << max_value_y << " max_row_y: " << max_row_y << " max_value_z: " << max_value_z << " max_row_z: " << max_row_z << std::endl;
 
 }
 
-//const Eigen::RowVector3d sea_green(70./255.,252./255.,167./255.);
-//// W - weights matrix
-//// BE - Edges between joints
-//// C - joints positions
-//// P - parents
-//// M - weights per vertex per joint matrix
-//// U - new vertices position after skinning
-//Eigen::MatrixXd V,W,C,U,M;
-//Eigen::MatrixXi F,BE;
-//Eigen::VectorXi P;
-//std::vector<RotationList > poses; // rotations of joints for animation
-//double anim_t = 0.0;
-//double anim_t_dir = 0.015;
-//bool use_dqs = false;
-//bool recompute = true;
-//
-//
-//bool pre_draw(igl::opengl::glfw::Viewer & viewer)
-//{
-//    using namespace Eigen;
-//    using namespace std;
-//    if(recompute)
-//    {
-//        // Find pose interval
-//        const int begin = (int)floor(anim_t)%poses.size();
-//        const int end = (int)(floor(anim_t)+1)%poses.size();
-//        const double t = anim_t - floor(anim_t);
-//
-//        // Interpolate pose and identity
-//        RotationList anim_pose(poses[begin].size());
-//        for(int e = 0;e<poses[begin].size();e++)
-//        {
-//            anim_pose[e] = poses[begin][e].slerp(t,poses[end][e]);
-//        }
-//        // Propagate relative rotations via FK to retrieve absolute transformations
-//        // vQ - rotations of joints
-//        // vT - translation of joints
-//        RotationList vQ;
-//        vector<Vector3d> vT;
-//        igl::forward_kinematics(C,BE,P,anim_pose,vQ,vT);
-//        const int dim = C.cols();
-//        MatrixXd T(BE.rows()*(dim+1),dim);
-//        for(int e = 0;e<BE.rows();e++)
-//        {
-//            Affine3d a = Affine3d::Identity();
-//            a.translate(vT[e]);
-//            a.rotate(vQ[e]);
-//            T.block(e*(dim+1),0,dim+1,dim) =
-//                    a.matrix().transpose().block(0,0,dim+1,dim);
-//        }
-//        // Compute deformation via LBS as matrix multiplication
-//        if(use_dqs)
-//        {
-//            igl::dqs(V,W,vQ,vT,U);
-//        }else
-//        {
-//            U = M*T;
-//        }
-//
-//        // Also deform skeleton edges
-//        MatrixXd CT;
-//        MatrixXi BET;
-//        //move joints according to T, returns new position in CT and BET
-//        std::cout << "before" << std::endl;
-//        std::cout << BE << std::endl;
-//        igl::deform_skeleton(C,BE,T,CT,BET);
-//        std::cout << "after" << std::endl;
-//        std::cout << BE << std::endl;
-//        std::cout << BET << std::endl;
-//        viewer.data().set_vertices(U);
-//        viewer.data().set_edges(CT,BET,sea_green);
-//        viewer.data().compute_normals();
-//        if(viewer.core().is_animating)
-//        {
-//            anim_t += anim_t_dir;
-//        }
-//        else
-//        {
-//            recompute=false;
-//        }
-//    }
-//    return false;
-//}
-//
-//bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int mods)
-//{
-//    recompute = true;
-//    switch(key)
-//    {
-//        case 'D':
-//        case 'd':
-//            use_dqs = !use_dqs;
-//            return true;
-//        case ' ':
-//            viewer.core().is_animating = !viewer.core().is_animating;
-//            return true;
-//    }
-//    return false;
-//}
-//
-//int mainloop()
-//{
-//    using namespace Eigen;
-//    using namespace std;
-////    igl::readOBJ(TUTORIAL_SHARED_PATH "/arm.obj",V,F);
-//    U=V;
-////    igl::readTGF(TUTORIAL_SHARED_PATH "/arm.tgf",C,BE);
-//    // retrieve parents for forward kinematics
-//    igl::directed_edge_parents(BE,P);
-//    RotationList rest_pose;
-//    igl::directed_edge_orientations(C,BE,rest_pose);
-//    poses.resize(4,RotationList(4,Quaterniond::Identity()));
-//    // poses[1] // twist
-//    const Quaterniond twist(AngleAxisd(igl::PI,Vector3d(1,0,0)));
-//    poses[1][2] = rest_pose[2]*twist*rest_pose[2].conjugate();
-//    const Quaterniond bend(AngleAxisd(-igl::PI*0.7,Vector3d(0,0,1)));
-//    poses[3][2] = rest_pose[2]*bend*rest_pose[2].conjugate();
-//
-////    igl::readDMAT(TUTORIAL_SHARED_PATH "/arm-weights.dmat",W);
-//    igl::lbs_matrix(V,W,M);
-//
-//    // Plot the mesh with pseudocolors
-//    igl::opengl::glfw::Viewer viewer;
-//    viewer.data().set_mesh(U, F);
-//    viewer.data().set_edges(C,BE,sea_green);
-//    viewer.data().show_lines = false;
-//    viewer.data().show_overlay_depth = false;
-//    viewer.data().line_width = 1;
-//    viewer.core().trackball_angle.normalize();
-//    viewer.callback_pre_draw = &pre_draw;
-//    viewer.callback_key_down = &key_down;
-//    viewer.core().is_animating = false;
-//    viewer.core().camera_zoom = 2.5;
-//    viewer.core().animation_max_fps = 30.;
-//    cout<<"Press [d] to toggle between LBS and DQS"<<endl<<
-//        "Press [space] to toggle animation"<<endl;
-//    viewer.launch();
-//}
-//
+

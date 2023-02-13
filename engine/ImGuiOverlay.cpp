@@ -11,7 +11,7 @@ char* ImGuiOverlay::formatScore()
 
 void ImGuiOverlay::startTimer(bool &animate)
 {
-    if (animate || !countdown)
+    if (animate || !countdown || died || leveledUp)
         return;
     if (countdownTimerEnd == 0)
         countdownTimerEnd = time(nullptr) + 3;
@@ -42,6 +42,7 @@ void ImGuiOverlay::startTimer(bool &animate)
             gameTimer = time(nullptr);
             animate = true;
             countdown = false;
+            grabCallbacks = true;
         }
     }
     ImGui::End();
@@ -96,7 +97,7 @@ void ImGuiOverlay::displayLives(int lives)
 
 void ImGuiOverlay::Scoreboard(bool &animate)
 {
-    if (!animate)
+    if (!animate || died)
         return;
     ImGui::CreateContext();
     bool* scoreboardToggle = nullptr;
@@ -140,9 +141,54 @@ void ImGuiOverlay::Scoreboard(bool &animate)
     displayLives(currentLives);
 }
 
+void ImGuiOverlay::showLeaderboard(bool &animate)
+{
+    if (animate || !displayLeaderboard)
+        return;
+    ImGui::CreateContext();
+    bool* leaderboardToggle = nullptr;
+    ImGui::Begin("Leaderboard", leaderboardToggle, MENU_FLAGS);
+
+    int width, height, nrChannels;
+    char* imgPath = getResource("leaderboard_bg.png");
+    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::Image((void*)textureID, ImVec2(width, height));
+    ImGui::SetWindowPos("Leaderboard", ImVec2(673.0f, 275.0f), ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Leaderboard", ImVec2(width + 20, height + 20), ImGuiCond_Always);
+    auto entries = leaderboard.getEntries();
+    float yPos = 140.0f;
+    for (int i = 0; i < entries.size(); i++)
+    {
+        ImGui::SetCursorPos(ImVec2(70.0f, yPos + 20 * i));
+        std::string entry = std::to_string(i + 1) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points);
+        ShowSmallText(entry.c_str(), "arial");
+    }
+    ImGui::SetCursorPos(ImVec2(120.0f, 350.0f));
+    if (ImGui::Button("BACK"))
+    {
+        displayLeaderboard = false;
+        displayMainMenu = true;
+    }
+    ImGui::End();
+}
+
 void ImGuiOverlay::MainMenu(bool &animate)
 {
-    if (animate || countdownTimerEnd > 0)
+    if (animate || countdownTimerEnd > 0 || (died && !displayGameOver) || leveledUp)
+        return;
+    if (!displayMainMenu)
         return;
     ImGui::CreateContext();
     bool* mainMenuToggle = nullptr;
@@ -174,12 +220,19 @@ void ImGuiOverlay::MainMenu(bool &animate)
         currentLives = 3;
         currentScore = 0;
         countdown = true;
+        displayGameOver = false;
+        died = false;
         countdownTimerEnd = 0;
+        deathTimerEnd = 0;
+    }
+    ImGui::SetCursorPos(ImVec2(85.0f, 220.0f));
+    if (ImGui::Button("LEADERBOARD"))
+    {
+        displayMainMenu = false;
+        displayLeaderboard = true;
     }
     ImGui::End();
 }
-
-
 
 void ImGuiOverlay::DeathScreen(bool &animate)
 {
@@ -192,10 +245,19 @@ void ImGuiOverlay::DeathScreen(bool &animate)
     bool* deathScreenToggle = nullptr;
     ImGui::Begin("DeathScreen", deathScreenToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
-    ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
+    if (displayGameOver)
+    {
+        ImGui::SetCursorPos(ImVec2(350.0f, 75.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ShowXLText("GAME OVER!", "snap");
+        ImGui::PopStyleColor();
+        ImGui::End();
+        return;
+    }
     auto now = time(nullptr);
     if (now < deathTimerEnd)
     {
+        ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         std::string msg = "Score: " + std::to_string(currentScore);
         ShowXLText(msg.c_str(), "snap");
@@ -203,7 +265,23 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         {
             ImGui::SetCursorPos(ImVec2(350.0f, 75.0f));
             ShowXLText("GAME OVER!", "snap");
-            // maybe add scoreboard function
+            ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
+            ImGui::SetNextItemWidth(300.0f);
+            char name[20] = "INSERT NAME HERE";
+            int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+            grabCallbacks = false;
+            if (!ImGui::InputText("", name, 20, flags))
+            {
+                deathTimerEnd = time(nullptr) + 5;
+                animate = false;
+            }
+            else
+            {
+                leaderboard.add(name, currentScore);
+                deathTimerEnd = time(nullptr);
+                displayGameOver = true;
+                grabCallbacks = true;
+            }
         }
         else
         {
@@ -216,24 +294,39 @@ void ImGuiOverlay::DeathScreen(bool &animate)
     else
     {
         deathTimerEnd = 0;
-        died = false;
+        if (currentLives == 0)
+            displayGameOver = true;
+        else 
+            died = false;
     }
     ImGui::End();
 }
 
-//static void splashScreen(const char* msg1, const char* msg2, ImVec4 col = { 0,0,0,255 })
-//{
-//    float width = 1600.0f, height = 900.0f;
-//    bool* splashScreenToggle = nullptr;
-//    ImGui::CreateContext();
-//    ImGui::Begin("Splash Screen", splashScreenToggle, MENU_FLAGS);
-//    ImGui::SetWindowSize("Splash Screen", ImVec2(width, height));
-//    ImGui::SetWindowPos("Splash Screen", ImVec2(0, 0), ImGuiCond_Always);
-//    ImGui::SetCursorPos(ImVec2(400.0f, 275.0f));
-//    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(col.w, col.x, col.y, col.z));
-//    ShowXLText(msg1, "arial");
-//    ImGui::SetCursorPos(ImVec2(400.0f, 375.0f));
-//    ShowXLText(msg2, "arial");
-//    ImGui::PopStyleColor();
-//    ImGui::End();
-//}
+void ImGuiOverlay::LevelUpScreen(bool& animate)
+{
+    if (animate || !leveledUp)
+        return;
+    if (levelUpEnd == 0)
+        levelUpEnd = time(nullptr) + 2;
+
+    float width = 1600.0f, height = 900.0f;
+    bool* levelUpToggle = nullptr;
+    ImGui::Begin("Level Up", levelUpToggle, MENU_FLAGS);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
+    auto now = time(nullptr);
+    if (now < levelUpEnd)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+        std::string msg = "Leveled Up!";
+        ShowXLText(msg.c_str(), "snap");
+        ImGui::SetCursorPos(ImVec2(450.0f, 325.0f));
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        levelUpEnd = 0;
+        leveledUp = false;
+    }
+    ImGui::End();
+}

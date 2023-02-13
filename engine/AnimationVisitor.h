@@ -2,9 +2,10 @@
 
 #include "Visitor.h"
 #include "Camera.h"
-#include "Skinning.cpp"
 #include <utility>
 #include <memory>
+#include "Scene.h"
+#include "Movable.h"
 
 
 namespace cg3d
@@ -24,8 +25,6 @@ namespace cg3d
         Scene* scene;
         int prevRotatedCylIndex = 0;
         Eigen::Quaternionf prev_quat_x, prev_quat_y, prev_quat_z;
-        float slerpFactor = 0.9f;
-        Eigen::Vector3f velocityVec = {0, 0, -0.05f};
 
     };
 

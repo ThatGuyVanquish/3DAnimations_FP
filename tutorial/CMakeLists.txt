@@ -26,14 +26,14 @@ if(NOT (LIBIGL_WITH_OPENGL AND LIBIGL_WITH_OPENGL_GLFW) )
   return()
 endif()
 
-add_subdirectory(Demo)
+#add_subdirectory(Demo)
 
-add_subdirectory(Example1)
+#add_subdirectory(Example1)
 
-add_subdirectory(Assignment1)
+#add_subdirectory(Assignment1)
 
-add_subdirectory(Assignment2)
+#add_subdirectory(Assignment2)
 
-add_subdirectory(Assignment3)
+#add_subdirectory(Assignment3)
 
 add_subdirectory(Assignment4)
