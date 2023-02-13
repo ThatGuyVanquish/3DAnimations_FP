@@ -32,11 +32,19 @@ public:
 
     void generateViableEntities();
 
-    void initEntity(Entity ent, std::shared_ptr<cg3d::Material> material);
+    entity_data initEntity(Entity ent, std::shared_ptr<cg3d::Material> material, bool visible = true);
+
+    void randomizeTranlate(entity_data& entity);
 
     void spawnEntity(int index, std::vector<Entity> &viableEntities);
 
     void spawnEntities(int amount, std::vector<Entity>& viableEntities);
+
+    void spawnExtras();
+
+    void swapEntities(entity_data& entity, std::vector<entity_data> extras);
+
+    void replaceEntity(entity_data& entity);
 
     void clearEntities();
 
@@ -44,11 +52,13 @@ public:
 
     void checkForCollision();
 
-    void checkTimedOutEntities();
+    //void checkTimedOutEntities();
 
-    void deleteEntityIfTimedOut(int index);
+    //void deleteEntityIfTimedOut(int index);
 
     void DeleteEntity(int index);
+    
+    void findAndDeleteEntity(entity_data& entity);
 
     void ResetSnake();
 
@@ -77,7 +87,9 @@ public:
     std::vector<model_data> cyls;
     std::vector<entity_data> entities;
     std::vector<Entity> viableItems;
+    std::vector<entity_data> extraItems;
     std::vector<Entity> viableEnemies;
+    std::vector<entity_data> extraEnemies;
     std::vector<Entity> viableBonuses;
     model_data head;
     model_data snake;
