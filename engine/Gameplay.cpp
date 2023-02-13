@@ -107,7 +107,7 @@ void Gameplay::generateViableEntities() {
     viableItems.push_back({"Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80});
     //viableEnemies.push_back({"Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100}); not a good model
     viableEnemies.push_back({"Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80});
-    viableEnemies.push_back({"Sword", "data/Sword01.off", 0.0005f, EntityType::ENEMY, -1000, 100});
+    //viableEnemies.push_back({"Sword", "data/Sword01.off", 0.0005f, EntityType::ENEMY, -1000, 100});
     viableBonuses.push_back({"Apple", "data/Apple.off", 0.005f, EntityType::BONUS, 0, 100});
 }
 
@@ -162,6 +162,7 @@ void Gameplay::spawnEntities(int amount, std::vector<Entity> &viableEntities) {
             entity_data entityToSpawn = extraEnemies[0];
             extraEnemies.erase(extraEnemies.begin());
             randomizeTranlate(entityToSpawn);
+            currentEnemies++;
             root->AddChild(entityToSpawn.modelData.model);
             entities.push_back(entityToSpawn);
         }
@@ -178,7 +179,7 @@ void Gameplay::spawnExtras()
         auto currentItem = initEntity(viableItems[i], basicMaterial, false);
         extraItems.push_back(currentItem);
     }
-    for (int i = 0; i < 11; i++)
+    for (int i = 0; i < 10; i++)
     {
         auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], basicMaterial, false);
         extraEnemies.push_back(currentEnemy);
