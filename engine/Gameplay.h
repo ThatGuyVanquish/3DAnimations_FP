@@ -9,13 +9,19 @@
 #include <AABB.h>
 #include "Movable.h"
 #include "Skinning.cpp"
-
+#include <thread>
 // header for common structures like model_data
 #include "common.h"
 
+static std::string getPyScript(const char* path_to_script, const char* path_to_argv1, int time)
+{
+    char* py_path = getResource(path_to_script);// probably location dependant
+    char* audio_path = getResource(path_to_argv1);
+    std::string py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+    return py_run;
+}
+
 using namespace cg3d;
-
-
 
 class Gameplay
 {

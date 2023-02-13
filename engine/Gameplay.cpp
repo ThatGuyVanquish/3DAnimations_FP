@@ -266,8 +266,16 @@ void Gameplay::checkForCollision()
             imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
+                std::thread fatalityThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
+                    });
+                fatalityThread.detach();
                 Reset(true);
             } else {
+                std::thread deathThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
+                    });
+                deathThread.detach();
                 Reset(false);
             }
         }
@@ -315,10 +323,18 @@ void Gameplay::HandleEntityCollision(int i)
             UpdateScore(entities[i].ent.points);
             if (shouldLevelUp())
             {
+                std::thread wowThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
+                    });
+                wowThread.detach();
                 Reset(false);
             } else {
                 /*DeleteEntity(i);
                 spawnEntity(getRandomNumberInRange(0, viableItems.size()), viableItems);*/
+                std::thread ringThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
+                    });
+                ringThread.detach();
                 replaceEntity(entities[i]);
             }
             break;
@@ -328,8 +344,16 @@ void Gameplay::HandleEntityCollision(int i)
             imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives == 0)
             {
+                std::thread fatalityThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
+                    });
+                fatalityThread.detach();
                 Reset(true);
             } else {
+                std::thread deathThread([&]() {
+                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
+                    });
+                deathThread.detach();
                 Reset(false);
             }
             break;
@@ -519,25 +543,56 @@ void Gameplay::updateGameplay()
 void Gameplay::handleBonus()
 {
     int bonusIndex = getRandomNumberInRange(0, bonusPercentage.size());
-    switch (bonusPercentage[bonusIndex])
+    if (bonusPercentage[bonusIndex] == Bonus::LIFE)
     {
-    case Bonus::LIFE:
         imGuiOverlay.currentLives++;
-        break;
-    case Bonus::POINTS:
+        std::thread sheeshThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/sheesh.mp3", 3).c_str());
+            });
+        sheeshThread.detach();
+        return;
+    }
+    if (bonusPercentage[bonusIndex] == Bonus::POINTS)
+    {
         UpdateScore(getRandomNumberInRange(0, 2000));
-        break;
-    case Bonus::SPEED_PLUS:
+        if (shouldLevelUp())
+        {
+            std::thread wowThread([&]() {
+                std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
+                });
+            wowThread.detach();
+            Reset(false);
+        }
+        else {
+            std::thread ringThread([&]() {
+                std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
+                });
+            ringThread.detach();
+        }
+        return;
+    }
+    if (bonusPercentage[bonusIndex] == Bonus::SPEED_PLUS)
+    {
         if (velocityVec.z() > -0.55f)
             velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor > 0.8f)
             slerpFactor -= 0.02f;
-        break;
-    case Bonus::SPEED_MINUS:
+        std::thread neeoomThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/neeoom.mp3", 3).c_str());
+            });
+        neeoomThread.detach();
+        return;
+    }
+    if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
+    {
+        /*std::thread slowThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/FIND_SOMETHING_TO_PUT_HERE.mp3").c_str());
+            });
+        slowThread.detach();*/
         if (velocityVec.z() < -0.05f)
             velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor < 1.0f)
             slerpFactor += 0.02f;
-        break;
+        return;
     }
 }

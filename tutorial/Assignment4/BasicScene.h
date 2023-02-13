@@ -18,7 +18,6 @@ public:
 
     void BuildImGui() override;
 
-
 private:
     // cameras
     std::vector<std::shared_ptr<cg3d::Camera>> cameras{3};
@@ -36,5 +35,4 @@ private:
     void KeyCallback(cg3d::Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods) override;
     void ViewportSizeCallback(cg3d::Viewport* _viewport) override;
     void AddViewportCallback(cg3d::Viewport* _viewport) override;
-
 };
