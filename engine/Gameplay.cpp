@@ -43,6 +43,9 @@ void Gameplay::InitMaterials() {
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
+    snakeShader = std::make_shared<Program>("shaders/overlay");
+    snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+//    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
 
 void Gameplay::InitSnake() {
@@ -55,6 +58,10 @@ void Gameplay::InitSnake() {
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
         cyls[i].model->showFaces = false;
+        if (!showCyls)
+        {
+            cyls[i].model->isHidden = true;
+        }
 
         if (i == 0) // first axis and cylinder depend on scene's root
         {
@@ -85,19 +92,11 @@ void Gameplay::InitSnake() {
     if (useSnake)
     {
         // init snake
-        snakeShader = std::make_shared<Program>("shaders/overlay");
-        snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-//        snakeSkin->AddTexture(0, "textures/snake1.png", 2);
         auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
         auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
-        igl::AABB<Eigen::MatrixXd, 3> snake_aabb = CollisionDetection::InitAABB(snakeMesh);
+        igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
-        InitSkinning(snake, W, numOfCyls);
-        V = snake.model->GetMesh(0)->data[0].vertices;
-//        snakeModel->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
-//        snakeModel->Scale(16.0f, Movable::Axis::Z);
-//        snakeModel->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
-//        cyls[0].model->AddChild(snakeModel);
+        snakeSkinning.InitSkinning(snake, cyls);
         root->AddChild(snakeModel);
     }
 
@@ -365,11 +364,15 @@ void Gameplay::ResetSnake() {
     {
         // reset snake model
         std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-                                                                                V,
+                                                                                snakeSkinning.V,
                                                                                 snake.model->GetMesh(0)->data[0].faces,
                                                                                 snake.model->GetMesh(0)->data[0].vertexNormals,
                                                                                 snake.model->GetMesh(0)->data[0].textureCoords
         );
+        // change snake mesh to the transformed one
+        snake.model->SetMeshList({deformedMesh});
+        snakeSkinning.InitTransformations(cyls);
+
 //        snake.model->SetMeshList({deformedMesh});
 //        snake.model->SetTout(Eigen::Affine3f::Identity());
 //        snake.model->SetTin(Eigen::Affine3f::Identity());

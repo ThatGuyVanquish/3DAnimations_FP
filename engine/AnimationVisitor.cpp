@@ -1,8 +1,5 @@
 #include "AnimationVisitor.h"
-#include "Visitor.h"
-#include "Scene.h"
-#include "Movable.h"
-#include "DebugHacks.h"
+
 
 
 namespace cg3d
@@ -26,18 +23,12 @@ namespace cg3d
         if (scene->gameplay.animate)
         {
             std::string modelsName = model->name;
-            if (scene->gameplay.useSnake && modelsName.starts_with("SNAKE"))
-            {
-                moveSnake(scene->gameplay.W, scene->gameplay.cyls, scene->gameplay.snake, scene->gameplay.V);
-//                applySkinning(W, scene->gameplay.cyls, scene->gameplay.snake);
-//                doSkinning = false;
-            }
-            else if (modelsName.starts_with("Cyl"))
+            if (modelsName.starts_with("Cyl"))
             {
                 int cylIndex = std::stoi(modelsName.substr(4));
                 if (cylIndex == 0) // need to check what's the head of the snake
                 {
-                    model->TranslateInSystem(system, velocityVec);
+                    model->TranslateInSystem(system, scene->gameplay.velocityVec);
                 }
                 else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
 //                    rotation_vec = model->Tout.rotation() * rotation_z;
@@ -74,7 +65,7 @@ namespace cg3d
                 if (prevRotatedCylIndex >= scene->gameplay.numOfCyls-1)
                 {
                     prevRotatedCylIndex = 0;
-//                    doSkinning = true;
+                    scene->gameplay.snakeSkinning.moveModel(scene->gameplay.cyls, scene->gameplay.snake);
                 }
             }
         }

@@ -8,7 +8,8 @@
 #include "GLFW/glfw3.h"
 #include <AABB.h>
 #include "Movable.h"
-#include "Skinning.cpp"
+#include "StaticSkinning.cpp"
+#include "Skinning.h"
 
 // header for common structures like model_data
 #include "common.h"
@@ -100,7 +101,11 @@ public:
     std::shared_ptr<cg3d::Material> snakeSkin;
 
     // skinning
+    Skinning snakeSkinning;
     bool useSnake = true;
-    bool initSnake = true;
-    Eigen::MatrixXd W, V;
+    bool showCyls = false;
+
+    // animation
+    Eigen::Vector3f velocityVec = {0, 0, -0.05f};
+
 };
