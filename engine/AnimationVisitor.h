@@ -6,7 +6,6 @@
 #include <memory>
 #include "Scene.h"
 #include "Movable.h"
-#include "DebugHacks.h"
 
 
 namespace cg3d
@@ -26,7 +25,6 @@ namespace cg3d
         Scene* scene;
         int prevRotatedCylIndex = 0;
         Eigen::Quaternionf prev_quat_x, prev_quat_y, prev_quat_z;
-        float slerpFactor = 0.9f;
 
     };
 
