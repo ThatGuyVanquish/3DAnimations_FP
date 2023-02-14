@@ -595,10 +595,10 @@ void Gameplay::handleBonus()
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
     {
-        /*std::thread slowThread([&]() {
-            std::system(getPyScript("scripts/play_sound.py", "audio/FIND_SOMETHING_TO_PUT_HERE.mp3").c_str());
+        std::thread slowThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/bruh.mp3", 1).c_str());
             });
-        slowThread.detach();*/
+        slowThread.detach();
         if (velocityVec.z() < -0.05f)
             velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor < 1.0f)
