@@ -37,4 +37,5 @@ private:
     int gotL = 0;
     void ViewportSizeCallback(cg3d::Viewport* _viewport) override;
     void AddViewportCallback(cg3d::Viewport* _viewport) override;
+    void CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState);
 };

@@ -13,5 +13,6 @@ out vec4 Color;
 
 void main()
 {
-	Color = texture(sampler1, texCoord0)* vec4(color0,1.0); //you must have Color
+	Color = vec4(0.5, 0.0, 0.0, 1.0);
+	//Color = texture(sampler1, texCoord0)* vec4(color0,1.0); //you must have Color
 }

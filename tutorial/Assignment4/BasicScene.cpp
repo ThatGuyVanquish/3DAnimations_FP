@@ -16,10 +16,10 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-    std::thread bgmThread([&]() {
-        std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
-        });
-    bgmThread.detach();
+    //std::thread bgmThread([&]() {
+    //    std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
+    //    });
+    //bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
@@ -265,36 +265,38 @@ void BasicScene::AddViewportCallback(Viewport* _viewport)
     Scene::AddViewportCallback(viewport);
 }
 
-//void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)
-//{
-//    if (dragging) {
-//        auto system = camera->GetRotation().transpose() * GetRotation();
-//        auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
-//        auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
-//        if (pickedModel) {
-//            pickedModel->SetTout(pickedToutAtPress);
-//            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
-//                pickedModel->TranslateInSystem(system,
-//                                               {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
-//            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
-//                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Z);
-//            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
-//                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
-//                pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
-//            }
-//        }
-//        else {
-//            // camera->SetTout(cameraToutAtPress);
-//            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
-//                root->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
-//            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
-//                root->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
-//            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
-//                root->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
-//                root->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
-//            }
-//        }
-//        xAtPress = x;
-//        yAtPress = y;
-//    }
-//}
+void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)
+{
+    if (!devTools)
+        return;
+    if (dragging) {
+        auto system = camera->GetRotation().transpose() * GetRotation();
+        auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
+        auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
+        if (pickedModel) {
+            pickedModel->SetTout(pickedToutAtPress);
+            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
+                pickedModel->TranslateInSystem(system,
+                                               {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
+            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
+                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Z);
+            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
+                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
+                pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
+            }
+        }
+        else {
+            // camera->SetTout(cameraToutAtPress);
+            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
+                gameplay.root->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
+            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
+                gameplay.root->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
+            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
+                gameplay.root->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
+                gameplay.root->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
+            }
+        }
+        xAtPress = x;
+        yAtPress = y;
+    }
+}

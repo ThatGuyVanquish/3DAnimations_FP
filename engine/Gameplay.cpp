@@ -1,5 +1,5 @@
 #include "Gameplay.h"
-
+#include "ObjLoader.h"
 
 /**
  * model init methods:
@@ -40,12 +40,14 @@ void Gameplay::InitCoordsys() {
 void Gameplay::InitMaterials() {
     program = std::make_shared<Program>("shaders/basicShader");
     basicMaterial = std::make_shared<Material>("basicMaterial", program); // empty material
+    basicMaterial->AddTexture(0, "/textures/snake.jpg", 2);
     frameColor = std::make_shared<Material>("green", program, true);
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
     snakeShader = std::make_shared<Program>("shaders/overlay");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+    
 //    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
 
@@ -55,13 +57,13 @@ void Gameplay::InitSnake() {
     float scaleFactor = 1.0f;
     igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = CollisionDetection::InitAABB(cylMesh);
     for (int i = 0; i < numOfCyls; i++) {
-        auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
+        auto cylModel = ObjLoader::ModelFromObj("Cyl " + std::to_string(i), "data/zcylinder.obj", basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
-        cyls[i].model->showFaces = false;
+        cyls[i].model->showFaces = true;
         if (!showCyls)
         {
-            cyls[i].model->isHidden = true;
+            cyls[i].model->isHidden = false;
         }
 
         if (i == 0) // first axis and cylinder depend on scene's root
@@ -123,8 +125,10 @@ entity_data Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> mat
     if (visible) root->AddChild(model);
     model->Translate({0.0, 0.0, -5.0});
     model->Scale(ent.scale);
-    model->showFaces = false;
-    model->showWireframe = true;
+    //model->showFaces = false;
+    model->showFaces = true;
+    //model->showWireframe = true;
+    model->showWireframe = false;
     entity_data currentEntity = {currentModel, time(nullptr),
                                  {ent.name, ent.pathToMesh, ent.scale, ent.type, ent.points,
                                   ent.lifeTime}};
