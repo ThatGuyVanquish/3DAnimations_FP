@@ -7,7 +7,7 @@
 
 static char* getResource(const char* fileName)
 {
-    std::filesystem::path cwd = std::filesystem::current_path() / "../../../tutorial/Assignment4/resources";
+    std::filesystem::path cwd = std::filesystem::current_path() / "resources";
     //std::filesystem::path cwd = std::filesystem::current_path() / "../tutorial/Assignment4/resources"; // works for lior
     std::filesystem::path filePath = cwd / fileName;
     std::string filePathString = filePath.string();

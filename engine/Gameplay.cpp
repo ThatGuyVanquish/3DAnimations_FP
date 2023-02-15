@@ -11,6 +11,7 @@
 
 void Gameplay::Init()
 {
+    //std::cout << "\nNEW TEXTURE COORDINATES\n" << getTextureCoords("data/zcylinder.obj") << std::endl;
     InitMaterials();
     InitSnake();
     generateViableEntities();
@@ -18,6 +19,7 @@ void Gameplay::Init()
     InitLevel();
     InitCoordsys();
     imGuiOverlay.leaderboard.Init(getResource("LEADERBOARD.txt"));
+    //std::cout << "\nOG TEXTURE COORDINATES\n" << cyls[0].model->GetMesh(0)->data[0].textureCoords << std::endl;
 }
 
 void Gameplay::InitCoordsys() {
@@ -40,13 +42,14 @@ void Gameplay::InitCoordsys() {
 void Gameplay::InitMaterials() {
     program = std::make_shared<Program>("shaders/basicShader");
     basicMaterial = std::make_shared<Material>("basicMaterial", program); // empty material
-    basicMaterial->AddTexture(0, "/textures/snake.jpg", 2);
+    basicMaterial->AddTexture(0, "textures/snake.jpg", 2);
     frameColor = std::make_shared<Material>("green", program, true);
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
     snakeShader = std::make_shared<Program>("shaders/overlay");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
+    snakeSkin->AddTexture(0, "textures/snake.jpg", 2);
     
 //    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
@@ -60,10 +63,10 @@ void Gameplay::InitSnake() {
         auto cylModel = ObjLoader::ModelFromObj("Cyl " + std::to_string(i), "data/zcylinder.obj", basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
-        cyls[i].model->showFaces = true;
+        cyls[i].model->showFaces = false;
         if (!showCyls)
         {
-            cyls[i].model->isHidden = false;
+            cyls[i].model->isHidden = true;
         }
 
         if (i == 0) // first axis and cylinder depend on scene's root
@@ -88,22 +91,23 @@ void Gameplay::InitSnake() {
     headModel->Scale(head.scaleFactor);
     headModel->Rotate((float) -M_PI, Movable::Axis::Y);
     headModel->Translate(-1.6f, Movable::Axis::Z);
-    headModel->showFaces = false;
-    headModel->showWireframe = true;
+    headModel->showFaces = true; // false
+    headModel->showWireframe = false; // true
     cyls[0].model->AddChild(headModel);
 
     if (useSnake)
     {
         // init snake
         auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+        snakeMesh->data = std::vector<MeshData>{{snakeMesh->data[0].vertices, snakeMesh->data[0].faces,
+                              snakeMesh->data[0].vertexNormals, getTextureCoords("data/snake2.obj")}};
+        auto snakeModel = Model::Create("SNAKE", snakeMesh, basicMaterial);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
         snakeSkinning.InitSkinning(snake, cyls);
         root->AddChild(snakeModel);
+        //std::cout << "TEXTURE COORDS\n" << snakeMesh->data[0].textureCoords << std::endl;
     }
-
-
 }
 
 void Gameplay::generateViableEntities() {
@@ -609,4 +613,87 @@ void Gameplay::handleBonus()
             slerpFactor += 0.02f;
         return;
     }
+}
+Eigen::MatrixXd Gameplay::getTextureCoords(const char* filename)
+{
+    auto model = ObjLoader::ModelFromObj("Model", filename, basicMaterial);
+    std::vector<Eigen::Vector2d> projectedVertices;
+    for(int i = 0; i < model->GetMesh((0))->data[0].vertices.rows(); i++)
+    {
+        auto v = model->GetMesh((0))->data[0].vertices.row(i);
+        projectedVertices.push_back((Eigen::Vector2d(v.x(), v.z())));
+    }
+    double xmin = std::numeric_limits<double>::max();
+    double xmax = -std::numeric_limits<double>::max();
+    double zmin = std::numeric_limits<double>::max();
+    double zmax = -std::numeric_limits<double>::max();
+
+    for (const Eigen::Vector2d& v : projectedVertices) {
+        xmin = std::min(xmin, v.x());
+        xmax = std::max(xmax, v.x());
+        zmin = std::min(zmin, v.y());
+        zmax = std::max(zmax, v.y());
+    }
+    float xspan = xmax - xmin;
+    float zspan = zmax - zmin;
+
+    Eigen::MatrixXd ret(projectedVertices.size(), 2);
+    for(int i = 0; i < projectedVertices.size(); i++)
+    {
+        Eigen::Vector2d uv((projectedVertices[i].x() - xmin) / xspan, (projectedVertices[i].y() -zmin) / zspan);
+        ret.row(i) = uv.transpose();
+    }
+    return ret;
+
+
+/*double xmin = std::numeric_limits<double>::max();
+double xmax = -std::numeric_limits<double>::max();
+double ymin = std::numeric_limits<double>::max();
+double ymax = -std::numeric_limits<double>::max();
+double zmin = std::numeric_limits<double>::max();
+double zmax = -std::numeric_limits<double>::max();
+
+for (int i = 0; i < model->GetMeshList().size(); i++) {
+    auto mesh = model->GetMesh(i);
+    for (size_t j = 3500; j < mesh->data[0].vertices.rows(); j++) {
+        auto v = mesh->data[0].vertices.row(j);
+        xmin = std::min(xmin, v.x());
+        xmax = std::max(xmax, v.x());
+        ymin = std::min(ymin, v.y());
+        ymax = std::max(ymax, v.y());
+        zmin = std::min(zmin, v.z());
+        zmax = std::max(zmax, v.z());
+    }
+}
+
+std::vector<Eigen::Vector2d> texCoords;
+for (int i = 0; i < model->GetMeshList().size(); i++) {
+    auto mesh = model->GetMesh(i);
+    for (size_t j = 0; j < mesh->data[0].faces.rows(); j++) {
+        auto face = mesh->data[0].faces.row(j);
+        Eigen::Vector3d centroid(0.0f, 0.0f, 0.0f);
+        for (int k = 0; k < 3; k++)
+        {
+            Eigen::Vector3d v = mesh->data[0].vertices.row(face(0, k));
+            centroid += v;
+        }
+        centroid /= 3.0;
+        for (int k = 0; k < 3; k++)
+        {
+            Eigen::Vector3d v = mesh->data[0].vertices.row(face(0, k));
+            double dist = (v - centroid).norm();
+            Eigen::Vector2d uv(dist, 0.0f);
+            texCoords.push_back(uv);
+        }
+    }
+}
+double xspan = xmax - xmin;
+double yspan = ymax - ymin;
+double zspan = zmax - zmin;
+Eigen::MatrixXd ret(texCoords.size(), 2);
+for (size_t i = 0; i < texCoords.size(); i++) {
+    Eigen::Vector2d uv(texCoords[i].x() / xspan, texCoords[i].z() / zspan);
+    ret.row(i) = uv.transpose();
+}
+return ret;*/
 }

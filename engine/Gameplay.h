@@ -125,4 +125,6 @@ public:
     // animation
     float slerpFactor = 0.9f;
     Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
+
+    Eigen::MatrixXd getTextureCoords(const char* filename);
 };

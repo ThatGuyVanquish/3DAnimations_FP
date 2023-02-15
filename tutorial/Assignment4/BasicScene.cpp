@@ -243,6 +243,13 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             }
             gotL = 0;
             break;
+        case GLFW_KEY_H:
+            gotL = 0;
+            if (!devTools)
+                break;
+            for(int i = 0; i < gameplay.cyls.size(); i++)
+                gameplay.cyls[i].model->isHidden = !gameplay.cyls[i].model->isHidden;
+            break;
         default:
             gotL = 0;
             break;
