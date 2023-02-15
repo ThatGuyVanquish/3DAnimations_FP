@@ -121,6 +121,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
 {
 //    auto system = camera->GetRotation().transpose();
     auto system = gameplay.cyls[0].model->GetRotation().transpose();
+    std::shared_ptr<cg3d::Mesh> newMesh;
     if ((action == GLFW_PRESS || action == GLFW_REPEAT) && gameplay.imGuiOverlay.grabCallbacks)
     {
         switch (key)
@@ -197,7 +198,32 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             gameplay.velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
             gameplay.slerpFactor += 0.02f;
             break;
-
+        case GLFW_KEY_Y:
+            std::cout << "curr uv: " << gameplay.curr_uv << std::endl;
+            // create new mesh with UV
+            newMesh = std::make_shared<cg3d::Mesh>(gameplay.snake.model->name,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertices,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].faces,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                               gameplay.uv_vec[gameplay.curr_uv]
+            );
+            // update snake mesh
+            gameplay.snake.model->SetMeshList({newMesh});
+            gameplay.curr_uv++;
+            break;
+        case GLFW_KEY_U:
+            gameplay.curr_uv--;
+                std::cout << "curr uv: " << gameplay.curr_uv << std::endl;
+            // create new mesh with UV
+            newMesh = std::make_shared<cg3d::Mesh>(gameplay.snake.model->name,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertices,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].faces,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                               gameplay.uv_vec[gameplay.curr_uv]
+            );
+            // update snake mesh
+            gameplay.snake.model->SetMeshList({newMesh});
+            break;
         }
         
     }

@@ -120,9 +120,13 @@ public:
     // skinning
     Skinning snakeSkinning;
     bool useSnake = true;
-    bool showCyls = true;
+    bool showCyls = false;
 
     // animation
     float slerpFactor = 0.9f;
     Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
+
+    // texture
+    std::vector<Eigen::MatrixXd> uv_vec;
+    int curr_uv = 0;
 };
