@@ -16,10 +16,10 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-    //std::thread bgmThread([&]() {
-    //    std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
-    //    });
-    //bgmThread.detach();
+    std::thread bgmThread([&]() {
+        std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
+        });
+    bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
@@ -248,7 +248,25 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             if (!devTools)
                 break;
             for(int i = 0; i < gameplay.cyls.size(); i++)
+            {
+                gameplay.cyls[i].collisionFrame->isHidden = !gameplay.cyls[i].collisionFrame->isHidden;
+            }
+            for(int i = 0; i < gameplay.entities.size(); i++)
+                gameplay.entities[i].modelData.collisionFrame->isHidden = !gameplay.entities[i].modelData.collisionFrame->isHidden;
+            gameplay.head.collisionFrame->isHidden = !gameplay.head.collisionFrame->isHidden;
+            break;
+        case GLFW_KEY_C:
+            gotL = 0;
+            if (!devTools)
+                break;
+            for(int i = 0; i < gameplay.cyls.size(); i++)
                 gameplay.cyls[i].model->isHidden = !gameplay.cyls[i].model->isHidden;
+            break;
+        case GLFW_KEY_V:
+            gotL = 0;
+            if (!devTools)
+                break;
+            gameplay.coordsys.model->isHidden = !gameplay.coordsys.model->isHidden;
             break;
         default:
             gotL = 0;
@@ -281,7 +299,7 @@ void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool draggi
         auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
         auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
         if (pickedModel) {
-            pickedModel->SetTout(pickedToutAtPress);
+            /*pickedModel->SetTout(pickedToutAtPress);
             if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
                 pickedModel->TranslateInSystem(system,
                                                {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
@@ -290,17 +308,17 @@ void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool draggi
             if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
                 pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
                 pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
-            }
+            }*/
         }
         else {
             // camera->SetTout(cameraToutAtPress);
             if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
-                gameplay.root->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
+                camera->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
             if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
-                gameplay.root->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
+                camera->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
             if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
-                gameplay.root->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
-                gameplay.root->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
+                camera->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
+                camera->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
             }
         }
         xAtPress = x;

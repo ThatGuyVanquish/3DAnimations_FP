@@ -17,7 +17,13 @@ static std::string getPyScript(const char* path_to_script, const char* path_to_a
 {
     char* py_path = getResource(path_to_script);// probably location dependant
     char* audio_path = getResource(path_to_argv1);
-    std::string py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+    std::string py_run = "";
+#ifdef __APPLE__
+    py_run = "python3 \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+#else
+    py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+#endif
+
     return py_run;
 }
 
@@ -116,6 +122,8 @@ public:
     std::shared_ptr<cg3d::Material> frameColor;
     std::shared_ptr<cg3d::Material> collisionColor;
     std::shared_ptr<cg3d::Material> snakeSkin;
+    std::shared_ptr<cg3d::Program> phongShader;
+    std::shared_ptr<cg3d::Material> phongMaterial;
 
     // skinning
     Skinning snakeSkinning;

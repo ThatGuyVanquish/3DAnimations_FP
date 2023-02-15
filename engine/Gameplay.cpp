@@ -37,6 +37,7 @@ void Gameplay::InitCoordsys() {
     axis->Scale(20);
     igl::AABB<Eigen::MatrixXd, 3> aabb;
     coordsys = {axis, 20.0, aabb};
+    axis->isHidden = true;
 }
 
 void Gameplay::InitMaterials() {
@@ -50,7 +51,13 @@ void Gameplay::InitMaterials() {
     snakeShader = std::make_shared<Program>("shaders/overlay");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
     snakeSkin->AddTexture(0, "textures/snake.jpg", 2);
-    
+    phongShader = std::make_shared<Program>("shaders/phongShader2");
+    phongMaterial = std::make_shared<Material>("phongMaterial", phongShader);
+    //phongShader->SetUniform4f("lightColor", 0.8f, 0.3f, 0.0f, 0.5f);
+    //phongShader->SetUniform4f("Kai", 1.0f, 0.3f, 0.6f, 1.0f);
+    //phongShader->SetUniform4f("Kdi", 0.5f, 0.5f, 0.0f, 1.0f);
+    phongShader->SetUniform1f("specular_exponent", 5.0);
+    phongShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
 //    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
 
@@ -84,7 +91,7 @@ void Gameplay::InitSnake() {
 
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/camelhead.off");
-    auto headModel = Model::Create("head", headMesh, basicMaterial);
+    auto headModel = Model::Create("head", headMesh, snakeSkin);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 1.0f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
@@ -101,7 +108,7 @@ void Gameplay::InitSnake() {
         auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
         snakeMesh->data = std::vector<MeshData>{{snakeMesh->data[0].vertices, snakeMesh->data[0].faces,
                               snakeMesh->data[0].vertexNormals, getTextureCoords("data/snake2.obj")}};
-        auto snakeModel = Model::Create("SNAKE", snakeMesh, basicMaterial);
+        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
         snakeSkinning.InitSkinning(snake, cyls);
@@ -151,7 +158,7 @@ void Gameplay::randomizeTranlate(entity_data& entity)
 void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {
     if (index == -1)
         index = getRandomNumberInRange(0, (int)viableEntities.size());
-    initEntity(viableEntities[index], basicMaterial);
+    initEntity(viableEntities[index], phongMaterial);
     randomizeTranlate(entities[entities.size() - 1]);
     switch (viableEntities[index].type) {
         case EntityType::ENEMY:
@@ -187,12 +194,12 @@ void Gameplay::spawnExtras()
 {
     for (int i = 0; i < viableItems.size(); i++)
     {
-        auto currentItem = initEntity(viableItems[i], basicMaterial, false);
+        auto currentItem = initEntity(viableItems[i], phongMaterial, false);
         extraItems.push_back(currentItem);
     }
     for (int i = 0; i < 10; i++)
     {
-        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], basicMaterial, false);
+        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], phongMaterial, false);
         extraEnemies.push_back(currentEnemy);
     }
 }
