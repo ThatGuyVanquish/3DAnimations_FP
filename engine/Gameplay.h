@@ -10,8 +10,8 @@
 #include "Movable.h"
 #include "Skinning.h"
 #include <thread>
-// header for common structures like model_data
 #include "common.h"
+#include "TextureCoordinates.h"
 
 static std::string getPyScript(const char* path_to_script, const char* path_to_argv1, int time)
 {
@@ -120,7 +120,7 @@ public:
     // skinning
     Skinning snakeSkinning;
     bool useSnake = true;
-    bool showCyls = false;
+    bool showCyls = true;
 
     // animation
     float slerpFactor = 0.9f;

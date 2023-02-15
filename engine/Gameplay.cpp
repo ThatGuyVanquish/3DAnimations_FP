@@ -46,7 +46,7 @@ void Gameplay::InitMaterials() {
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
     snakeShader = std::make_shared<Program>("shaders/overlay");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-//    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
+    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
 
 void Gameplay::InitSnake() {
@@ -58,7 +58,7 @@ void Gameplay::InitSnake() {
         auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
-        cyls[i].model->showFaces = false;
+//        cyls[i].model->showFaces = false;
         if (!showCyls)
         {
             cyls[i].model->isHidden = true;
@@ -99,8 +99,19 @@ void Gameplay::InitSnake() {
         snake = {snakeModel, 16.0f, snake_aabb};
         snakeSkinning.InitSkinning(snake, cyls);
         root->AddChild(snakeModel);
-    }
 
+        Eigen::MatrixXd V_uv;
+        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
+        // create new mesh with UV
+        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+                                                                                snake.model->GetMesh(0)->data[0].vertices,
+                                                                                snake.model->GetMesh(0)->data[0].faces,
+                                                                                snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                                V_uv
+        );
+        // update snake mesh
+        snake.model->SetMeshList({newMesh});
+    }
 
 }
 
