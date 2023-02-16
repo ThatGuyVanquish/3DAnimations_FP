@@ -86,6 +86,8 @@ public:
 
     void HandleEntityCollision(int index);
 
+    Eigen::MatrixXd getTextureCoords(const char* filename);
+
 
     ImGuiOverlay imGuiOverlay;
     const int MAP_SIZE = 50;
@@ -127,14 +129,13 @@ public:
 
     // skinning
     Skinning snakeSkinning;
-    bool useSnake = true;
-    bool showCyls = false;
+    bool useSnake = false;
+    bool showCyls = true;
 
     // animation
     float slerpFactor = 0.9f;
     Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
-
-    Eigen::MatrixXd getTextureCoords(const char* filename);
+    time_t timeFromLastWASDQE = time(nullptr);
 
     // texture
     std::vector<Eigen::MatrixXd> uv_vec;

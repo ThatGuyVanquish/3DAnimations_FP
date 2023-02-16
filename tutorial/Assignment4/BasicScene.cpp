@@ -128,33 +128,39 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         {
         case GLFW_KEY_A:
             gotL = 0;
-                gameplay.cyls[0].model->Rotate(0.1f, Axis::Y);
-                gameplay.cyls[1].model->Rotate(-0.1f, Axis::Y);
+            gameplay.cyls[0].model->Rotate(0.1f, Axis::Y);
+            gameplay.cyls[1].model->Rotate(-0.1f, Axis::Y);
+            gameplay.timeFromLastWASDQE = time(nullptr);
             break;
         case GLFW_KEY_D:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Y);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Y);
+            gameplay.timeFromLastWASDQE = time(nullptr);
             break;
         case GLFW_KEY_W:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::X);
+            gameplay.timeFromLastWASDQE = time(nullptr);
             break;
         case GLFW_KEY_S:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::X);
+            gameplay.timeFromLastWASDQE = time(nullptr);
             break;
         case GLFW_KEY_Q:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::Z);
+            gameplay.timeFromLastWASDQE = time(nullptr);
             break;
         case GLFW_KEY_E:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Z);
+            gameplay.timeFromLastWASDQE = time(nullptr);
             break;
         case GLFW_KEY_R:
             gotL = 0;
