@@ -83,7 +83,7 @@ void Gameplay::InitSnake() {
 
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/camelhead.off");
-    auto headModel = Model::Create("head", headMesh, basicMaterial);
+    auto headModel = Model::Create("head", headMesh, snakeSkin);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 1.0f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
