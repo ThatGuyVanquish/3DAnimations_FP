@@ -301,7 +301,7 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         deathTimerEnd = 0;
         if (currentLives == 0)
             displayGameOver = true;
-        else 
+        else
             died = false;
     }
     ImGui::End();
@@ -335,7 +335,17 @@ void ImGuiOverlay::LevelUpScreen(bool& animate)
     }
     ImGui::End();
 }
-/*
+
+void ImGuiOverlay::handleCheats(const std::string& cheat)
+{
+    int index = std::find(cheatCodes.begin(), cheatCodes.end(), cheat) - cheatCodes.begin();
+    switch (index)
+    {
+        case 0:
+            devMode = !devMode;
+            break;
+    }
+}
 
 void ImGuiOverlay::CheatScreen(bool &animate)
 {
@@ -347,9 +357,9 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     ImGui::Begin("CheatWindow", cheatWindowToggle, MENU_FLAGS);
     ImGui::SetWindowSize(ImVec2(width, height));
 
-    ImGui::SetCursorPos(ImVec2(450.0f, 225.0f));
+    ImGui::SetCursorPos(ImVec2(500.0f, 225.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-    std::string msg = "INSERT CHEAT CODE:";
+    std::string msg = "CHEATS";
     ShowXLText(msg.c_str(), "arial");
     ImGui::SetCursorPos(ImVec2(550.0f, 425.0f));
     ImGui::SetNextItemWidth(300.0f);
@@ -358,12 +368,13 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     grabCallbacks = false;
     if (ImGui::InputText("", cheat, 20, flags))
     {
-        if (cheatCodes.contains(cheat))
-            handleCheat(cheat);
+        if (std::find(cheatCodes.begin(), cheatCodes.end(), cheat) != cheatCodes.end())
+            handleCheats(cheat);
         displayCheatWindow = false;
         animate = true;
+        grabCallbacks = true;
     }
     ImGui::PopStyleColor();
 
     ImGui::End();
-}*/
+}

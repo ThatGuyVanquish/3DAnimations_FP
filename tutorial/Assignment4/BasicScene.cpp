@@ -94,6 +94,7 @@ void BasicScene::BuildImGui()
     gameplay.imGuiOverlay.DeathScreen(gameplay.animate);
     gameplay.imGuiOverlay.LevelUpScreen(gameplay.animate);
     gameplay.imGuiOverlay.showLeaderboard(gameplay.animate);
+    gameplay.imGuiOverlay.CheatScreen(gameplay.animate);
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -176,7 +177,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             break;
         case GLFW_KEY_R:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.Reset(true);
             if (gameplay.callResetCameras)
@@ -202,52 +203,52 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             break;
         case GLFW_KEY_G:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.animate = !gameplay.animate;
             break;
         case GLFW_KEY_T: // Simulating level up to get more enemies
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.imGuiOverlay.currentLevel++;
             gameplay.Reset(false);
             break;
         case GLFW_KEY_J:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.UpdateScore(1000);
             break;
         case GLFW_KEY_RIGHT:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.imGuiOverlay.currentLives++;
             break;
         case GLFW_KEY_LEFT:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.imGuiOverlay.currentLives--;
             break;
         case GLFW_KEY_P:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
             std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
             break;
         case GLFW_KEY_UP:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
             gameplay.slerpFactor -= 0.02f;
             break;
         case GLFW_KEY_DOWN:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
             gameplay.slerpFactor += 0.02f;
@@ -258,13 +259,14 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_N:
             if (gotL == 1)
             {
-                devTools = !devTools;
+                gameplay.animate = false;
+                gameplay.imGuiOverlay.displayCheatWindow = true;
             }
             gotL = 0;
             break;
         case GLFW_KEY_H:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             for(int i = 0; i < gameplay.cyls.size(); i++)
             {
@@ -276,14 +278,14 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             break;
         case GLFW_KEY_C:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             for(int i = 0; i < gameplay.cyls.size(); i++)
                 gameplay.cyls[i].model->isHidden = !gameplay.cyls[i].model->isHidden;
             break;
         case GLFW_KEY_V:
             gotL = 0;
-            if (!devTools)
+            if (!gameplay.imGuiOverlay.devMode)
                 break;
             gameplay.coordsys.model->isHidden = !gameplay.coordsys.model->isHidden;
             break;
@@ -337,7 +339,7 @@ void BasicScene::AddViewportCallback(Viewport* _viewport)
 
 void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)
 {
-    if (!devTools)
+    if (!gameplay.imGuiOverlay.devMode)
         return;
     if (dragging) {
         auto system = camera->GetRotation().transpose();

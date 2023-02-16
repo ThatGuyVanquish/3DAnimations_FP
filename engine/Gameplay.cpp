@@ -92,15 +92,16 @@ void Gameplay::InitSnake() {
 
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/viperagabon.obj");
-    auto headModel = Model::Create("head", headMesh, basicMaterial);
+    auto headModel = Model::Create("head", headMesh, itemMaterial);
+    headModel->Scale(0.3f);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 1.0f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
     headModel->Scale(head.scaleFactor);
-    headModel->Rotate((float) -M_PI, Movable::Axis::Y);
+//    headModel->Rotate((float) -M_PI, Movable::Axis::Y);
     headModel->Translate(-1.6f, Movable::Axis::Z);
-    headModel->showFaces = false;
-    headModel->showWireframe = true;
+    headModel->showFaces = true;
+    headModel->showWireframe = false;
     cyls[0].model->AddChild(headModel);
 
     if (useSnake)
@@ -314,7 +315,7 @@ void Gameplay::checkForCollision()
         if (CollisionDetection::intersects(head, cyls[i], box_camel, box_i)) {
             imGuiOverlay.currentLives--;
             imGuiOverlay.died = true;
-            if (imGuiOverlay.currentLives == 0)
+            if (imGuiOverlay.currentLives <= 0)
             {
                 std::thread fatalityThread([&]() {
                     std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
@@ -339,21 +340,21 @@ void Gameplay::checkForCollision()
         }
     }
 
-    for (int i = 0; i < cyls.size(); i++) {
-        // search for collision between cylinder and cylinder
-        for (int j = i + 2; j < cyls.size(); j++) {
-            Eigen::AlignedBox3d box_i, box_j;
-            if (CollisionDetection::intersects(cyls[i], cyls[j], box_i, box_j)) {
-                imGuiOverlay.currentLives--;
-                imGuiOverlay.died = true;
-                if (imGuiOverlay.currentLives == 0)
-                {
-                    Reset(true);
-                } else {
-                    Reset(false);
-                }
-            }
-        }
+//    for (int i = 0; i < cyls.size(); i++) {
+//        // search for collision between cylinder and cylinder
+//        for (int j = i + 2; j < cyls.size(); j++) {
+//            Eigen::AlignedBox3d box_i, box_j;
+//            if (CollisionDetection::intersects(cyls[i], cyls[j], box_i, box_j)) {
+//                imGuiOverlay.currentLives--;
+//                imGuiOverlay.died = true;
+//                if (imGuiOverlay.currentLives <= 0)
+//                {
+//                    Reset(true);
+//                } else {
+//                    Reset(false);
+//                }
+//            }
+//        }
 //        // search for collision between cylinders and entities:
 //        for (int j = 0; j < entities.size(); j++) {
 //            Eigen::AlignedBox3d box_i, box_j;
@@ -363,7 +364,7 @@ void Gameplay::checkForCollision()
 //                CollisionDetection::SetCollisionBox(entities[j].modelData, box_j);
 //            }
 //        }
-    }
+//    }
 }
 
 void Gameplay::HandleEntityCollision(int i)
@@ -392,7 +393,7 @@ void Gameplay::HandleEntityCollision(int i)
             UpdateScore(entities[i].ent.points);
             imGuiOverlay.currentLives--;
             imGuiOverlay.died = true;
-            if (imGuiOverlay.currentLives == 0)
+            if (imGuiOverlay.currentLives <= 0)
             {
                 std::thread fatalityThread([&]() {
                     std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
