@@ -2,7 +2,6 @@
 
 #include "BasicScene.h"
 
-
 using namespace cg3d;
 
 BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGui(std::move(name), display)
@@ -17,7 +16,7 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
     std::thread bgmThread([&]() {
-        std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
+        std::system(getPyScript("scripts/bgm.py", "audio/megalovania.mp3", -1).c_str());
         });
     bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes

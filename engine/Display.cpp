@@ -149,6 +149,11 @@ void Display::LaunchRendering(bool loop) const
         }
 #endif
     }
+#ifdef __APPLE__
+    std::system("pkill python");
+#else
+    std::system("taskkill /f /im python.exe");
+#endif
     exit(1);
 }
 
