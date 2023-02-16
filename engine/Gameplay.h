@@ -12,6 +12,7 @@
 #include <thread>
 #include "common.h"
 #include "TextureCoordinates.h"
+#include "Simplification.h"
 
 static std::string getPyScript(const char* path_to_script, const char* path_to_argv1, int time)
 {
