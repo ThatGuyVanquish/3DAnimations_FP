@@ -16,16 +16,16 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-    //std::thread bgmThread([&]() {
-    //    std::system(getPyScript("scripts/bgm.py", "audio/megalovania.mp3", -1).c_str());
-    //    });
-    //bgmThread.detach();
+/*    std::thread bgmThread([&]() {
+        std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
+        });
+    bgmThread.detach();*/
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
 
     auto daylight{ std::make_shared<Material>("daylight", "shaders/cubemapShader") };
-    daylight->AddTexture(0, "textures/cubemaps/Daylight Box_", 3);
+    daylight->AddTexture(0, "textures/cubemaps/Underwater Box_", 3);
     auto background{ Model::Create("background", Mesh::Cube(), daylight) };
     AddChild(background);
     background->Scale(120, Axis::XYZ);
@@ -125,31 +125,40 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
     {
         switch (key)
         {
-        case GLFW_KEY_LEFT:
+        case GLFW_KEY_A:
+            gotL = 0;
                 gameplay.cyls[0].model->Rotate(0.1f, Axis::Y);
                 gameplay.cyls[1].model->Rotate(-0.1f, Axis::Y);
             break;
-        case GLFW_KEY_RIGHT:
+        case GLFW_KEY_D:
+            gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Y);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Y);
             break;
-        case GLFW_KEY_UP:
+        case GLFW_KEY_W:
+            gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::X);
             break;
-        case GLFW_KEY_DOWN:
+        case GLFW_KEY_S:
+            gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::X);
             break;
         case GLFW_KEY_Q:
+            gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::Z);
             break;
         case GLFW_KEY_E:
+            gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Z);
             break;
         case GLFW_KEY_R:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.Reset(true);
             if (gameplay.callResetCameras)
             {
@@ -158,48 +167,111 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             }
             break;
         case GLFW_KEY_3:
+            gotL = 0;
             SetCamera(2);
             gameplay.head.model->showWireframe = true;
             break;
         case GLFW_KEY_1:
+            gotL = 0;
             SetCamera(1);
             gameplay.head.model->showWireframe = false;
             break;
         case GLFW_KEY_0:
+            gotL = 0;
             SetCamera(0);
             gameplay.head.model->showWireframe = true;
             break;
-        case GLFW_KEY_S:
+        case GLFW_KEY_G:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.animate = !gameplay.animate;
             break;
-        case GLFW_KEY_T: // Simulating level up
+        case GLFW_KEY_T: // Simulating level up to get more enemies
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.imGuiOverlay.currentLevel++;
             gameplay.Reset(false);
             break;
         case GLFW_KEY_J:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.UpdateScore(1000);
             break;
-        case GLFW_KEY_RIGHT_BRACKET:
+        case GLFW_KEY_RIGHT:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.imGuiOverlay.currentLives++;
             break;
-        case GLFW_KEY_LEFT_BRACKET:
+        case GLFW_KEY_LEFT:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.imGuiOverlay.currentLives--;
             break;
         case GLFW_KEY_P:
+            gotL = 0;
+            if (!devTools)
+                break;
             std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
             std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
             break;
-        case GLFW_KEY_I:
+        case GLFW_KEY_UP:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
             gameplay.slerpFactor -= 0.02f;
             break;
-        case GLFW_KEY_O:
+        case GLFW_KEY_DOWN:
+            gotL = 0;
+            if (!devTools)
+                break;
             gameplay.velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
             gameplay.slerpFactor += 0.02f;
             break;
-
+        case GLFW_KEY_L:
+            gotL = 1;
+            break;
+        case GLFW_KEY_N:
+            if (gotL == 1)
+            {
+                devTools = !devTools;
+            }
+            gotL = 0;
+            break;
+        case GLFW_KEY_H:
+            gotL = 0;
+            if (!devTools)
+                break;
+            for(int i = 0; i < gameplay.cyls.size(); i++)
+            {
+                gameplay.cyls[i].collisionFrame->isHidden = !gameplay.cyls[i].collisionFrame->isHidden;
+            }
+            for(int i = 0; i < gameplay.entities.size(); i++)
+                gameplay.entities[i].modelData.collisionFrame->isHidden = !gameplay.entities[i].modelData.collisionFrame->isHidden;
+            gameplay.head.collisionFrame->isHidden = !gameplay.head.collisionFrame->isHidden;
+            break;
+        case GLFW_KEY_C:
+            gotL = 0;
+            if (!devTools)
+                break;
+            for(int i = 0; i < gameplay.cyls.size(); i++)
+                gameplay.cyls[i].model->isHidden = !gameplay.cyls[i].model->isHidden;
+            break;
+        case GLFW_KEY_V:
+            gotL = 0;
+            if (!devTools)
+                break;
+            gameplay.coordsys.model->isHidden = !gameplay.coordsys.model->isHidden;
+            break;
+        default:
+            gotL = 0;
+            break;
         }
-        
     }
 }
 
@@ -218,36 +290,38 @@ void BasicScene::AddViewportCallback(Viewport* _viewport)
     Scene::AddViewportCallback(viewport);
 }
 
-//void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)
-//{
-//    if (dragging) {
-//        auto system = camera->GetRotation().transpose() * GetRotation();
-//        auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
-//        auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
-//        if (pickedModel) {
-//            pickedModel->SetTout(pickedToutAtPress);
-//            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
-//                pickedModel->TranslateInSystem(system,
-//                                               {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
-//            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
-//                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Z);
-//            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
-//                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
-//                pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
-//            }
-//        }
-//        else {
-//            // camera->SetTout(cameraToutAtPress);
-//            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
-//                root->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
-//            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
-//                root->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
-//            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
-//                root->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
-//                root->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
-//            }
-//        }
-//        xAtPress = x;
-//        yAtPress = y;
-//    }
-//}
+void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool dragging, int* buttonState)
+{
+    if (!devTools)
+        return;
+    if (dragging) {
+        auto system = camera->GetRotation().transpose() * GetRotation();
+        auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
+        auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
+        if (pickedModel) {
+            /*pickedModel->SetTout(pickedToutAtPress);
+            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
+                pickedModel->TranslateInSystem(system,
+                                               {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
+            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
+                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Z);
+            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
+                pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
+                pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
+            }*/
+        }
+        else {
+            // camera->SetTout(cameraToutAtPress);
+            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
+                camera->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
+            if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
+                camera->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
+            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
+                camera->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
+                camera->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
+            }
+        }
+        xAtPress = x;
+        yAtPress = y;
+    }
+}
