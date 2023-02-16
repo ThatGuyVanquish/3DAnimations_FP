@@ -30,11 +30,6 @@ void Skinning::InitSkinning(model_data &snake, std::vector<model_data> &cyls)
         V(i, 2) = vertex[2];
     }
 
-//    print_min_max(V);
-//
-//    std::cout << "min x,y,z: " << V.colwise().minCoeff() << std::endl;
-//    std::cout << "max x,y,z: " << V.colwise().maxCoeff() << std::endl;
-
     // create new mesh based on transformed vertices
     std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
                                                                             V,
@@ -50,12 +45,6 @@ void Skinning::InitSkinning(model_data &snake, std::vector<model_data> &cyls)
 
     // calculate weights
     calcWeight();
-//    std::cout << "W: " << W << std::endl;
-//
-//    for (int i = 0; i < vT.size(); i++)
-//    {
-//        std::cout << "vT[" << i << "]: " << vT[i].transpose() << std::endl;
-//    }
 
 }
 
@@ -65,7 +54,6 @@ void Skinning::InitTransformations(std::vector<model_data> &cyls)
     vQ.resize(numOfCyls + 1 , Eigen::Quaterniond::Identity());
     for (int i = 0; i < vQ.size(); i++) {
         Eigen::Quaterniond quad = vQ[i];
-//        std::cout << "vQ[" << i << "]: " << quad.matrix() << std::endl;
     }
     vT.resize(numOfCyls + 1);
     Positions.resize(numOfCyls + 1);
@@ -73,13 +61,9 @@ void Skinning::InitTransformations(std::vector<model_data> &cyls)
     for (int i = 0; i < numOfCyls; i++)
     {
         cylPos = getPosition(cyls[i], -0.8f);
-//        std::cout << "cyl[[" << i << "] pos: " << cylPos.transpose() << std::endl;
-//        vT[i] = cylPos.cast<double>();
         Positions[i] = cylPos.cast<double>();
     }
     cylPos = getPosition(cyls[numOfCyls - 1], 0.8f);
-//    std::cout << "cyl[17] pos: " << cylPos.transpose() << std::endl;
-//    vT[numOfCyls] = cylPos.cast<double>();
     Positions[numOfCyls] = cylPos.cast<double>();
 }
 
@@ -97,16 +81,10 @@ void Skinning::calcWeight()
         double curr_z = V.row(i)[2];
         for (int j = 0; j < numOfCyls + 1; j++) {
             if (curr_z >= min_z + jointLength * j && curr_z <= min_z + jointLength * (j + 1)) {
-                // my way
                 double dist = abs(curr_z - (min_z + jointLength * j));
                 W.row(i)[j] = (jointLength - dist) / jointLength;
                 W.row(i)[j + 1] = 1 - W.row(i)[j];
-//                std::cout << "curr_z: " << curr_z << " i: " << i << " jointLength: " << jointLength << " j: " << j << " dist: " << dist << " W.row(i)[j]: " << W.row(i)[j] << " W.row(i)[j + 1]: " << W.row(i)[j + 1] << std::endl;
                 break;
-//                double res = (abs(curr_z - (min_z + jointLength * (j + 1)))/16) * 10;
-//                W.row(i)[j] = res;
-//                W.row(i)[j + 1] = 1-res ;
-//                break;
             }
         }
     }
@@ -119,21 +97,13 @@ void Skinning::moveModel(std::vector<model_data> &cyls, model_data &snake)
     for (int i = 0; i < numOfCyls; i++)
     {
         jointPos = getPosition(cyls[i], -0.8f);
-//        std::cout << "cyl[[" << i << "] pos: " << jointPos.transpose() << std::endl;
         vT[i] = jointPos.cast<double>() - Positions[i];
-//        Positions[i] = jointPos.cast<double>();
     }
     jointPos = getPosition(cyls[numOfCyls - 1], 0.8f);
-//    std::cout << "cyl[17] pos: " << jointPos.transpose() << std::endl;
     vT[numOfCyls] = jointPos.cast<double>() - Positions[numOfCyls];
 
     // activate Dual Quaternion Skinning
     igl::dqs(V,W,vQ,vT,U);
-
-//    print_min_max(U);
-//
-//    std::cout << "min x,y,z: " << U.colwise().minCoeff() << std::endl;
-//    std::cout << "max x,y,z: " << U.colwise().maxCoeff() << std::endl;
 
     // create new mesh based on deformed vertex
     std::shared_ptr<cg3d::Mesh> deformedMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
@@ -147,54 +117,54 @@ void Skinning::moveModel(std::vector<model_data> &cyls, model_data &snake)
     snake.model->SetMeshList({deformedMesh});
 }
 
-
-static void print_min_max(const Eigen::MatrixXd& matrix) {
-    double max_value_x = -std::numeric_limits<double>::infinity();
-    double min_value_x = std::numeric_limits<double>::infinity();
-    double max_value_y = -std::numeric_limits<double>::infinity();
-    double min_value_y = std::numeric_limits<double>::infinity();
-    double max_value_z = -std::numeric_limits<double>::infinity();
-    double min_value_z = std::numeric_limits<double>::infinity();
-
-    int max_row_x = 0;
-    int max_row_y = 0;
-    int max_row_z = 0;
-    int min_row_x = 0;
-    int min_row_y = 0;
-    int min_row_z = 0;
-
-    for (int row = 0; row < matrix.rows(); ++row) {
-
-        if (matrix(row, 0) > max_value_x) {
-            max_value_x = matrix(row, 0);
-            max_row_x = row;
-        }
-        if (matrix(row, 1) > max_value_y) {
-            max_value_y = matrix(row, 1);
-            max_row_y = row;
-        }
-        if (matrix(row, 2) > max_value_z) {
-            max_value_z = matrix(row, 2);
-            max_row_z = row;
-        }
-
-        if (matrix(row, 0) < min_value_x) {
-            min_value_x = matrix(row, 0);
-            min_row_x = row;
-        }
-        if (matrix(row, 1) < min_value_y) {
-            min_value_y = matrix(row, 1);
-            min_row_y = row;
-        }
-        if (matrix(row, 2) < min_value_z) {
-            min_value_z = matrix(row, 2);
-            min_row_z = row;
-        }
-    }
-
-    std::cout << "min_value_x: " << min_value_x << " min_row_x: " << min_row_x << " min_value_y: " << min_value_y << " min_row_y: " << min_row_y << " min_value_z: " << min_value_z << " min_row_z: " << min_row_z << std::endl;
-    std::cout << "max_value_x: " << max_value_x << " max_row_x: " << max_row_x << " max_value_y: " << max_value_y << " max_row_y: " << max_row_y << " max_value_z: " << max_value_z << " max_row_z: " << max_row_z << std::endl;
-
-}
+//
+//static void print_min_max(const Eigen::MatrixXd& matrix) {
+//    double max_value_x = -std::numeric_limits<double>::infinity();
+//    double min_value_x = std::numeric_limits<double>::infinity();
+//    double max_value_y = -std::numeric_limits<double>::infinity();
+//    double min_value_y = std::numeric_limits<double>::infinity();
+//    double max_value_z = -std::numeric_limits<double>::infinity();
+//    double min_value_z = std::numeric_limits<double>::infinity();
+//
+//    int max_row_x = 0;
+//    int max_row_y = 0;
+//    int max_row_z = 0;
+//    int min_row_x = 0;
+//    int min_row_y = 0;
+//    int min_row_z = 0;
+//
+//    for (int row = 0; row < matrix.rows(); ++row) {
+//
+//        if (matrix(row, 0) > max_value_x) {
+//            max_value_x = matrix(row, 0);
+//            max_row_x = row;
+//        }
+//        if (matrix(row, 1) > max_value_y) {
+//            max_value_y = matrix(row, 1);
+//            max_row_y = row;
+//        }
+//        if (matrix(row, 2) > max_value_z) {
+//            max_value_z = matrix(row, 2);
+//            max_row_z = row;
+//        }
+//
+//        if (matrix(row, 0) < min_value_x) {
+//            min_value_x = matrix(row, 0);
+//            min_row_x = row;
+//        }
+//        if (matrix(row, 1) < min_value_y) {
+//            min_value_y = matrix(row, 1);
+//            min_row_y = row;
+//        }
+//        if (matrix(row, 2) < min_value_z) {
+//            min_value_z = matrix(row, 2);
+//            min_row_z = row;
+//        }
+//    }
+//
+//    std::cout << "min_value_x: " << min_value_x << " min_row_x: " << min_row_x << " min_value_y: " << min_value_y << " min_row_y: " << min_row_y << " min_value_z: " << min_value_z << " min_row_z: " << min_row_z << std::endl;
+//    std::cout << "max_value_x: " << max_value_x << " max_row_x: " << max_row_x << " max_value_y: " << max_value_y << " max_row_y: " << max_row_y << " max_value_z: " << max_value_z << " max_row_z: " << max_row_z << std::endl;
+//
+//}
 
 
