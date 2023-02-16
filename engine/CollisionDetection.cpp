@@ -278,7 +278,8 @@ namespace CollisionDetection {
             frameColor
         );
         collisionFrame->showFaces = false;
-        collisionFrame->showWireframe = true;
+        collisionFrame->showWireframe = false;
+        collisionFrame->isHidden = true;
         collisionFrame->Scale(modelData.scaleFactor);
         modelData.model->AddChild(collisionFrame);
         modelData.collisionFrame = collisionFrame;

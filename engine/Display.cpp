@@ -149,6 +149,7 @@ void Display::LaunchRendering(bool loop) const
         }
 #endif
     }
+    exit(1);
 }
 
 void Display::SwapBuffers() const

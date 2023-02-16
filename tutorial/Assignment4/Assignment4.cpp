@@ -27,7 +27,6 @@ int main()
     scene->Init(CAMERA_ANGLE, DISPLAY_WIDTH, DISPLAY_HEIGHT, NEAR, FAR);
     renderer.AddViewport(scene);
     display.LaunchRendering(true);
-
     return 0;
 }
 

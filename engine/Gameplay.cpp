@@ -1,5 +1,5 @@
 #include "Gameplay.h"
-
+#include "ObjLoader.h"
 
 /**
  * model init methods:
@@ -11,6 +11,7 @@
 
 void Gameplay::Init()
 {
+    //std::cout << "\nNEW TEXTURE COORDINATES\n" << getTextureCoords("data/zcylinder.obj") << std::endl;
     InitMaterials();
     InitSnake();
     generateViableEntities();
@@ -18,6 +19,7 @@ void Gameplay::Init()
     InitLevel();
     InitCoordsys();
     imGuiOverlay.leaderboard.Init(getResource("LEADERBOARD.txt"));
+    //std::cout << "\nOG TEXTURE COORDINATES\n" << cyls[0].model->GetMesh(0)->data[0].textureCoords << std::endl;
 }
 
 void Gameplay::InitCoordsys() {
@@ -35,11 +37,13 @@ void Gameplay::InitCoordsys() {
     axis->Scale(20);
     igl::AABB<Eigen::MatrixXd, 3> aabb;
     coordsys = {axis, 20.0, aabb};
+    axis->isHidden = true;
 }
 
 void Gameplay::InitMaterials() {
     program = std::make_shared<Program>("shaders/basicShader");
     basicMaterial = std::make_shared<Material>("basicMaterial", program); // empty material
+    basicMaterial->AddTexture(0, "textures/snake.jpg", 2);
     frameColor = std::make_shared<Material>("green", program, true);
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
@@ -55,7 +59,7 @@ void Gameplay::InitSnake() {
     float scaleFactor = 1.0f;
     igl::AABB<Eigen::MatrixXd, 3> cyl_aabb = CollisionDetection::InitAABB(cylMesh);
     for (int i = 0; i < numOfCyls; i++) {
-        auto cylModel = Model::Create("Cyl " + std::to_string(i), cylMesh, basicMaterial);
+        auto cylModel = ObjLoader::ModelFromObj("Cyl " + std::to_string(i), "data/zcylinder.obj", basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
 //        cyls[i].model->showFaces = false;
@@ -152,8 +156,10 @@ entity_data Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> mat
     if (visible) root->AddChild(model);
     model->Translate({0.0, 0.0, -5.0});
     model->Scale(ent.scale);
-    model->showFaces = false;
-    model->showWireframe = true;
+    //model->showFaces = false;
+    model->showFaces = true;
+    //model->showWireframe = true;
+    model->showWireframe = false;
     entity_data currentEntity = {currentModel, time(nullptr),
                                  {ent.name, ent.pathToMesh, ent.scale, ent.type, ent.points,
                                   ent.lifeTime}};
@@ -624,14 +630,97 @@ void Gameplay::handleBonus()
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
     {
-        /*std::thread slowThread([&]() {
-            std::system(getPyScript("scripts/play_sound.py", "audio/FIND_SOMETHING_TO_PUT_HERE.mp3").c_str());
+        std::thread slowThread([&]() {
+            std::system(getPyScript("scripts/play_sound.py", "audio/bruh.mp3", 1).c_str());
             });
-        slowThread.detach();*/
+        slowThread.detach();
         if (velocityVec.z() < -0.05f)
             velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor < 1.0f)
             slerpFactor += 0.02f;
         return;
     }
+}
+Eigen::MatrixXd Gameplay::getTextureCoords(const char* filename)
+{
+    auto model = ObjLoader::ModelFromObj("Model", filename, basicMaterial);
+    std::vector<Eigen::Vector2d> projectedVertices;
+    for(int i = 0; i < model->GetMesh((0))->data[0].vertices.rows(); i++)
+    {
+        auto v = model->GetMesh((0))->data[0].vertices.row(i);
+        projectedVertices.push_back((Eigen::Vector2d(v.x(), v.z())));
+    }
+    double xmin = std::numeric_limits<double>::max();
+    double xmax = -std::numeric_limits<double>::max();
+    double zmin = std::numeric_limits<double>::max();
+    double zmax = -std::numeric_limits<double>::max();
+
+    for (const Eigen::Vector2d& v : projectedVertices) {
+        xmin = std::min(xmin, v.x());
+        xmax = std::max(xmax, v.x());
+        zmin = std::min(zmin, v.y());
+        zmax = std::max(zmax, v.y());
+    }
+    float xspan = xmax - xmin;
+    float zspan = zmax - zmin;
+
+    Eigen::MatrixXd ret(projectedVertices.size(), 2);
+    for(int i = 0; i < projectedVertices.size(); i++)
+    {
+        Eigen::Vector2d uv((projectedVertices[i].x() - xmin) / xspan, (projectedVertices[i].y() -zmin) / zspan);
+        ret.row(i) = uv.transpose();
+    }
+    return ret;
+
+
+/*double xmin = std::numeric_limits<double>::max();
+double xmax = -std::numeric_limits<double>::max();
+double ymin = std::numeric_limits<double>::max();
+double ymax = -std::numeric_limits<double>::max();
+double zmin = std::numeric_limits<double>::max();
+double zmax = -std::numeric_limits<double>::max();
+
+for (int i = 0; i < model->GetMeshList().size(); i++) {
+    auto mesh = model->GetMesh(i);
+    for (size_t j = 3500; j < mesh->data[0].vertices.rows(); j++) {
+        auto v = mesh->data[0].vertices.row(j);
+        xmin = std::min(xmin, v.x());
+        xmax = std::max(xmax, v.x());
+        ymin = std::min(ymin, v.y());
+        ymax = std::max(ymax, v.y());
+        zmin = std::min(zmin, v.z());
+        zmax = std::max(zmax, v.z());
+    }
+}
+
+std::vector<Eigen::Vector2d> texCoords;
+for (int i = 0; i < model->GetMeshList().size(); i++) {
+    auto mesh = model->GetMesh(i);
+    for (size_t j = 0; j < mesh->data[0].faces.rows(); j++) {
+        auto face = mesh->data[0].faces.row(j);
+        Eigen::Vector3d centroid(0.0f, 0.0f, 0.0f);
+        for (int k = 0; k < 3; k++)
+        {
+            Eigen::Vector3d v = mesh->data[0].vertices.row(face(0, k));
+            centroid += v;
+        }
+        centroid /= 3.0;
+        for (int k = 0; k < 3; k++)
+        {
+            Eigen::Vector3d v = mesh->data[0].vertices.row(face(0, k));
+            double dist = (v - centroid).norm();
+            Eigen::Vector2d uv(dist, 0.0f);
+            texCoords.push_back(uv);
+        }
+    }
+}
+double xspan = xmax - xmin;
+double yspan = ymax - ymin;
+double zspan = zmax - zmin;
+Eigen::MatrixXd ret(texCoords.size(), 2);
+for (size_t i = 0; i < texCoords.size(); i++) {
+    Eigen::Vector2d uv(texCoords[i].x() / xspan, texCoords[i].z() / zspan);
+    ret.row(i) = uv.transpose();
+}
+return ret;*/
 }
