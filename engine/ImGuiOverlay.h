@@ -104,7 +104,7 @@ public:
     bool displayGameOver = false;
     bool grabCallbacks = false;
     bool displayMainMenu = true, displayLeaderboard = false;
-
+    bool displayCheatWindow = false;
     Leaderboard leaderboard;
 private:
 

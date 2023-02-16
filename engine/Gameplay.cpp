@@ -43,7 +43,7 @@ void Gameplay::InitCoordsys() {
 void Gameplay::InitMaterials() {
     program = std::make_shared<Program>("shaders/basicShader");
     basicMaterial = std::make_shared<Material>("basicMaterial", program); // empty material
-    basicMaterial->AddTexture(0, "textures/snake_long.png", 2);
+    basicMaterial->AddTexture(0, "textures/snake.png", 2);
     frameColor = std::make_shared<Material>("green", program, true);
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
@@ -91,8 +91,8 @@ void Gameplay::InitSnake() {
     }
 
     // init head
-    auto headMesh = IglLoader::MeshFromFiles("head", "data/camelhead.off");
-    auto headModel = Model::Create("head", headMesh, snakeSkin);
+    auto headMesh = IglLoader::MeshFromFiles("head", "data/viperagabon.obj");
+    auto headModel = Model::Create("head", headMesh, basicMaterial);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 1.0f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
