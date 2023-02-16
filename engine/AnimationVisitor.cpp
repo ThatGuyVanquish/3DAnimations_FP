@@ -75,8 +75,8 @@ namespace cg3d
         scene->gameplay.slerpFactor = 0.8;
         scene->gameplay.cyls[0].model->Rotate(direction*directions[round], Movable::Axis::Y);
         scene->gameplay.cyls[1].model->Rotate(-1*direction*directions[round], Movable::Axis::Y);
-//        scene->cameras[1]->Rotate(-1*direction*directions[round], Movable::Axis::Y);
-//        scene->cameras[2]->Rotate(-1*direction*directions[round], Movable::Axis::Y);
+        scene->cameras[1]->Rotate(-1*direction*directions[round], Movable::Axis::Y);
+        scene->cameras[2]->Rotate(-1*direction*directions[round], Movable::Axis::Y);
         round += direction;
         if (round < 0 || round >= directions.size()) {
             direction *= -1;
