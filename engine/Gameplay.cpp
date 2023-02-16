@@ -51,14 +51,6 @@ void Gameplay::InitMaterials() {
     snakeShader = std::make_shared<Program>("shaders/overlay");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
     snakeSkin->AddTexture(0, "textures/snake.jpg", 2);
-    phongShader = std::make_shared<Program>("shaders/phongShader2");
-    phongMaterial = std::make_shared<Material>("phongMaterial", phongShader);
-    //phongShader->SetUniform4f("lightColor", 0.8f, 0.3f, 0.0f, 0.5f);
-    //phongShader->SetUniform4f("Kai", 1.0f, 0.3f, 0.6f, 1.0f);
-    //phongShader->SetUniform4f("Kdi", 0.5f, 0.5f, 0.0f, 1.0f);
-    phongShader->SetUniform1f("specular_exponent", 5.0);
-    phongShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
-//    snakeSkin->AddTexture(0, "textures/snake1.png", 2);
 }
 
 void Gameplay::InitSnake() {
