@@ -150,7 +150,7 @@ void Display::LaunchRendering(bool loop) const
 #endif
     }
 #ifdef __APPLE__
-    std::system("pkill python");
+    std::system("pkill -9 -f bgm.py");
 #else
     std::system("taskkill /f /im python.exe");
 #endif

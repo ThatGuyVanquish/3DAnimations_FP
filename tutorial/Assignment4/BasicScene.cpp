@@ -80,11 +80,9 @@ void BasicScene::SetCamerasView()
     cameras[0]->Rotate((float)-M_PI_4/2.0, Axis::X);
 
     cameras[1]->Translate({0, 0, -2});
-//    cameras[1]->SetCenter({0, 0, -2});
 
     rotation << 0.999981f, 0.00187451f, 0.0059422f, -0.00398497f, 0.925535f, 0.378641f, -0.00478994f,   -0.378658f,    0.925524f;
     cameras[2]->Translate({0, 4.88115, 10.5869});
-//    cameras[2]->SetCenter({0, 4.88115, 10.5869});
     cameras[2]->Rotate(rotation);
 
 
@@ -111,21 +109,6 @@ void BasicScene::noLocomotion()
     gameplay.timeFromLastWASDQE = time(nullptr);
     gameplay.slerpFactor = gameplay.prev_slerp;
     SetCamera(cameraIdx);
-//    for (int i = 0; i < locomotionCameras.size(); i++)
-//    {
-//        locomotionCameras[i]->SetTout(gameplay.cyls[0].model->GetTout())
-////        Eigen::Vector3f rotation_z, rotation_x, rotation_y, rotation_vec;
-////        Eigen::Quaternionf prev_quat_x, prev_quat_y;
-////        rotation_x = Eigen::Vector3f(1, 0, 0);
-////        rotation_y = Eigen::Vector3f(0, 1, 0);
-////
-////        rotation_vec = locomotionCameras[i]->Tout.rotation() * rotation_x;
-////        prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
-////        locomotionCameras[i]->Rotate(prev_quat_x);
-////        rotation_vec = locomotionCameras[i]->Tout.rotation() * rotation_y;
-////        prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
-////        locomotionCameras[i]->Rotate(prev_quat_y);
-//    }
 }
 
 void BasicScene::BuildImGui()
@@ -283,8 +266,8 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             gotL = 0;
             if (!devTools)
                 break;
-            std::cout << "camera[1] translate:" << cameras[1]->GetTout().translation() << std::endl;
-            std::cout << "camera[1] rotation:" << cameras[1]->GetTout().rotation() << std::endl;
+            std::cout << "camera[1] translate:" << locomotionCameras[2]->GetTout().translation() << std::endl;
+            std::cout << "camera[1] rotation:" << locomotionCameras[2]->GetTout().rotation() << std::endl;
             break;
         case GLFW_KEY_UP:
             gotL = 0;

@@ -29,7 +29,7 @@ namespace cg3d
                 if (cylIndex == 0) {
                     if ((time(nullptr) - scene->gameplay.timeFromLastWASDQE) > 2.5) snakyLocomotion();
                     model->TranslateInSystem(system, scene->gameplay.velocityVec);
-//                    translateLocomotionCameras();
+                    translateLocomotionCameras();
                 } else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
                     rotateXY(model);
                 } else if (cylIndex == prevRotatedCylIndex + 1) {
@@ -75,8 +75,7 @@ namespace cg3d
         scene->gameplay.slerpFactor = 0.8;
         scene->gameplay.cyls[0].model->Rotate(direction*directions[round], Movable::Axis::Y);
         scene->gameplay.cyls[1].model->Rotate(-1*direction*directions[round], Movable::Axis::Y);
-        scene->cameras[1]->Rotate(-1*direction*directions[round], Movable::Axis::Y);
-        scene->cameras[2]->Rotate(-1*direction*directions[round], Movable::Axis::Y);
+//        rotateBackCameras();
         round += direction;
         if (round < 0 || round >= directions.size()) {
             direction *= -1;
@@ -88,9 +87,38 @@ namespace cg3d
     {
         Eigen::Vector3f translate = getPosition(scene->gameplay.cyls[0], -0.8) - scene->gameplay.currPos;
         scene->gameplay.currPos = getPosition(scene->gameplay.cyls[0], -0.8);
-        scene->locomotionCameras[0]->Translate(translate);
-        scene->locomotionCameras[1]->Translate(translate);
-        scene->locomotionCameras[2]->Translate(translate);
+        for (int i = 0; i < scene->locomotionCameras.size(); i++)
+        {
+
+            Eigen::Vector3f D = getPosition(scene->gameplay.cyls[0], -0.8);
+            Eigen::Vector3f R = getPosition(scene->gameplay.cyls[0], 0.8);
+            Eigen::Vector3f translation{ 0, 0, 1.6};
+            Eigen::Vector3f E = R + scene->locomotionCameras[i]->GetRotation() * translation;
+            Eigen::Vector3f RE = (E - R).normalized();
+            Eigen::Vector3f RD = (D - R).normalized();
+            Eigen::Vector3f normal = RE.cross(RD);
+            float dot = RD.dot(RE);
+            if (abs(dot) > 1) dot = 1.0f;
+            float theta = acos(dot);
+
+            Eigen::Vector3f rotateAroundVector = scene->locomotionCameras[i]->GetAggregatedTransform().block<3, 3>(0, 0).inverse() * normal;
+            scene->locomotionCameras[i]->Rotate(theta, rotateAroundVector);
+
+            scene->locomotionCameras[i]->Translate(translate);
+
+        }
+    }
+
+    void AnimationVisitor::rotateBackCameras()
+    {
+        for (int i = 0; i < scene->cameras.size(); i++)
+        {
+            auto system = scene->cameras[i]->GetRotation().transpose();
+            auto angleCoeff = scene->cameras[i]->CalcAngleCoeff(1600);
+            scene->cameras[i]->RotateInSystem(system, /*(-1*direction*directions[round])*/9.0 / angleCoeff, Movable::Axis::Y);
+//            scene->cameras[i]->RotateInSystem(system, 0, Movable::Axis::X);
+        }
+
     }
 
 

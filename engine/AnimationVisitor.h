@@ -21,6 +21,7 @@ namespace cg3d
         void rotateXY(Model* model);
         void snakyLocomotion();
         void translateLocomotionCameras();
+        void rotateBackCameras();
 
 //        void Visit(Scene* _scene) override;
 
