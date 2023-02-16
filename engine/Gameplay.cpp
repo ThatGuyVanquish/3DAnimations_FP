@@ -43,7 +43,7 @@ void Gameplay::InitCoordsys() {
 void Gameplay::InitMaterials() {
     program = std::make_shared<Program>("shaders/basicShader");
     basicMaterial = std::make_shared<Material>("basicMaterial", program); // empty material
-    basicMaterial->AddTexture(0, "textures/snake.jpg", 2);
+    basicMaterial->AddTexture(0, "textures/snake_long.png", 2);
     frameColor = std::make_shared<Material>("green", program, true);
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
@@ -51,7 +51,16 @@ void Gameplay::InitMaterials() {
     snakeShader = std::make_shared<Program>("shaders/basicShader");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
     snakeSkin->AddTexture(0, "textures/snake.png", 2);
-}
+    itemShader = std::make_shared<Program>("shaders/phongShader2");
+    itemMaterial = std::make_shared<Material>("itemMaterial", itemShader);
+    itemShader->name = "itemShader";
+    enemyShader = std::make_shared<Program>("shaders/phongShader2");
+    enemyMaterial = std::make_shared<Material>("enemyMaterial", enemyShader);
+    enemyShader->name = "enemyShader";
+    bonusShader = std::make_shared<Program>("shaders/phongShader2");
+    bonusMaterial = std::make_shared<Material>("bonusMaterial", bonusShader);
+    bonusShader->name = "bonusShader";
+    }
 
 void Gameplay::InitSnake() {
     //init cylinders
@@ -180,19 +189,21 @@ void Gameplay::randomizeTranlate(entity_data& entity)
 void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {
     if (index == -1)
         index = getRandomNumberInRange(0, (int)viableEntities.size());
-    initEntity(viableEntities[index], basicMaterial);
-    randomizeTranlate(entities[entities.size() - 1]);
     switch (viableEntities[index].type) {
         case EntityType::ENEMY:
+            initEntity(viableEntities[index], enemyMaterial);
             currentEnemies++;
             break;
         case EntityType::ITEM:
+            initEntity(viableEntities[index], itemMaterial);
             currentItems++;
             break;
         case EntityType::BONUS:
+            initEntity(viableEntities[index], bonusMaterial);
             currentBonuses++;
             break;
     }
+    randomizeTranlate(entities[entities.size() - 1]);
 }
 
 void Gameplay::spawnEntities(int amount, std::vector<Entity> &viableEntities) {
@@ -216,12 +227,12 @@ void Gameplay::spawnExtras()
 {
     for (int i = 0; i < viableItems.size(); i++)
     {
-        auto currentItem = initEntity(viableItems[i], basicMaterial, false);
+        auto currentItem = initEntity(viableItems[i], itemMaterial, false);
         extraItems.push_back(currentItem);
     }
     for (int i = 0; i < 10; i++)
     {
-        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], basicMaterial, false);
+        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], enemyMaterial, false);
         extraEnemies.push_back(currentEnemy);
     }
 }

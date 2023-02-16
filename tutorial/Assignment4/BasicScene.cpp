@@ -2,7 +2,6 @@
 
 #include "BasicScene.h"
 
-
 using namespace cg3d;
 
 BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGui(std::move(name), display)
@@ -17,7 +16,7 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
     std::thread bgmThread([&]() {
-        std::system(getPyScript("scripts/bgm.py", "audio/through_the_fire_and_flames.mp3", -1).c_str());
+        std::system(getPyScript("scripts/bgm.py", "audio/bgm.mp3", -1).c_str());
         });
     bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
@@ -142,11 +141,30 @@ void BasicScene::BuildImGui()
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
 {
     Scene::Update(program, proj, view, model);
-//    program.SetUniform4f("lightColor", 0.8f, 0.3f, 0.0f, 0.5f);
-//    program.SetUniform4f("Kai", 1.0f, 0.3f, 0.6f, 1.0f);
-//    program.SetUniform4f("Kdi", 0.5f, 0.5f, 0.0f, 1.0f);
-//    program.SetUniform1f("specular_exponent", 5.0);
-//    program.SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+    if (std::strcmp(program.name.c_str(), "itemShader") == 0)
+    {
+        gameplay.bonusShader->SetUniform4f("lightColor", 0.0f, 0.392f, 0.0f, 1.0f);
+        gameplay.bonusShader->SetUniform4f("Kai", 0.0f, 0.392f, 0.0f, 0.4f);
+        gameplay.bonusShader->SetUniform4f("Kdi", 0.0f, 0.392f, 0.0f, 0.4f);
+        gameplay.bonusShader->SetUniform1f("specular_exponent", 5.0);
+        gameplay.bonusShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+    }
+    if (std::strcmp(program.name.c_str(), "enemyShader") == 0)
+    {
+        gameplay.itemShader->SetUniform4f("lightColor", 0.545f, 0.0f, 0.0f, 1.0f);
+        gameplay.itemShader->SetUniform4f("Kai", 0.545f, 0.0f, 0.0f, 0.4f);
+        gameplay.itemShader->SetUniform4f("Kdi", 0.545f, 0.0f, 0.0f, 0.4f);
+        gameplay.itemShader->SetUniform1f("specular_exponent", 3.0);
+        gameplay.itemShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+    }
+    if (std::strcmp(program.name.c_str(), "bonusShader") == 0)
+    {
+        gameplay.enemyShader->SetUniform4f("lightColor", 1.0f, 0.843f, 0.0f, 1.0f);
+        gameplay.enemyShader->SetUniform4f("Kai", 1.0f, 0.843f, 0.0f, 0.4f);
+        gameplay.enemyShader->SetUniform4f("Kdi", 1.0f, 0.843f, 0.0f, 0.4f);
+        gameplay.enemyShader->SetUniform1f("specular_exponent", 3.0);
+        gameplay.enemyShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+    }
 }
 
 void BasicScene::updateGameplay()

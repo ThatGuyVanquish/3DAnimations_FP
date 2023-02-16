@@ -124,8 +124,12 @@ public:
     std::shared_ptr<cg3d::Material> frameColor;
     std::shared_ptr<cg3d::Material> collisionColor;
     std::shared_ptr<cg3d::Material> snakeSkin;
-    std::shared_ptr<cg3d::Program> phongShader;
-    std::shared_ptr<cg3d::Material> phongMaterial;
+    std::shared_ptr<cg3d::Program> itemShader;
+    std::shared_ptr<cg3d::Material> itemMaterial;
+    std::shared_ptr<cg3d::Program> enemyShader;
+    std::shared_ptr<cg3d::Material> enemyMaterial;
+    std::shared_ptr<cg3d::Program> bonusShader;
+    std::shared_ptr<cg3d::Material> bonusMaterial;
 
     // skinning
     Skinning snakeSkinning;
