@@ -10,8 +10,8 @@
 #include "Movable.h"
 #include "Skinning.h"
 #include <thread>
-// header for common structures like model_data
 #include "common.h"
+#include "TextureCoordinates.h"
 
 static std::string getPyScript(const char* path_to_script, const char* path_to_argv1, int time)
 {
@@ -135,4 +135,8 @@ public:
     Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
 
     Eigen::MatrixXd getTextureCoords(const char* filename);
+
+    // texture
+    std::vector<Eigen::MatrixXd> uv_vec;
+    int curr_uv = 0;
 };

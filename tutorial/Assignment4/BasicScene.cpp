@@ -121,6 +121,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
 {
 //    auto system = camera->GetRotation().transpose();
     auto system = gameplay.cyls[0].model->GetRotation().transpose();
+    std::shared_ptr<cg3d::Mesh> newMesh;
     if ((action == GLFW_PRESS || action == GLFW_REPEAT) && gameplay.imGuiOverlay.grabCallbacks)
     {
         switch (key)
@@ -271,6 +272,32 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         default:
             gotL = 0;
             break;
+        case GLFW_KEY_Y:
+            std::cout << "curr uv: " << gameplay.curr_uv << std::endl;
+            // create new mesh with UV
+            newMesh = std::make_shared<cg3d::Mesh>(gameplay.snake.model->name,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertices,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].faces,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                               gameplay.uv_vec[gameplay.curr_uv]
+            );
+            // update snake mesh
+            gameplay.snake.model->SetMeshList({newMesh});
+            gameplay.curr_uv++;
+            break;
+        case GLFW_KEY_U:
+            gameplay.curr_uv--;
+                std::cout << "curr uv: " << gameplay.curr_uv << std::endl;
+            // create new mesh with UV
+            newMesh = std::make_shared<cg3d::Mesh>(gameplay.snake.model->name,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertices,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].faces,
+                                                                               gameplay.snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                               gameplay.uv_vec[gameplay.curr_uv]
+            );
+            // update snake mesh
+            gameplay.snake.model->SetMeshList({newMesh});
+            break;
         }
     }
 }
@@ -295,33 +322,29 @@ void BasicScene::CursorPosCallback(Viewport* viewport, int x, int y, bool draggi
     if (!devTools)
         return;
     if (dragging) {
-        auto system = camera->GetRotation().transpose() * GetRotation();
+        auto system = camera->GetRotation().transpose();
         auto moveCoeff = camera->CalcMoveCoeff(pickedModelDepth, viewport->width);
         auto angleCoeff = camera->CalcAngleCoeff(viewport->width);
         if (pickedModel) {
-            /*pickedModel->SetTout(pickedToutAtPress);
+            pickedModel->SetTout(pickedToutAtPress);
             if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
-                pickedModel->TranslateInSystem(system,
-                                               {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
+                pickedModel->TranslateInSystem(system, {float(x - xAtPress) / moveCoeff, float(yAtPress - y) / moveCoeff, 0});
             if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
                 pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Z);
             if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
                 pickedModel->RotateInSystem(system, float(x - xAtPress) / moveCoeff, Axis::Y);
                 pickedModel->RotateInSystem(system, float(y - yAtPress) / moveCoeff, Axis::X);
-            }*/
-        }
-        else {
-            // camera->SetTout(cameraToutAtPress);
-            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE)
-                camera->TranslateInSystem(system, { -float(xAtPress - x) / moveCoeff / 10.0f, float(yAtPress - y) / moveCoeff / 10.0f, 0 });
+            }
+        } else {
+            camera->SetTout(cameraToutAtPress);
+            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE)
+                camera->TranslateInSystem(system, {float(xAtPress - x) / moveCoeff, float(y - yAtPress) / moveCoeff, 0});
             if (buttonState[GLFW_MOUSE_BUTTON_MIDDLE] != GLFW_RELEASE)
                 camera->RotateInSystem(system, float(x - xAtPress) / 180, Axis::Z);
-            if (buttonState[GLFW_MOUSE_BUTTON_LEFT] != GLFW_RELEASE) {
+            if (buttonState[GLFW_MOUSE_BUTTON_RIGHT] != GLFW_RELEASE) {
                 camera->RotateInSystem(system, float(x - xAtPress) / angleCoeff, Axis::Y);
                 camera->RotateInSystem(system, float(y - yAtPress) / angleCoeff, Axis::X);
             }
         }
-        xAtPress = x;
-        yAtPress = y;
     }
 }

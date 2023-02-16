@@ -48,9 +48,9 @@ void Gameplay::InitMaterials() {
     frameColor->AddTexture(0, "textures/grass.bmp", 2);
     collisionColor = std::make_shared<Material>("red", program);
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
-    snakeShader = std::make_shared<Program>("shaders/overlay");
+    snakeShader = std::make_shared<Program>("shaders/basicShader");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-    snakeSkin->AddTexture(0, "textures/snake.jpg", 2);
+    snakeSkin->AddTexture(0, "textures/snake.png", 2);
 }
 
 void Gameplay::InitSnake() {
@@ -62,7 +62,7 @@ void Gameplay::InitSnake() {
         auto cylModel = ObjLoader::ModelFromObj("Cyl " + std::to_string(i), "data/zcylinder.obj", basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
-        cyls[i].model->showFaces = false;
+//        cyls[i].model->showFaces = false;
         if (!showCyls)
         {
             cyls[i].model->isHidden = true;
@@ -90,23 +90,51 @@ void Gameplay::InitSnake() {
     headModel->Scale(head.scaleFactor);
     headModel->Rotate((float) -M_PI, Movable::Axis::Y);
     headModel->Translate(-1.6f, Movable::Axis::Z);
-    headModel->showFaces = true; // false
-    headModel->showWireframe = false; // true
+    headModel->showFaces = false;
+    headModel->showWireframe = true;
     cyls[0].model->AddChild(headModel);
 
     if (useSnake)
     {
         // init snake
-        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-        snakeMesh->data = std::vector<MeshData>{{snakeMesh->data[0].vertices, snakeMesh->data[0].faces,
-                              snakeMesh->data[0].vertexNormals, getTextureCoords("data/snake2.obj")}};
+        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake3.obj");
         auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
+
+        Eigen::MatrixXd V_uv;
+        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
+        // create new mesh with UV
+        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+                                                                           snake.model->GetMesh(0)->data[0].vertices,
+                                                                           snake.model->GetMesh(0)->data[0].faces,
+                                                                           snake.model->GetMesh(0)->data[0].vertexNormals,
+                                                                           V_uv
+        );
+        // update snake mesh
+        snake.model->SetMeshList({newMesh});
+//        setAllUVs(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, uv_vec);
+
         snakeSkinning.InitSkinning(snake, cyls);
+
         root->AddChild(snakeModel);
-        //std::cout << "TEXTURE COORDS\n" << snakeMesh->data[0].textureCoords << std::endl;
+
+//        snake.model->showFaces = false;
+//        snake.model->showWireframe = true;
+
+//        Eigen::MatrixXd V_uv;
+//        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
+//        // create new mesh with UV
+//        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+//                                                                                snake.model->GetMesh(0)->data[0].vertices,
+//                                                                                snake.model->GetMesh(0)->data[0].faces,
+//                                                                                snake.model->GetMesh(0)->data[0].vertexNormals,
+//                                                                                V_uv
+//        );
+//        // update snake mesh
+//        snake.model->SetMeshList({newMesh});
     }
+
 }
 
 void Gameplay::generateViableEntities() {
@@ -150,7 +178,7 @@ void Gameplay::randomizeTranlate(entity_data& entity)
 void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {
     if (index == -1)
         index = getRandomNumberInRange(0, (int)viableEntities.size());
-    initEntity(viableEntities[index], phongMaterial);
+    initEntity(viableEntities[index], basicMaterial);
     randomizeTranlate(entities[entities.size() - 1]);
     switch (viableEntities[index].type) {
         case EntityType::ENEMY:
@@ -186,12 +214,12 @@ void Gameplay::spawnExtras()
 {
     for (int i = 0; i < viableItems.size(); i++)
     {
-        auto currentItem = initEntity(viableItems[i], phongMaterial, false);
+        auto currentItem = initEntity(viableItems[i], basicMaterial, false);
         extraItems.push_back(currentItem);
     }
     for (int i = 0; i < 10; i++)
     {
-        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], phongMaterial, false);
+        auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], basicMaterial, false);
         extraEnemies.push_back(currentEnemy);
     }
 }

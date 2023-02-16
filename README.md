@@ -1,60 +1,79 @@
-# Lior and Nave's 3D Animations Assignment 3 (Inverse Kinematics)
+# Lior and Nave's 3D Animations Final Project (Skinning)
 
-***********************************
-The assignment is coded in the folder [Assignment3](https://github.com/ThatGuyVanquish/3DAnimations_AS3/tree/master/tutorial/Assignment3)
-#    
+The assignment is to build a 3D Snake game, using a provided engine and utilizing GLFW3, dear ImGUI and papers taught in class to make the game as smooth and fun as possible.
 
-Our implementation added a CPP file:
-[KinematicChain.cpp](https://github.com/ThatGuyVanquish/3DAnimations_AS3/blob/master/tutorial/Assignment3/KinematicChain.cpp)
+The assignment is coded in the folder [Assignment4](https://github.com/ThatGuyVanquish/3DAnimations_FP/tree/master/tutorial/Assignment4) and in various files we've included in the engine folder, as stated below:   
 
-Which holds static functions used to calculate the position of the cylinder for moving, either by arrows\camera (using euler angles) and through the attempt to reach the sphere (cyclic descent).
+### 1) Animation Visitor {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/AnimationVisitor.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/tree/master/tutorial/Assignment4)}
 
-### 
+The Animation Visitor is another visitor that's called in the renderer and is used to make the movement smoother and more snake-like.
 
-The function [*cyclicCoordinateDescentStep*](https://github.com/ThatGuyVanquish/3DAnimations_AS3/blob/master/tutorial/Assignment3/KinematicChain.cpp#L69) is using the equations from the article and basic trigonometry to get the angle to rotate and the vector to rotate around, then physically rotates the arm's parts one by one in order to reach the destination.
+### 2) Collision Detection {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/CollisionDetection.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/CollisionDetection.cpp)}
 
-The virtual function [*nextCyclicDescentStep*](https://github.com/ThatGuyVanquish/3DAnimations_AS3/blob/master/engine/Scene.h#L39) was added to Scene.h, which is called every time the renderer calls for [*RenderAllViewports*](https://github.com/ThatGuyVanquish/3DAnimations_AS3/blob/master/engine/Renderer.cpp#L48).
-         The function checks the state of a boolean variable to use cyclicCoordinateDescentStep when it can (and is instructed to by pressing *space*) to move the arm to the destination.
+The collision detection class holds the methods necessary to add collision detection to all of the entities and the snake itself, using AABBs as shown in [Assignment 2](https://github.com/ThatGuyVanquish/3DAnimation_AS2).
 
-###
-The function [*rotateBasedOnEulerAngles*](https://github.com/ThatGuyVanquish/3DAnimations_AS3/blob/master/tutorial/Assignment3/KinematicChain.cpp#L57) is the function used by the arrows to rotate cylinders around it's axis based on euler angles. 
-It uses the function [*getZXZRotationMatrices*](https://github.com/ThatGuyVanquish/3DAnimations_AS3/blob/master/tutorial/Assignment3/KinematicChain.cpp#L18) to calculate the new rotation matrix and sets the rotation as per the euler angle matrices.
+### 3) Texture Coordinates {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/commit/0527a70182d75e1218bcfa4bbec3c98109029901#diff-5094cf97a15dd0544aa388bd12ba949e15f0b6672d2e31a6a590549fbbef06bd)} *[EDIT THE LINK AND INFO]*
 
-##
-### BUTTON MAPPINGS
+### 4) ImGuiOverlay {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/ImGuiOverlay.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/ImGuiOverlay.cpp)}
 
-**H**      -> Hide\show axis
+ImGuiOverlay is our entire implementation of the game's GUI. Using dear ImGUI we've implemented a main menu used to start the game and show a leaderboard, the top of the screen HUD used to display the time and score and more graphics such as a start countdown, level-up and death screens, and so on.
 
-#### Camera movement
-**WASDBF** -> Move the camera around
+### 5) Leaderboard {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Leaderboard.h)}
 
-**Can also move camera with the mouse when there isn't a picked object**
+As previously mentioned in ImGuiOverlay, the leaderboard is a class that is used to store given scores locally on the device and display them when queried through the start menu.
 
-#### Cylinder picking
-**1, 2**   -> Cycle between cylinder indices (I.E. set the cylinder as "picked object to be moved by keyboard")
+### 6) [common.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/common.h)
 
-**3**      -> Unpick any cylinder previously picked
+A header file used for additional general methods and definitions, such as the Entity, entity_data and model_data structs we used throughout the assignment.
 
-#### Amount of cylinders
-**[, ]**   -> Move the number of cylinders up or down (down to at least 1). Note that this resets the scene.
+### 7) Skinning {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Skinning.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Skinning.cpp)}
 
-**R**      -> Reset the scene
+The class that holds our implementation of the skinning algorithm, using dual quaternion skinning.
 
-#### Printouts
-**P**      -> Prints the Euler Rotation Matrices of **the picked object** or **root**
+We use the methods [*calcWeight*](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/4414a87e9a48c9914e475d7511bb5d9238d89111/engine/Skinning.cpp#L86) to calculate the relevant weight of each joint to each vertex and [*moveModel*](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/4414a87e9a48c9914e475d7511bb5d9238d89111/engine/Skinning.cpp#L115) to animate the snake correctly according to the calculated weights.
 
-**T**      -> Prints the tip position of each link in the arm
+### 8) Gameplay {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Gameplay.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Gameplay.cpp)}
 
-**Y**      -> Prints the location of the sphere
+The Gameplay class handles the entire aspects of the game, from initializing the entities at the loading stage, to handling the result of collisions and game state.
 
-#### Arrow key movements
-**UP**     -> Moves *Picked **Cylinder*** around positive X axis using euler angles
+***************************
+## BUTTON MAPPINGS
 
-**DOWN**   -> Moves *Picked **Cylinder*** around negative X axis using euler angles
+### GAMEPLAY
+**W, S** -> Go up and down
 
-**RIGHT**  -> Moves *Picked **Cylinder*** around positive Z axis using euler angles
+**A, D** -> Go left and right
 
-**LEFT**   -> Moves *Picked **Cylinder*** around negative Z axis using euler angles
+**Q, E** -> Handle the roll of the snake
 
-### **SPACE**
-**Moves the arm towards the destination (sphere's center with delta DELTA) *if and only if* it can reach**
+### CAMERAS
+**1** -> Switch to first person view
+
+**3** -> Switch to third person view
+
+**0** -> Switch to top down camera *[SUBJECT TO CHANGES]*
+
+### DEV MODE
+#### NOTE THAT MOUSE MOVEMENT IS RESTRICTED TO CAMERAS, AND IS GENERALLY ONLY AVAILABLE IN DEV MODE.
+
+**LN** -> Enters and exits developer mode, used to distinguish a debug state away from the general gameplay and restrict unnecessary actions from the user.
+
+**:arrow_up:, :arrow_down:** -> Increase and decrease the snake's velocity (could be negative), also changese the slerp factor for it's rotation.
+
+**:arrow_left:, :arrow_right:** -> Increases and decreases the amount of lives the player has. Note that lives could be at the negative, player can only die if collided with enemy with 1 heart. *[SUBJECT TO CHANGES]*
+
+**R** -> Reset game back to the main menu.
+
+**G** -> Toggle animation on/off
+
+**T** -> Simulates level-up in the background to get more enemies after next reset.
+
+**J** -> Adds 1000 to the current score
+
+**P** -> Prints camera's position
+
+**H** -> Toggles cylinders and entities collision frame hidden/showing
+
+**C** -> Toggles cylinders hidden/showing
+
+**V** -> Toggles global axis hidden/showing
