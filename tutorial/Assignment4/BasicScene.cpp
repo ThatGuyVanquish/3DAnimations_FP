@@ -44,9 +44,12 @@ void BasicScene::InitCameras()
     for (int i = 0; i < cameras.size(); i++)
     {
         cameras[i] = Camera::Create("camera " + std::to_string(i), FOV, float(WIDTH) / float(HEIGHT), NEAR, FAR);
+        locomotionCameras[i] = Camera::Create("camera " + std::to_string(i), FOV, float(WIDTH) / float(HEIGHT), NEAR, FAR);
     }
 
     SetCamerasView();
+//    cameras[1]->SetCenter({0, 0, -0.8});
+//    cameras[2]->SetCenter({0, 0, -0.8});
 
     camera = cameras[0];
     gameplay.cyls[0].model->AddChild(cameras[1]);
@@ -61,6 +64,9 @@ void BasicScene::ResetCameras()
         cameras[i]->SetTout(Eigen::Affine3f::Identity());
         cameras[i]->SetTin(Eigen::Affine3f::Identity());
         cameras[i]->PropagateTransform();
+        locomotionCameras[i]->SetTout(Eigen::Affine3f::Identity());
+        locomotionCameras[i]->SetTin(Eigen::Affine3f::Identity());
+        locomotionCameras[i]->PropagateTransform();
     }
     SetCamerasView();
     SetCamera(0);
@@ -75,16 +81,52 @@ void BasicScene::SetCamerasView()
     cameras[0]->Rotate((float)-M_PI_4/2.0, Axis::X);
 
     cameras[1]->Translate({0, 0, -2});
+//    cameras[1]->SetCenter({0, 0, -2});
 
     rotation << 0.999981f, 0.00187451f, 0.0059422f, -0.00398497f, 0.925535f, 0.378641f, -0.00478994f,   -0.378658f,    0.925524f;
     cameras[2]->Translate({0, 4.88115, 10.5869});
+//    cameras[2]->SetCenter({0, 4.88115, 10.5869});
     cameras[2]->Rotate(rotation);
+
+
+    locomotionCameras[0]->Translate(30, Axis::Z);
+    locomotionCameras[0]->Translate(15, Axis::Y);
+    locomotionCameras[0]->Rotate((float)-M_PI_4/2.0, Axis::X);
+
+    locomotionCameras[1]->Translate({0, 0, -2});
+
+    locomotionCameras[2]->Translate({0, 4.88115, 10.5869});
+    locomotionCameras[2]->Rotate(rotation);
 }
 
 void BasicScene::SetCamera(int index)
 {
-    camera = cameras[index];
+    cameraIdx = index;
+    /*if ((time(nullptr) - gameplay.timeFromLastWASDQE) > 2.5) camera = locomotionCameras[index];
+    else*/ camera = cameras[index];
     viewport->camera = camera;
+}
+
+void BasicScene::noLocomotion()
+{
+    gameplay.timeFromLastWASDQE = time(nullptr);
+    gameplay.slerpFactor = gameplay.prev_slerp;
+    SetCamera(cameraIdx);
+//    for (int i = 0; i < locomotionCameras.size(); i++)
+//    {
+//        locomotionCameras[i]->SetTout(gameplay.cyls[0].model->GetTout())
+////        Eigen::Vector3f rotation_z, rotation_x, rotation_y, rotation_vec;
+////        Eigen::Quaternionf prev_quat_x, prev_quat_y;
+////        rotation_x = Eigen::Vector3f(1, 0, 0);
+////        rotation_y = Eigen::Vector3f(0, 1, 0);
+////
+////        rotation_vec = locomotionCameras[i]->Tout.rotation() * rotation_x;
+////        prev_quat_x = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_x);
+////        locomotionCameras[i]->Rotate(prev_quat_x);
+////        rotation_vec = locomotionCameras[i]->Tout.rotation() * rotation_y;
+////        prev_quat_y = Eigen::Quaternionf::FromTwoVectors(rotation_vec, rotation_y);
+////        locomotionCameras[i]->Rotate(prev_quat_y);
+//    }
 }
 
 void BasicScene::BuildImGui()
@@ -130,37 +172,37 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::Y);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::Y);
-            gameplay.timeFromLastWASDQE = time(nullptr);
+            noLocomotion();
             break;
         case GLFW_KEY_D:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Y);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Y);
-            gameplay.timeFromLastWASDQE = time(nullptr);
+            noLocomotion();
             break;
         case GLFW_KEY_W:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::X);
-            gameplay.timeFromLastWASDQE = time(nullptr);
+            noLocomotion();
             break;
         case GLFW_KEY_S:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::X);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::X);
-            gameplay.timeFromLastWASDQE = time(nullptr);
+            noLocomotion();
             break;
         case GLFW_KEY_Q:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(-0.1f, Axis::Z);
-            gameplay.timeFromLastWASDQE = time(nullptr);
+            noLocomotion();
             break;
         case GLFW_KEY_E:
             gotL = 0;
             gameplay.cyls[0].model->Rotate(-0.1f, Axis::Z);
             gameplay.cyls[1].model->Rotate(0.1f, Axis::Z);
-            gameplay.timeFromLastWASDQE = time(nullptr);
+            noLocomotion();
             break;
         case GLFW_KEY_R:
             gotL = 0;
@@ -176,17 +218,17 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
         case GLFW_KEY_3:
             gotL = 0;
             SetCamera(2);
-            gameplay.head.model->showWireframe = true;
+            gameplay.head.model->isHidden = false;
             break;
         case GLFW_KEY_1:
             gotL = 0;
             SetCamera(1);
-            gameplay.head.model->showWireframe = false;
+            gameplay.head.model->isHidden = true;
             break;
         case GLFW_KEY_0:
             gotL = 0;
             SetCamera(0);
-            gameplay.head.model->showWireframe = true;
+            gameplay.head.model->isHidden = false;
             break;
         case GLFW_KEY_G:
             gotL = 0;

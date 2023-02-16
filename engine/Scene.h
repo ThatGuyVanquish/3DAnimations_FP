@@ -40,6 +40,7 @@ public:
     virtual void Init(Visitor* visitor);
     virtual void Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model);
     virtual void nextCyclicDescentStep() {};
+    virtual void SetCamera(int index) {};
     virtual void updateGameplay() {};
     std::shared_ptr<Model> pickedModel;
     std::shared_ptr<Camera> camera;
@@ -49,6 +50,10 @@ public:
      * fields for project
      */
     Gameplay gameplay;
+    // cameras
+    std::vector<std::shared_ptr<cg3d::Camera>> cameras{3};
+    std::vector<std::shared_ptr<cg3d::Camera>> locomotionCameras{3};
+    int cameraIdx = 0;
 
 
     virtual void MouseCallback(Viewport* viewport, int x, int y, int button, int action, int mods, int buttonState[]);

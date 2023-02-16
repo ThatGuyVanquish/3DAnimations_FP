@@ -94,6 +94,8 @@ void Gameplay::InitSnake() {
     headModel->showWireframe = true;
     cyls[0].model->AddChild(headModel);
 
+    currPos = getPosition(cyls[0], -0.8f);
+
     if (useSnake)
     {
         // init snake

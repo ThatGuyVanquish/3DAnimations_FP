@@ -134,10 +134,14 @@ public:
 
     // animation
     float slerpFactor = 0.9f;
+    float prev_slerp;
     Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
     time_t timeFromLastWASDQE = time(nullptr);
+    Eigen::Vector3f currPos;
 
     // texture
     std::vector<Eigen::MatrixXd> uv_vec;
     int curr_uv = 0;
+
+
 };
