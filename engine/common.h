@@ -14,6 +14,8 @@
 #ifdef __APPLE__
     #include <unistd.h>
     #include <cstdlib>
+#include <thread>
+
 #endif
 
 #define M_E        2.71828182845904523536   // e
@@ -98,32 +100,8 @@ static std::string getPyScript(const std::string& path_to_script, const std::str
 
 static void callPythonScript(const std::string& script, const std::string& audio, int time)
 {
-/* LIOR PLEASE TEST WITH THIS ALSO INSTEAD OF THE IFDEF APPLE,
- * BECAUSE IT MIGHT WORK FOR THE BOTH OF US WITH THE AMPERSAND
     std::thread newThread([script, audio, time]() {
         std::system(getPyScript(script, audio, time).c_str());
     });
     newThread.detach();
-    */
-#ifdef __APPLE__
-    pid_t pid = fork();
-    if (pid == 0)
-    {
-        setsid();
-        pid_t pid2 = fork();
-        if (pid2 == 0)
-        {
-            execlp("python3", "python3", getResource(script.c_str()), getResource(audio.c_str()), std::to_string(time), NULL);
-            _exit(EXIT_FAILURE);
-        }
-        else if (pid2 > 0)
-            _exit(EXIT_SUCCESS);
-        else _exit(EXIT_FAILURE);
-    }
-#else
-    std::thread newThread([script, audio, time]() {
-        std::system(getPyScript(script, audio, time).c_str());
-    });
-    newThread.detach();
-#endif
 }
