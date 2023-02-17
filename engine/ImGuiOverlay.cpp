@@ -217,10 +217,11 @@ void ImGuiOverlay::MainMenu(bool &animate)
     ImGui::SetWindowFontScale(1.3f);
     if (ImGui::Button("START GAME"))
     {
-        std::thread slowThread([&]() {
-            std::system(getPyScript("scripts/play_sound.py", "audio/here_we_go.mp3", 2).c_str());
-            });
-        slowThread.detach();
+        callPythonScript("scripts/play_sound.py", "audio/here_we_go.mp3", 2);
+//        std::thread slowThread([&]() {
+//            std::system(getPyScript("scripts/play_sound.py", "audio/here_we_go.mp3", 2).c_str());
+//            });
+//        slowThread.detach();
         currentLevel = 1;
         currentLives = 3;
         currentScore = 0;
