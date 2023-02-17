@@ -88,9 +88,9 @@ static std::string getPyScript(const std::string& path_to_script, const std::str
     char* audio_path = getResource(path_to_argv1.c_str());
     std::string py_run;
 #ifdef __APPLE__ // might be unnecessary if we fork() for bgm as well
-    py_run = "python3 \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+    py_run = "python3 \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time) + " &";
 #else
-    py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
+    py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time) + " &";
 #endif
 
     return py_run;
@@ -98,6 +98,13 @@ static std::string getPyScript(const std::string& path_to_script, const std::str
 
 static void callPythonScript(const std::string& script, const std::string& audio, int time)
 {
+/* LIOR PLEASE TEST WITH THIS ALSO INSTEAD OF THE IFDEF APPLE,
+ * BECAUSE IT MIGHT WORK FOR THE BOTH OF US WITH THE AMPERSAND
+    std::thread newThread([script, audio, time]() {
+        std::system(getPyScript(script, audio, time).c_str());
+    });
+    newThread.detach();
+    */
 #ifdef __APPLE__
     pid_t pid = fork();
     if (pid == 0)
