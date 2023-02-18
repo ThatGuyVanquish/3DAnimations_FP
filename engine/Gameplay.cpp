@@ -108,7 +108,7 @@ void Gameplay::InitSnake() {
     if (useSnake)
     {
         // init snake
-        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
+        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2downPart.obj");
         auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
