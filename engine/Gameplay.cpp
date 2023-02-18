@@ -152,10 +152,11 @@ void Gameplay::generateViableEntities() {
     viableItems.push_back({"Bunny", "data/bunny.off", 10.0f, EntityType::ITEM, 1000, 100});
     viableItems.push_back({"Cheburashka", "data/cheburashka.off", 1.5f, EntityType::ITEM, 500, 80});
     viableItems.push_back({"Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80});
-    //viableEnemies.push_back({"Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100}); not a good model
     viableEnemies.push_back({"Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80});
+    viableEnemies.push_back({"Dragon", "data/Models/dragon.off", 1.5f, EntityType::ENEMY, -1000, 80});
     //viableEnemies.push_back({"Sword", "data/Sword01.off", 0.0005f, EntityType::ENEMY, -1000, 100});
     viableBonuses.push_back({"Apple", "data/Apple.off", 0.005f, EntityType::BONUS, 0, 100});
+    viableBonuses.push_back({"Mushroom", "data/Models/mushroom.off", 3.0f, EntityType::BONUS, 0, 100});
 }
 
 entity_data Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> material, bool visible) {
