@@ -50,7 +50,7 @@ void Gameplay::InitMaterials() {
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
     snakeShader = std::make_shared<Program>("shaders/basicShader");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-    snakeSkin->AddTexture(0, "textures/snake_long.png", 2);
+    snakeSkin->AddTexture(0, "textures/snake.png", 2);
     itemShader = std::make_shared<Program>("shaders/phongShader2");
     itemMaterial = std::make_shared<Material>("itemMaterial", itemShader);
     itemShader->name = "itemShader";
@@ -107,23 +107,24 @@ void Gameplay::InitSnake() {
 
     if (useSnake)
     {
+        auto snakeModel = ObjLoader::ModelFromObj("SNAKE", "data/snake_scaled_tex.obj", snakeSkin);
         // init snake
-        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2downPart.obj");
-        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+//        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake_tex.obj");
+//        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
 
-        Eigen::MatrixXd V_uv;
-        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
-        // create new mesh with UV
-        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-                                                                           snake.model->GetMesh(0)->data[0].vertices,
-                                                                           snake.model->GetMesh(0)->data[0].faces,
-                                                                           snake.model->GetMesh(0)->data[0].vertexNormals,
-                                                                           V_uv
-        );
-        // update snake mesh
-        snake.model->SetMeshList({newMesh});
+//        Eigen::MatrixXd V_uv;
+//        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
+//        // create new mesh with UV
+//        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+//                                                                           snake.model->GetMesh(0)->data[0].vertices,
+//                                                                           snake.model->GetMesh(0)->data[0].faces,
+//                                                                           snake.model->GetMesh(0)->data[0].vertexNormals,
+//                                                                           V_uv
+//        );
+//        // update snake mesh
+//        snake.model->SetMeshList({newMesh});
 //        setAllUVs(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, uv_vec);
 
         snakeSkinning.InitSkinning(snake, cyls);

@@ -200,7 +200,7 @@ static void setUV(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F_true, Eigen
 
 
     // Scale UV to make the texture more clear
-//    V_uv *= 20;
+    V_uv *= 20;
 //    V_uv *= 10;
 
 }
