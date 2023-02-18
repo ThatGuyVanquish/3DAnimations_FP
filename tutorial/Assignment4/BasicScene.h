@@ -33,7 +33,6 @@ private:
     void updateGameplay() override;
 
     void KeyCallback(cg3d::Viewport* _viewport, int x, int y, int key, int scancode, int action, int mods) override;
-    bool devTools = false;
     int gotL = 0;
     void ViewportSizeCallback(cg3d::Viewport* _viewport) override;
     void AddViewportCallback(cg3d::Viewport* _viewport) override;

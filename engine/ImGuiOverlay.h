@@ -69,12 +69,6 @@ static void ShowXLText(const char* text, std::string font)
     ImGui::PopFont();
 }
 
-static void insertIntoScoreboard(char* name, int score)
-{
-
-}
-
-
 class ImGuiOverlay {
 
 public:
@@ -87,7 +81,9 @@ public:
     void MainMenu(bool &animate);
     void DeathScreen(bool &animate);
     void LevelUpScreen(bool& animate);
+    void CheatScreen(bool& animate);
 
+    void handleCheats(const std::string& cheat);
     
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
@@ -104,8 +100,10 @@ public:
     bool displayGameOver = false;
     bool grabCallbacks = false;
     bool displayMainMenu = true, displayLeaderboard = false;
-
+    bool displayCheatWindow = false;
+    bool devMode = false;
     Leaderboard leaderboard;
+    std::vector<std::string> cheatCodes = {"DEVTOOLS"};
 private:
 
 
