@@ -120,8 +120,8 @@ public:
 
     // skinning
     Skinning snakeSkinning;
-    bool useSnake = false;
-    bool showCyls = true;
+    bool useSnake = true;
+    bool showCyls = false;
 
     // animation
     float slerpFactor = 0.9f;

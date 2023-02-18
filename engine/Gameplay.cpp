@@ -93,13 +93,12 @@ void Gameplay::InitSnake() {
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/viperagabon.obj");
     auto headModel = Model::Create("head", headMesh, itemMaterial);
-    headModel->Scale(0.3f);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
-    head = {headModel, 1.0f, head_aabb};
+    head = {headModel, 0.25f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
     headModel->Scale(head.scaleFactor);
 //    headModel->Rotate((float) -M_PI, Movable::Axis::Y);
-    headModel->Translate(-1.6f, Movable::Axis::Z);
+    headModel->Translate(-1.1f, Movable::Axis::Z);
     headModel->showFaces = true;
     headModel->showWireframe = false;
     cyls[0].model->AddChild(headModel);
@@ -109,7 +108,7 @@ void Gameplay::InitSnake() {
     if (useSnake)
     {
         // init snake
-        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake3.obj");
+        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
         auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
@@ -515,8 +514,8 @@ void Gameplay::ResetSnake() {
     head.model->SetTin(Eigen::Affine3f::Identity());
     head.model->PropagateTransform();
     head.model->Scale(head.scaleFactor);
-    head.model->Rotate((float) -M_PI, Movable::Axis::Y);
-    head.model->Translate(-1.6f, Movable::Axis::Z);
+//    head.model->Rotate((float) -M_PI, Movable::Axis::Y);
+    head.model->Translate(-1.1f, Movable::Axis::Z);
 
     if (useSnake)
     {

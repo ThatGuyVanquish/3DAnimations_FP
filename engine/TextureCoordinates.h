@@ -111,23 +111,23 @@ static void setUV(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F_true, Eigen
 //    Eigen::MatrixXi F = F_true.block(0,0,rows,3);
     Eigen::MatrixXi F = F_true;
 
-    int counter = 0;
-    for (int i = 0; i < F.rows(); i++)
-    {
-        if ((abs(V.row(F(i, 0))[2]) < 0.09 || abs(V.row(F(i, 1))[2]) < 0.09 || abs(V.row(F(i, 2))[2]) < 0.09) &&
-                (abs(V.row(F(i, 0))[0]) < 0.09 || abs(V.row(F(i, 1))[0]) < 0.09 || abs(V.row(F(i, 2))[0]) < 0.09) &&
-                (V.row(F(i, 0))[1] < -0.3 || V.row(F(i, 1))[1] < -0.3 || V.row(F(i, 2))[1] < -0.3)){
-            std::cout << "face index = " << i << std::endl;
-            std::cout << V.row(F(i, 0)).transpose() << "\n" << std::endl;
-            std::cout << V.row(F(i, 1)).transpose() << "\n" << std::endl;
-            std::cout << V.row(F(i, 2)).transpose() << "\n" << std::endl;
-            std::cout << "\n" << std::endl;
-            counter++;
-        }
-    }
-    std::cout << counter << std::endl;
-    std::cout << V.colwise().maxCoeff() << std::endl;
-    std::cout << V.colwise().minCoeff() << std::endl;
+//    int counter = 0;
+//    for (int i = 0; i < F.rows(); i++)
+//    {
+//        if ((abs(V.row(F(i, 0))[2]) < 0.09 || abs(V.row(F(i, 1))[2]) < 0.09 || abs(V.row(F(i, 2))[2]) < 0.09) &&
+//                (abs(V.row(F(i, 0))[0]) < 0.09 || abs(V.row(F(i, 1))[0]) < 0.09 || abs(V.row(F(i, 2))[0]) < 0.09) &&
+//                (V.row(F(i, 0))[1] < -0.3 || V.row(F(i, 1))[1] < -0.3 || V.row(F(i, 2))[1] < -0.3)){
+//            std::cout << "face index = " << i << std::endl;
+//            std::cout << V.row(F(i, 0)).transpose() << "\n" << std::endl;
+//            std::cout << V.row(F(i, 1)).transpose() << "\n" << std::endl;
+//            std::cout << V.row(F(i, 2)).transpose() << "\n" << std::endl;
+//            std::cout << "\n" << std::endl;
+//            counter++;
+//        }
+//    }
+//    std::cout << counter << std::endl;
+//    std::cout << V.colwise().maxCoeff() << std::endl;
+//    std::cout << V.colwise().minCoeff() << std::endl;
 
     F.resize(F_true.rows()-1, 3);
     bool visited = false;
@@ -138,7 +138,6 @@ static void setUV(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F_true, Eigen
            else F.row(i) = F_true.row(i);
        } else visited = true;
     }
-    int j = 0;
 
 //    // 501
 //    // Find the open boundary
@@ -201,5 +200,7 @@ static void setUV(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F_true, Eigen
 
 
     // Scale UV to make the texture more clear
-    V_uv *= 20;
+//    V_uv *= 20;
+    V_uv *= 10;
+
 }
