@@ -50,7 +50,7 @@ void Gameplay::InitMaterials() {
     collisionColor->AddTexture(0, "textures/box0.bmp", 2);
     snakeShader = std::make_shared<Program>("shaders/basicShader");
     snakeSkin = std::make_shared<Material>("snakeSkin", snakeShader);
-    snakeSkin->AddTexture(0, "textures/snake.png", 2);
+    snakeSkin->AddTexture(0, "textures/snake_long.png", 2);
     itemShader = std::make_shared<Program>("shaders/phongShader2");
     itemMaterial = std::make_shared<Material>("itemMaterial", itemShader);
     itemShader->name = "itemShader";
