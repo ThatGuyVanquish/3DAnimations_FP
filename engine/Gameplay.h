@@ -14,20 +14,6 @@
 #include "TextureCoordinates.h"
 #include "Simplification.h"
 
-static std::string getPyScript(const char* path_to_script, const char* path_to_argv1, int time)
-{
-    char* py_path = getResource(path_to_script);// probably location dependant
-    char* audio_path = getResource(path_to_argv1);
-    std::string py_run = "";
-#ifdef __APPLE__
-    py_run = "python3 \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
-#else
-    py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time);
-#endif
-
-    return py_run;
-}
-
 using namespace cg3d;
 
 class Gameplay

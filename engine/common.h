@@ -9,6 +9,14 @@
 #include "Model.h"
 #include <chrono>
 #include <random>
+#include <filesystem>
+
+#ifdef __APPLE__
+    #include <unistd.h>
+    #include <cstdlib>
+#include <thread>
+
+#endif
 
 #define M_E        2.71828182845904523536   // e
 #define M_LOG2E    1.44269504088896340736   // log2(e)
@@ -66,4 +74,34 @@ static int getRandomNumberInRange(int low, int high)
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(low, high - 1); // define the range
     return distr(gen);
+}
+
+static char* getResource(const char* fileName)
+{
+    std::filesystem::path cwd = std::filesystem::current_path() / "resources";
+    std::filesystem::path filePath = cwd / fileName;
+    std::string filePathString = filePath.string();
+    return strcpy(new char[filePathString.length() + 1], filePathString.c_str());
+}
+
+static std::string getPyScript(const std::string& path_to_script, const std::string& path_to_argv1, int time)
+{
+    char* py_path = getResource(path_to_script.c_str());// probably location dependant
+    char* audio_path = getResource(path_to_argv1.c_str());
+    std::string py_run;
+#ifdef __APPLE__ // might be unnecessary if we fork() for bgm as well
+    py_run = "python3 \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time) + " &";
+#else
+    py_run = "python \"" + std::string(py_path) + "\" \"" + audio_path + "\" " + std::to_string(time) + " &";
+#endif
+
+    return py_run;
+}
+
+static void callPythonScript(const std::string& script, const std::string& audio, int time)
+{
+    std::thread newThread([script, audio, time]() {
+        std::system(getPyScript(script, audio, time).c_str());
+    });
+    newThread.detach();
 }

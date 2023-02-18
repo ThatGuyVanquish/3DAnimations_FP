@@ -148,8 +148,8 @@ void Gameplay::InitSnake() {
 }
 
 void Gameplay::generateViableEntities() {
-    viableItems.push_back({"Bunny", "data/bunny.off", 6.0f, EntityType::ITEM, 1000, 100});
-    viableItems.push_back({"Cheburashka", "data/cheburashka.off", 1.0f, EntityType::ITEM, 500, 80});
+    viableItems.push_back({"Bunny", "data/bunny.off", 10.0f, EntityType::ITEM, 1000, 100});
+    viableItems.push_back({"Cheburashka", "data/cheburashka.off", 1.5f, EntityType::ITEM, 500, 80});
     viableItems.push_back({"Cow", "data/cow.off", 2.0f, EntityType::ITEM, 500, 80});
     //viableEnemies.push_back({"Screwdriver", "data/screwdriver.off", 10.0f, EntityType::ENEMY, -1000, 100}); not a good model
     viableEnemies.push_back({"Knight", "data/decimated-knight.off", 2.0f, EntityType::ENEMY, -500, 80});
@@ -317,16 +317,18 @@ void Gameplay::checkForCollision()
             imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives <= 0)
             {
-                std::thread fatalityThread([&]() {
-                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
-                    });
-                fatalityThread.detach();
+                callPythonScript("scripts/play_sound.py", "audio/fatality.mp3", 3);
+//                std::thread fatalityThread([&]() {
+//                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
+//                    });
+//                fatalityThread.detach();
                 Reset(true);
             } else {
-                std::thread deathThread([&]() {
-                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
-                    });
-                deathThread.detach();
+                callPythonScript("scripts/play_sound.py", "audio/death_noise.mp3", 2);
+//                std::thread deathThread([&]() {
+//                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
+//                    });
+//                deathThread.detach();
                 Reset(false);
             }
         }
@@ -374,18 +376,18 @@ void Gameplay::HandleEntityCollision(int i)
             UpdateScore(entities[i].ent.points);
             if (shouldLevelUp())
             {
-                std::thread wowThread([&]() {
-                    std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
-                    });
-                wowThread.detach();
+                callPythonScript("scripts/play_sound.py", "audio/wow.mp3", 5);
+//                std::thread wowThread([&]() {
+//                    std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
+//                    });
+//                wowThread.detach();
                 Reset(false);
             } else {
-                /*DeleteEntity(i);
-                spawnEntity(getRandomNumberInRange(0, viableItems.size()), viableItems);*/
-                std::thread ringThread([&]() {
-                    std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
-                    });
-                ringThread.detach();
+                callPythonScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1);
+//                std::thread ringThread([&]() {
+//                    std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
+//                    });
+//                ringThread.detach();
                 replaceEntity(entities[i]);
             }
             break;
@@ -395,16 +397,18 @@ void Gameplay::HandleEntityCollision(int i)
             imGuiOverlay.died = true;
             if (imGuiOverlay.currentLives <= 0)
             {
-                std::thread fatalityThread([&]() {
-                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
-                    });
-                fatalityThread.detach();
+                callPythonScript("scripts/play_sound.py", "audio/fatality.mp3", 2);
+//                std::thread fatalityThread([&]() {
+//                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
+//                    });
+//                fatalityThread.detach();
                 Reset(true);
             } else {
-                std::thread deathThread([&]() {
-                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
-                    });
-                deathThread.detach();
+                callPythonScript("scripts/play_sound.py", "audio/death_noise.mp3", 2);
+//                std::thread deathThread([&]() {
+//                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
+//                    });
+//                deathThread.detach();
                 Reset(false);
             }
             break;
@@ -603,10 +607,11 @@ void Gameplay::handleBonus()
     if (bonusPercentage[bonusIndex] == Bonus::LIFE)
     {
         imGuiOverlay.currentLives++;
-        std::thread sheeshThread([&]() {
-            std::system(getPyScript("scripts/play_sound.py", "audio/sheesh.mp3", 3).c_str());
-            });
-        sheeshThread.detach();
+        callPythonScript("scripts/play_sound.py", "audio/sheesh.mp3", 3);
+//        std::thread sheeshThread([&]() {
+//            std::system(getPyScript("scripts/play_sound.py", "audio/sheesh.mp3", 3).c_str());
+//            });
+//        sheeshThread.detach();
         return;
     }
     if (bonusPercentage[bonusIndex] == Bonus::POINTS)
@@ -614,17 +619,19 @@ void Gameplay::handleBonus()
         UpdateScore(getRandomNumberInRange(0, 2000));
         if (shouldLevelUp())
         {
-            std::thread wowThread([&]() {
-                std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
-                });
-            wowThread.detach();
+            callPythonScript("scripts/play_sound.py", "audio/wow.mp3", 5);
+//            std::thread wowThread([&]() {
+//                std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
+//                });
+//            wowThread.detach();
             Reset(false);
         }
         else {
-            std::thread ringThread([&]() {
-                std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
-                });
-            ringThread.detach();
+            callPythonScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1);
+//            std::thread ringThread([&]() {
+//                std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
+//                });
+//            ringThread.detach();
         }
         return;
     }
@@ -634,18 +641,20 @@ void Gameplay::handleBonus()
             velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor > 0.8f)
             slerpFactor -= 0.02f;
-        std::thread neeoomThread([&]() {
-            std::system(getPyScript("scripts/play_sound.py", "audio/neeoom.mp3", 3).c_str());
-            });
-        neeoomThread.detach();
+        callPythonScript("scripts/play_sound.py", "audio/neeoom.mp3", 3);
+//        std::thread neeoomThread([&]() {
+//            std::system(getPyScript("scripts/play_sound.py", "audio/neeoom.mp3", 3).c_str());
+//            });
+//        neeoomThread.detach();
         return;
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
     {
-        std::thread slowThread([&]() {
-            std::system(getPyScript("scripts/play_sound.py", "audio/bruh.mp3", 1).c_str());
-            });
-        slowThread.detach();
+        callPythonScript("scripts/play_sound.py", "audio/bruh.mp3", 1);
+//        std::thread slowThread([&]() {
+//            std::system(getPyScript("scripts/play_sound.py", "audio/bruh.mp3", 1).c_str());
+//            });
+//        slowThread.detach();
         if (velocityVec.z() < -0.05f)
             velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor < 1.0f)
