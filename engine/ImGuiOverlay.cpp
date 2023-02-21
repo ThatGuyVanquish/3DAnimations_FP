@@ -248,6 +248,7 @@ void ImGuiOverlay::MainMenu(bool &animate)
         currentLevel = 1;
         currentLives = 3;
         currentScore = 0;
+        currentScoreFormatted = formatScore();
         countdown = true;
         displayGameOver = false;
         died = false;
@@ -412,4 +413,74 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     ImGui::PopStyleColor();
 
     ImGui::End();
+}
+
+bool ImGuiOverlay::PauseMenu(bool &animate)
+{
+    if (!paused)
+        return false;
+    if (animate)
+        animate = false;
+    ImGui::CreateContext();
+    bool* pauseMenuToggle = nullptr;
+    ImGui::Begin("Pause Menu", pauseMenuToggle, MENU_FLAGS);
+
+    int width, height, nrChannels;
+    char* imgPath = getResource("mainmenu_bg.png");
+    unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
+    delete imgPath;
+
+    // Generate the OpenGL texture
+    unsigned int bgImage;
+    glGenTextures(1, &bgImage);
+    glBindTexture(GL_TEXTURE_2D, bgImage);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+
+    ImGui::Image((void*)bgImage, ImVec2(width,height));
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    center.x -= width/2;
+    center.y -= height/2;
+    ImGui::SetWindowPos("Pause Menu", center, ImGuiCond_Always);
+    ImGui::SetItemAllowOverlap();
+    ImGui::SetWindowSize("Pause Menu", ImVec2(width + 20, height + 20), ImGuiCond_Always);
+    ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
+    ImGui::SetWindowFontScale(1.3f);
+    ImGui::PushStyleColor(ImGuiCol_Button, GL_CLEAR);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,100,0,255));
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[4]);
+    if (ImGui::Button("RESUME"))
+    {
+        callPythonScript("scripts/play_sound.py", "audio/here_we_go.mp3", 2);
+        countdown = true;
+        countdownTimerEnd = 0;
+        deathTimerEnd = 0;
+        paused = false;
+    }
+
+    ImGui::SetCursorPos(ImVec2(85.0f, 220.0f));
+    if (ImGui::Button("MAIN MENU"))
+    {
+        displayMainMenu = true;
+        paused = false;
+        deathTimerEnd = 0;
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+        ImGui::PopFont();
+        ImGui::End();
+        return true;
+    }
+
+    ImGui::SetCursorPos(ImVec2(85.0f, 255.0f));
+    if (ImGui::Button("LEVIOSA?"))
+    {
+        callPythonScript("scripts/play_sound.py", "audio/leviosa.mp3", 3);
+    }
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopFont();
+    ImGui::End();
+    return false;
 }
