@@ -71,6 +71,7 @@ public:
     char* formatScore();
     void showLeaderboard(bool& animate);
     void MainMenu(bool &animate);
+    bool PauseMenu(bool &animate);
     void DeathScreen(bool &animate);
     void LevelUpScreen(bool& animate);
     void CheatScreen(bool& animate);
@@ -94,6 +95,7 @@ public:
     bool displayMainMenu = true, displayLeaderboard = false;
     bool displayCheatWindow = false;
     bool devMode = false;
+    bool paused = false;
     Leaderboard leaderboard;
     std::vector<std::string> cheatCodes = {"DEVTOOLS"};
 

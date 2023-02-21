@@ -15,7 +15,7 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-    callPythonScript("scripts/bgm.py", "audio/bgm.mp3", -1);
+    //callPythonScript("scripts/bgm.py", "audio/bgm.mp3", -1);
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
@@ -117,6 +117,8 @@ void BasicScene::BuildImGui()
     gameplay.imGuiOverlay.LevelUpScreen(gameplay.animate);
     gameplay.imGuiOverlay.showLeaderboard(gameplay.animate);
     gameplay.imGuiOverlay.CheatScreen(gameplay.animate);
+    if (gameplay.imGuiOverlay.PauseMenu(gameplay.animate))
+        gameplay.Reset(true);
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)
@@ -262,6 +264,7 @@ void BasicScene::KeyCallback(Viewport* _viewport, int x, int y, int key, int sca
             break;
         case GLFW_KEY_P:
             gotL = 0;
+            gameplay.imGuiOverlay.paused = true;
             if (!gameplay.imGuiOverlay.devMode)
                 break;
             std::cout << "camera[1] translate:" << locomotionCameras[2]->GetTout().translation() << std::endl;
