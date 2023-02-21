@@ -44,6 +44,7 @@ void ImGuiOverlay::startTimer(bool &animate)
             animate = true;
             countdown = false;
             grabCallbacks = true;
+            timeFromLastWASDQE = time(nullptr);
         }
     }
     ImGui::End();
@@ -215,6 +216,9 @@ void ImGuiOverlay::MainMenu(bool &animate)
     ImGui::SetWindowSize("Main Menu", ImVec2(width + 20, height + 20), ImGuiCond_Always);
     ImGui::SetCursorPos(ImVec2(85.0f, 185.0f));
     ImGui::SetWindowFontScale(1.3f);
+    ImGui::PushStyleColor(ImGuiCol_Button, GL_CLEAR);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,100,0,255));
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[4]);
     if (ImGui::Button("START GAME"))
     {
         callPythonScript("scripts/play_sound.py", "audio/here_we_go.mp3", 2);
@@ -237,6 +241,9 @@ void ImGuiOverlay::MainMenu(bool &animate)
         displayMainMenu = false;
         displayLeaderboard = true;
     }
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopFont();
     ImGui::End();
 }
 
@@ -372,6 +379,7 @@ void ImGuiOverlay::CheatScreen(bool &animate)
         if (std::find(cheatCodes.begin(), cheatCodes.end(), cheat) != cheatCodes.end())
             handleCheats(cheat);
         displayCheatWindow = false;
+        timeFromLastWASDQE = time(nullptr);
         animate = true;
         grabCallbacks = true;
     }

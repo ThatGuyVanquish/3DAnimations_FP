@@ -96,6 +96,9 @@ public:
     bool devMode = false;
     Leaderboard leaderboard;
     std::vector<std::string> cheatCodes = {"DEVTOOLS"};
+
+    time_t timeFromLastWASDQE = time(nullptr);
+
 private:
 
 

@@ -16,10 +16,6 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
     callPythonScript("scripts/bgm.py", "audio/bgm.mp3", -1);
-//    std::thread bgmThread([&]() {
-//        std::system(getPyScript("scripts/bgm.py", "audio/bgm.mp3", -1).c_str());
-//        });
-//    bgmThread.detach();
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
@@ -100,14 +96,14 @@ void BasicScene::SetCamerasView()
 void BasicScene::SetCamera(int index)
 {
     cameraIdx = index;
-    /*if ((time(nullptr) - gameplay.timeFromLastWASDQE) > 2.5) camera = locomotionCameras[index];
+    /*if ((time(nullptr) - gameplay.imGuiOverlay.timeFromLastWASDQE) > 2.5) camera = locomotionCameras[index];
     else*/ camera = cameras[index];
     viewport->camera = camera;
 }
 
 void BasicScene::noLocomotion()
 {
-    gameplay.timeFromLastWASDQE = time(nullptr);
+    gameplay.imGuiOverlay.timeFromLastWASDQE = time(nullptr);
     gameplay.slerpFactor = gameplay.prev_slerp;
     SetCamera(cameraIdx);
 }
