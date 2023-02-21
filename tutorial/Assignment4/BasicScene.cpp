@@ -15,7 +15,7 @@ BasicScene::BasicScene(std::string name, cg3d::Display* display) : SceneWithImGu
 
 void BasicScene::Init(float fov, int width, int height, float near, float far)
 {
-    callPythonScript("scripts/bgm.py", "audio/bgm.mp3", -1);
+    //callPythonScript("scripts/bgm.py", "audio/bgm.mp3", -1);
     AddChild(gameplay.root = Movable::Create("root")); // a common invisible parent object for all the shapes
 
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
