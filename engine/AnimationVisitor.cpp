@@ -27,7 +27,7 @@ namespace cg3d
             {
                 int cylIndex = std::stoi(modelsName.substr(4));
                 if (cylIndex == 0) {
-                    if ((time(nullptr) - scene->gameplay.timeFromLastWASDQE) > 2.5) snakyLocomotion();
+                    if ((time(nullptr) - scene->gameplay.timeFromLastWASDQE) > delay) snakyLocomotion();
                     model->TranslateInSystem(system, scene->gameplay.velocityVec);
                     translateLocomotionCameras();
                 } else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
