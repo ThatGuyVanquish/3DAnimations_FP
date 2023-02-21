@@ -107,23 +107,24 @@ void Gameplay::InitSnake() {
 
     if (useSnake)
     {
+        auto snakeModel = ObjLoader::ModelFromObj("SNAKE", "data/snake_scaled_tex.obj", snakeSkin);
         // init snake
-        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake2.obj");
-        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+//        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake_tex.obj");
+//        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
 
-        Eigen::MatrixXd V_uv;
-        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
-        // create new mesh with UV
-        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-                                                                           snake.model->GetMesh(0)->data[0].vertices,
-                                                                           snake.model->GetMesh(0)->data[0].faces,
-                                                                           snake.model->GetMesh(0)->data[0].vertexNormals,
-                                                                           V_uv
-        );
-        // update snake mesh
-        snake.model->SetMeshList({newMesh});
+//        Eigen::MatrixXd V_uv;
+//        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
+//        // create new mesh with UV
+//        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
+//                                                                           snake.model->GetMesh(0)->data[0].vertices,
+//                                                                           snake.model->GetMesh(0)->data[0].faces,
+//                                                                           snake.model->GetMesh(0)->data[0].vertexNormals,
+//                                                                           V_uv
+//        );
+//        // update snake mesh
+//        snake.model->SetMeshList({newMesh});
 //        setAllUVs(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, uv_vec);
 
         snakeSkinning.InitSkinning(snake, cyls);
