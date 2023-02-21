@@ -125,7 +125,7 @@ public:
 
     // animation
     float slerpFactor = 0.9f;
-    float prev_slerp;
+    float prev_slerp = 0.9f;
     Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
     //time_t timeFromLastWASDQE = time(nullptr);
     Eigen::Vector3f currPos;
