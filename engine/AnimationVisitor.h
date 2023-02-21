@@ -22,6 +22,7 @@ namespace cg3d
         void snakyLocomotion();
         void translateLocomotionCameras();
         void rotateBackCameras();
+        bool CheckInRange(Eigen::Vector3f init, Eigen::Vector3f current, Eigen::Vector3f limit);
 
 //        void Visit(Scene* _scene) override;
 

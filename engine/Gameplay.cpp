@@ -185,6 +185,9 @@ void Gameplay::randomizeTranlate(entity_data& entity)
     int z_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     int y_value = getRandomNumberInRange(-MAP_SIZE, MAP_SIZE);
     entity.modelData.model->Translate({ (float)x_value, (float)y_value, (float)z_value });
+    entity.modelData.model->initialTranslation = entity.modelData.model->GetTranslation();
+    float speedY = (float)getRandomNumberInRange(-100, 100) / 1000.0f;
+    entity.modelData.model->speed = {0.0f, speedY, 0.0f};
 }
 
 void Gameplay::spawnEntity(int index, std::vector<Entity> &viableEntities) {

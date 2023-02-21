@@ -43,6 +43,9 @@ public:
     int meshIndex = 0;
     int mode = 0;
 
+    Eigen::Vector3f initialTranslation;
+    Eigen::Vector3f speed;
+
     inline std::shared_ptr<Mesh> GetMesh(int index = 0) const { return meshList[index]; }
     inline std::vector<std::shared_ptr<Mesh>> GetMeshList() const { return meshList; }
     void SetMeshList(std::vector<std::shared_ptr<Mesh>> _meshList);
