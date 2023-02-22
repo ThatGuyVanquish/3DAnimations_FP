@@ -4,15 +4,20 @@ The assignment is to build a 3D Snake game, using a provided engine and utilizin
 
 The assignment is coded in the folder [Assignment4](https://github.com/ThatGuyVanquish/3DAnimations_FP/tree/master/tutorial/Assignment4) and in various files we've included in the engine folder, as stated below:   
 
-### 1) Animation Visitor {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/AnimationVisitor.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/tree/master/tutorial/Assignment4)}
+### 1) Animation Visitor {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/AnimationVisitor.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/AnimationVisitor.cpp)}
 
-The Animation Visitor is another visitor that's called in the renderer and is used to make the movement smoother and more snake-like.
+The Animation Visitor is another visitor that's called in the renderer and is used to make the movement smoother and more snake-like:
+* For cylinder kind models, this visitor is calculating the angle from the cylinder to its X and Y axis, and rotating it slightly to the axis direction in each visit. 
+* In addition, when the player's controls are not in action, this visitor is responsible on making the snake move in a snake-like movement with rotations to left and right of the snake.
+* For entity kind models, the visitor will move the model dynamically in the game space, under a predefined range.
 
-### 2) Collision Detection {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/CollisionDetection.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/CollisionDetection.cpp)}
+### 2) Collision Detection {[.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/CollisionDetection.cpp)}
 
-The collision detection class holds the methods necessary to add collision detection to all of the entities and the snake itself, using AABBs as shown in [Assignment 2](https://github.com/ThatGuyVanquish/3DAnimation_AS2).
+The collision detection class holds the methods necessary to add collision detection to all the entities and the snake itself, using AABBs as shown in [Assignment 2](https://github.com/ThatGuyVanquish/3DAnimation_AS2). Collision between the head of the snake and any kind of entity and between the head and its body (the cylinders) is checked frame by frame and is followed by a proper response depending on the colliding models in [Gameplay::checkForCollision()](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/8651719f90fa30f949eff5098b087d569a7e7d52/engine/Gameplay.cpp#L293)
 
-### 3) Texture Coordinates {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/commit/0527a70182d75e1218bcfa4bbec3c98109029901#diff-5094cf97a15dd0544aa388bd12ba949e15f0b6672d2e31a6a590549fbbef06bd)} *[EDIT THE LINK AND INFO]*
+### 3) Texture Coordinates {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/TextureCoordinates.h)}
+
+TextureCoordinates is our implementation for calculating the snake texture coordinates, which is crucial to make the snake model look more snake-like with an awesome snake skin texture. This functionality is based on [libigl-tutorial-503](https://github.com/libigl/libigl/blob/main/tutorial/503_ARAPParam/main.cpp) for "As-rigid-as-possible Parametrization" algorithm.    
 
 ### 4) ImGuiOverlay {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/ImGuiOverlay.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/ImGuiOverlay.cpp)}
 
@@ -30,7 +35,7 @@ A header file used for additional general methods and definitions, such as the E
 
 The class that holds our implementation of the skinning algorithm, using dual quaternion skinning.
 
-We use the methods [*calcWeight*](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/4414a87e9a48c9914e475d7511bb5d9238d89111/engine/Skinning.cpp#L86) to calculate the relevant weight of each joint to each vertex and [*moveModel*](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/4414a87e9a48c9914e475d7511bb5d9238d89111/engine/Skinning.cpp#L115) to animate the snake correctly according to the calculated weights.
+We use the methods [*calcWeight*](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/4414a87e9a48c9914e475d7511bb5d9238d89111/engine/Skinning.cpp#L86) to calculate the relevant weight of each joint to each vertex and [*moveModel*](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/4414a87e9a48c9914e475d7511bb5d9238d89111/engine/Skinning.cpp#L115) to animate the snake correctly according to the calculated weights. The implementation for the wights calculation for each snake vertex is considering the 2 closets joints where the weight for each joint is based on its distance from the vertex and the joint z coordinate.  
 
 ### 8) Gameplay {[.h](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Gameplay.h) | [.cpp](https://github.com/ThatGuyVanquish/3DAnimations_FP/blob/master/engine/Gameplay.cpp)}
 
