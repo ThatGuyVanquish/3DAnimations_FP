@@ -79,61 +79,15 @@ void Skinning::calcWeight()
 
     for (int i = 0; i < n; i++) {
         double curr_z = V.row(i)[2];
-//        for (int j = 0; j < numOfCyls + 1; j++) {
-//            if (curr_z >= min_z + jointLength * j && curr_z <= min_z + jointLength * (j + 1)) {
-//                double dist = abs(curr_z - (min_z + jointLength * j));
-//                W.row(i)[j] = (jointLength - dist) / jointLength;
-//                W.row(i)[j + 1] = 1 - W.row(i)[j];
-//                break;
-//            }
-//        }
-        double totalWeight = 0.0;
-        double min_value_1 = std::numeric_limits<double>::infinity();
-        double min_value_2 = std::numeric_limits<double>::infinity();
-        double min_value_3 = std::numeric_limits<double>::infinity();
-        int index_1 = 0;
-        int index_2 = 0;
-        int index_3 = 0;
         for (int j = 0; j < numOfCyls + 1; j++) {
-            double dist = abs(curr_z - (min_z + jointLength * j));
-            if (dist < min_value_1) {
-                min_value_3 = min_value_2;
-                index_3 = index_2;
-                min_value_2 = min_value_1;
-                index_2 = index_1;
-                min_value_1 = dist;
-                index_1 = j;
-            } else if (dist < min_value_2) {
-                min_value_3 = min_value_2;
-                index_3 = index_2;
-                min_value_2 = dist;
-                index_2 = j;
-            } else if (dist < min_value_3) {
-                min_value_3 = dist;
-                index_3 = j;
+            if (curr_z >= min_z + jointLength * j && curr_z <= min_z + jointLength * (j + 1)) {
+                double dist = abs(curr_z - (min_z + jointLength * j));
+                W.row(i)[j] = (jointLength - dist) / jointLength;
+                W.row(i)[j + 1] = 1 - W.row(i)[j];
+                break;
             }
         }
-        double variance = 0.1;
-        totalWeight = exp(-min_value_1 * min_value_1 / (2.0 * variance)) + exp(-min_value_2 * min_value_2 / (2.0 * variance)) + exp(-min_value_3 * min_value_3 / (2.0 * variance));
-        W.row(i)[index_1] = exp(-min_value_1 * min_value_1 / (2.0 * variance)) / totalWeight;
-        W.row(i)[index_2] = exp(-min_value_2 * min_value_2 / (2.0 * variance)) / totalWeight;
-        W.row(i)[index_3] = exp(-min_value_3 * min_value_3 / (2.0 * variance)) / totalWeight;
-
-//            double sum = min_value_1 + min_value_2 + min_value_3;
-//            W.row(i)[index_1] = (min_value_3 / sum);
-//            W.row(i)[index_2] = (min_value_2 / sum);
-//            W.row(i)[index_3] = (min_value_1 / sum);
-
-//            W.row(i)[j] = snakeLength - dist;
-//            double variance = 1.0;
-//            W.row(i)[j] = exp(-dist * dist / (2.0 * variance));
-//            totalWeight += W.row(i)[j];
-
-//        for (int j = 0; j < numOfCyls + 1; j++) {
-//            W.row(i)[j] /= totalWeight;
-//        }
     }
-    std::cout << "W: " << W << std::endl;
 }
 
 void Skinning::moveModel(std::vector<model_data> &cyls, model_data &snake)
@@ -162,55 +116,5 @@ void Skinning::moveModel(std::vector<model_data> &cyls, model_data &snake)
     // change snake mesh to the deformed one
     snake.model->SetMeshList({deformedMesh});
 }
-
-//
-//static void print_min_max(const Eigen::MatrixXd& matrix) {
-//    double max_value_x = -std::numeric_limits<double>::infinity();
-//    double min_value_x = std::numeric_limits<double>::infinity();
-//    double max_value_y = -std::numeric_limits<double>::infinity();
-//    double min_value_y = std::numeric_limits<double>::infinity();
-//    double max_value_z = -std::numeric_limits<double>::infinity();
-//    double min_value_z = std::numeric_limits<double>::infinity();
-//
-//    int max_row_x = 0;
-//    int max_row_y = 0;
-//    int max_row_z = 0;
-//    int min_row_x = 0;
-//    int min_row_y = 0;
-//    int min_row_z = 0;
-//
-//    for (int row = 0; row < matrix.rows(); ++row) {
-//
-//        if (matrix(row, 0) > max_value_x) {
-//            max_value_x = matrix(row, 0);
-//            max_row_x = row;
-//        }
-//        if (matrix(row, 1) > max_value_y) {
-//            max_value_y = matrix(row, 1);
-//            max_row_y = row;
-//        }
-//        if (matrix(row, 2) > max_value_z) {
-//            max_value_z = matrix(row, 2);
-//            max_row_z = row;
-//        }
-//
-//        if (matrix(row, 0) < min_value_x) {
-//            min_value_x = matrix(row, 0);
-//            min_row_x = row;
-//        }
-//        if (matrix(row, 1) < min_value_y) {
-//            min_value_y = matrix(row, 1);
-//            min_row_y = row;
-//        }
-//        if (matrix(row, 2) < min_value_z) {
-//            min_value_z = matrix(row, 2);
-//            min_row_z = row;
-//        }
-//    }
-//
-//    std::cout << "min_value_x: " << min_value_x << " min_row_x: " << min_row_x << " min_value_y: " << min_value_y << " min_row_y: " << min_row_y << " min_value_z: " << min_value_z << " min_row_z: " << min_row_z << std::endl;
-//    std::cout << "max_value_x: " << max_value_x << " max_row_x: " << max_row_x << " max_value_y: " << max_value_y << " max_row_y: " << max_row_y << " max_value_z: " << max_value_z << " max_row_z: " << max_row_z << std::endl;
-//
-//}
 
 

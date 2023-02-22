@@ -72,7 +72,6 @@ void Gameplay::InitSnake() {
         auto cylModel = ObjLoader::ModelFromObj("Cyl " + std::to_string(i), "data/zcylinder.obj", basicMaterial);
         cyls.push_back({cylModel, scaleFactor, cyl_aabb});
         CollisionDetection::InitCollisionModels(cyls[i], frameColor, collisionColor);
-//        cyls[i].model->showFaces = false;
         if (!showCyls)
         {
             cyls[i].model->isHidden = true;
@@ -85,7 +84,6 @@ void Gameplay::InitSnake() {
             cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         } else {
             cyls[i - 1].model->AddChild(cyls[i].model);
-            //cyls[i].model->Scale(1, Axis::X);
             cyls[i].model->Translate(1.6f, Movable::Axis::Z);
             cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         }
@@ -98,7 +96,6 @@ void Gameplay::InitSnake() {
     head = {headModel, 0.25f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
     headModel->Scale(head.scaleFactor);
-//    headModel->Rotate((float) -M_PI, Movable::Axis::Y);
     headModel->Translate(-1.1f, Movable::Axis::Z);
     headModel->showFaces = true;
     headModel->showWireframe = false;
@@ -108,10 +105,8 @@ void Gameplay::InitSnake() {
 
     if (useSnake)
     {
-        auto snakeModel = ObjLoader::ModelFromObj("SNAKE", "data/snake_scaled_tex.obj", snakeSkin);
         // init snake
-//        auto snakeMesh = IglLoader::MeshFromFiles("snakeMesh", "data/snake_tex.obj");
-//        auto snakeModel = Model::Create("SNAKE", snakeMesh, snakeSkin);
+        auto snakeModel = ObjLoader::ModelFromObj("SNAKE", "data/snake_scaled_tex.obj", snakeSkin);
         igl::AABB<Eigen::MatrixXd, 3> snake_aabb;
         snake = {snakeModel, 16.0f, snake_aabb};
 
@@ -126,26 +121,10 @@ void Gameplay::InitSnake() {
 //        );
 //        // update snake mesh
 //        snake.model->SetMeshList({newMesh});
-//        setAllUVs(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, uv_vec);
 
         snakeSkinning.InitSkinning(snake, cyls);
 
         root->AddChild(snakeModel);
-
-//        snake.model->showFaces = false;
-//        snake.model->showWireframe = true;
-
-//        Eigen::MatrixXd V_uv;
-//        setUV(snake.model->GetMesh(0)->data[0].vertices, snake.model->GetMesh(0)->data[0].faces, V_uv);
-//        // create new mesh with UV
-//        std::shared_ptr<cg3d::Mesh> newMesh = std::make_shared<cg3d::Mesh>(snake.model->name,
-//                                                                                snake.model->GetMesh(0)->data[0].vertices,
-//                                                                                snake.model->GetMesh(0)->data[0].faces,
-//                                                                                snake.model->GetMesh(0)->data[0].vertexNormals,
-//                                                                                V_uv
-//        );
-//        // update snake mesh
-//        snake.model->SetMeshList({newMesh});
     }
 
 }
@@ -258,7 +237,7 @@ void Gameplay::swapEntities(entity_data& entity, std::vector<entity_data> extras
 
 void Gameplay::replaceEntity(entity_data& entity)
 {
-    // If hit a bonus, just randomize it's position, we're not going to respawn it
+    // If hit a bonus, just randomize its position, we're not going to respawn it
     switch (entity.ent.type)
     {
     case EntityType::BONUS:
@@ -310,12 +289,7 @@ void Gameplay::UpdateScore(int score)
     imGuiOverlay.currentScoreFormatted = imGuiOverlay.formatScore();
 }
 
-/**
- * need to add actions to be made when a collision of 2 objects detected, like:
- * 1. when the head of the snake collides with a "good" object, it should be eaten and gain score
- * 2. when the head of the snake collides with a "bad" object or itself, it should lower the score or end the game
- * 3. any other scenarios...
- */
+
 void Gameplay::checkForCollision()
 {
     // collision with the head and cylinders:
@@ -488,7 +462,6 @@ void Gameplay::ResetSnake() {
             cyls[0].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         } else {
             cyls[i - 1].model->AddChild(cyls[i].model);
-            //cyls[i].model->Scale(1, Axis::X);
             cyls[i].model->Translate(1.6f, Movable::Axis::Z);
             cyls[i].model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
         }
@@ -498,7 +471,6 @@ void Gameplay::ResetSnake() {
     head.model->SetTin(Eigen::Affine3f::Identity());
     head.model->PropagateTransform();
     head.model->Scale(head.scaleFactor);
-//    head.model->Rotate((float) -M_PI, Movable::Axis::Y);
     head.model->Translate(-1.1f, Movable::Axis::Z);
 
     if (useSnake)
@@ -513,16 +485,7 @@ void Gameplay::ResetSnake() {
         // change snake mesh to the transformed one
         snake.model->SetMeshList({deformedMesh});
         snakeSkinning.InitTransformations(cyls);
-
-//        snake.model->SetMeshList({deformedMesh});
-//        snake.model->SetTout(Eigen::Affine3f::Identity());
-//        snake.model->SetTin(Eigen::Affine3f::Identity());
-//        snake.model->PropagateTransform();
-//        snake.model->Translate(1.6f * (numOfCyls / 2) - 0.8f, Movable::Axis::Z);
-//        snake.model->Scale(16.0f, Movable::Axis::Z);
-//        snake.model->SetCenter(Eigen::Vector3f(0, 0, -0.8f));
     }
-
 }
 
 void Gameplay::Reset(bool mainMenu) {
@@ -541,7 +504,6 @@ void Gameplay::Reset(bool mainMenu) {
         imGuiOverlay.countdownTimerEnd = 0;
         imGuiOverlay.accumulatedTime = 0;
     }
-        //root->RemoveChild(snake.model); need to create a method to remove the snake
     else {
         imGuiOverlay.countdown = true;
         imGuiOverlay.countdownTimerEnd = 0;
