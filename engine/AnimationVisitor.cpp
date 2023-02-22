@@ -15,10 +15,6 @@ namespace cg3d
     void AnimationVisitor::Visit(Model* model)
     {
         Eigen::Matrix3f system = model->GetRotation().transpose();
-        Eigen::Vector3f rotation_z, rotation_x, rotation_y, rotation_vec;
-        rotation_z = Eigen::Vector3f(0, 0, 1);
-        rotation_x = Eigen::Vector3f(1, 0, 0);
-        rotation_y = Eigen::Vector3f(0, 1, 0);
 
         if (scene->gameplay.animate)
         {
@@ -50,8 +46,9 @@ namespace cg3d
                     model->speed *= -1;
                 model->Translate(model->speed);
             }
+            Visitor::Visit(model);
         }
-        Visitor::Visit(model);
+//        Visitor::Visit(model);
     }
 
     bool AnimationVisitor::CheckInRange(Eigen::Vector3f init, Eigen::Vector3f current, Eigen::Vector3f limit)
