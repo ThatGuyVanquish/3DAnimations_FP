@@ -27,7 +27,7 @@ namespace cg3d
             {
                 int cylIndex = std::stoi(modelsName.substr(4));
                 if (cylIndex == 0) {
-                    if ((time(nullptr) - scene->gameplay.timeFromLastWASDQE) > delay) snakyLocomotion();
+                    if ((time(nullptr) - scene->gameplay.imGuiOverlay.timeFromLastWASDQE) > delay) snakyLocomotion();
                     model->TranslateInSystem(system, scene->gameplay.velocityVec);
                     translateLocomotionCameras();
                 } else if (cylIndex == 1 && prevRotatedCylIndex == 0) {
@@ -44,9 +44,25 @@ namespace cg3d
                     if (scene->gameplay.useSnake) scene->gameplay.snakeSkinning.moveModel(scene->gameplay.cyls, scene->gameplay.snake);
                 }
             }
+            else if (modelsName.starts_with("Entity"))
+            {
+                if (!CheckInRange(model->initialTranslation, model->GetTranslation(), Eigen::Vector3f{0.0f, 1.0f, 0.0f}))
+                    model->speed *= -1;
+                model->Translate(model->speed);
+            }
         }
         Visitor::Visit(model);
     }
+
+    bool AnimationVisitor::CheckInRange(Eigen::Vector3f init, Eigen::Vector3f current, Eigen::Vector3f limit)
+    {
+        Eigen::Vector3f upper = init + limit;
+        Eigen::Vector3f lower = init - limit;
+        bool lessThanUpper = (upper - current).x() >= 0 && (upper - current).y() >= 0 && (upper - current).z() >= 0;
+        bool moreThanLower = (current - lower).x() >= 0 && (current - lower).y() >= 0 && (current - lower).z() >= 0;
+        return lessThanUpper && moreThanLower;
+    }
+
 
     void AnimationVisitor::rotateXY(Model* model)
     {

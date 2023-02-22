@@ -129,15 +129,15 @@ static void setUV(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F_true, Eigen
 //    std::cout << V.colwise().maxCoeff() << std::endl;
 //    std::cout << V.colwise().minCoeff() << std::endl;
 
-    F.resize(F_true.rows()-1, 3);
-    bool visited = false;
-    for (int i = 0; i < F_true.rows(); i++)
-    {
-       if (i != 711) {
-           if (visited) F.row(i-1) = F_true.row(i);
-           else F.row(i) = F_true.row(i);
-       } else visited = true;
-    }
+//    F.resize(F_true.rows()-1, 3);
+//    bool visited = false;
+//    for (int i = 0; i < F_true.rows(); i++)
+//    {
+//       if (i != 711) {
+//           if (visited) F.row(i-1) = F_true.row(i);
+//           else F.row(i) = F_true.row(i);
+//       } else visited = true;
+//    }
 
 //    // 501
 //    // Find the open boundary
@@ -200,7 +200,7 @@ static void setUV(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F_true, Eigen
 
 
     // Scale UV to make the texture more clear
-//    V_uv *= 20;
-    V_uv *= 10;
+    V_uv *= 20;
+//    V_uv *= 10;
 
 }
