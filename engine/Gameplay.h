@@ -73,9 +73,6 @@ public:
 
     void HandleEntityCollision(int index);
 
-    Eigen::MatrixXd getTextureCoords(const char* filename);
-
-
     ImGuiOverlay imGuiOverlay;
     const int MAP_SIZE = 50;
     int numOfCyls = 16;
@@ -117,6 +114,8 @@ public:
     std::shared_ptr<cg3d::Material> enemyMaterial;
     std::shared_ptr<cg3d::Program> bonusShader;
     std::shared_ptr<cg3d::Material> bonusMaterial;
+    std::shared_ptr<cg3d::Program> snakeHeadShader;
+    std::shared_ptr<cg3d::Material> snakeHeadMaterial;
 
     // skinning
     Skinning snakeSkinning;
@@ -124,9 +123,9 @@ public:
     bool showCyls = false;
 
     // animation
-    float slerpFactor = 0.9f;
-    float prev_slerp = 0.9f;
-    Eigen::Vector3f velocityVec = { 0, 0, -0.05f };
+    float slerpFactor = 0.86f;
+    float prev_slerp = 0.86f;
+    Eigen::Vector3f velocityVec = { 0, 0, -0.3f };
     //time_t timeFromLastWASDQE = time(nullptr);
     Eigen::Vector3f currPos;
 

@@ -426,7 +426,7 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     ImGui::Begin("Pause Menu", pauseMenuToggle, MENU_FLAGS);
 
     int width, height, nrChannels;
-    char* imgPath = getResource("mainmenu_bg.png");
+    char* imgPath = getResource("pausemenu_bg.png");
     unsigned char* data = stbi_load(imgPath, &width, &height, &nrChannels, 0);
     delete imgPath;
 

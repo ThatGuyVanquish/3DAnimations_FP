@@ -11,7 +11,6 @@
 
 void Gameplay::Init()
 {
-    //std::cout << "\nNEW TEXTURE COORDINATES\n" << getTextureCoords("data/zcylinder.obj") << std::endl;
     InitMaterials();
     InitSnake();
     generateViableEntities();
@@ -19,7 +18,6 @@ void Gameplay::Init()
     InitLevel();
     InitCoordsys();
     imGuiOverlay.leaderboard.Init(getResource("LEADERBOARD.txt"));
-    //std::cout << "\nOG TEXTURE COORDINATES\n" << cyls[0].model->GetMesh(0)->data[0].textureCoords << std::endl;
 }
 
 void Gameplay::InitCoordsys() {
@@ -60,6 +58,9 @@ void Gameplay::InitMaterials() {
     bonusShader = std::make_shared<Program>("shaders/phongShader2");
     bonusMaterial = std::make_shared<Material>("bonusMaterial", bonusShader);
     bonusShader->name = "bonusShader";
+    snakeHeadShader = std::make_shared<Program>("shaders/phongShader2");
+    snakeHeadMaterial = std::make_shared<Material>("snakeHeadMaterial", snakeHeadShader);
+    snakeHeadShader->name = "snakeHeadShader";
     }
 
 void Gameplay::InitSnake() {
@@ -92,7 +93,7 @@ void Gameplay::InitSnake() {
 
     // init head
     auto headMesh = IglLoader::MeshFromFiles("head", "data/viperagabon.obj");
-    auto headModel = Model::Create("head", headMesh, itemMaterial);
+    auto headModel = Model::Create("head", headMesh, snakeHeadMaterial);
     igl::AABB<Eigen::MatrixXd, 3> head_aabb = CollisionDetection::InitAABB(headMesh);
     head = {headModel, 0.25f, head_aabb};
     CollisionDetection::InitCollisionModels(head, frameColor, collisionColor);
@@ -169,6 +170,8 @@ entity_data Gameplay::initEntity(Entity ent, std::shared_ptr<cg3d::Material> mat
     if (visible) root->AddChild(model);
     model->Translate({0.0, 0.0, -5.0});
     model->Scale(ent.scale);
+    if (ent.name == "Apple")
+        model->Rotate(-M_PI_2, Movable::Axis::X);
     //model->showFaces = false;
     model->showFaces = true;
     //model->showWireframe = true;
@@ -235,7 +238,7 @@ void Gameplay::spawnExtras()
         auto currentItem = initEntity(viableItems[i], itemMaterial, false);
         extraItems.push_back(currentItem);
     }
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 30; i++)
     {
         auto currentEnemy = initEntity(viableEnemies[i % viableEnemies.size()], enemyMaterial, false);
         extraEnemies.push_back(currentEnemy);
@@ -280,19 +283,19 @@ void Gameplay::clearEntities() {
 }
 
 void Gameplay::InitLevel() {
-    int enemies, items = 10 - currentItems, bonuses = 2 - currentBonuses;
+    int enemies, items = 20 - currentItems, bonuses = 5 - currentBonuses;
     switch (imGuiOverlay.currentLevel) {
         case 1:
-            enemies = 3;
+            enemies = 15;
             break;
         case 2:
-            enemies = 5;
+            enemies = 20;
             break;
         case 3:
-            enemies = 7;
+            enemies = 25;
             break;
         default:
-            enemies = 10;
+            enemies = 30;
     }
     enemies = enemies - currentEnemies;
     spawnEntities(items, viableItems);
@@ -324,17 +327,9 @@ void Gameplay::checkForCollision()
             if (imGuiOverlay.currentLives <= 0)
             {
                 callPythonScript("scripts/play_sound.py", "audio/fatality.mp3", 3);
-//                std::thread fatalityThread([&]() {
-//                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
-//                    });
-//                fatalityThread.detach();
                 Reset(true);
             } else {
                 callPythonScript("scripts/play_sound.py", "audio/death_noise.mp3", 2);
-//                std::thread deathThread([&]() {
-//                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
-//                    });
-//                deathThread.detach();
                 Reset(false);
             }
         }
@@ -383,17 +378,9 @@ void Gameplay::HandleEntityCollision(int i)
             if (shouldLevelUp())
             {
                 callPythonScript("scripts/play_sound.py", "audio/wow.mp3", 5);
-//                std::thread wowThread([&]() {
-//                    std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
-//                    });
-//                wowThread.detach();
                 Reset(false);
             } else {
                 callPythonScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1);
-//                std::thread ringThread([&]() {
-//                    std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
-//                    });
-//                ringThread.detach();
                 replaceEntity(entities[i]);
             }
             break;
@@ -404,17 +391,9 @@ void Gameplay::HandleEntityCollision(int i)
             if (imGuiOverlay.currentLives <= 0)
             {
                 callPythonScript("scripts/play_sound.py", "audio/fatality.mp3", 2);
-//                std::thread fatalityThread([&]() {
-//                    std::system(getPyScript("scripts/play_sound.py", "audio/fatality.mp3", 3).c_str());
-//                    });
-//                fatalityThread.detach();
                 Reset(true);
             } else {
                 callPythonScript("scripts/play_sound.py", "audio/death_noise.mp3", 2);
-//                std::thread deathThread([&]() {
-//                    std::system(getPyScript("scripts/play_sound.py", "audio/death_noise.mp3", 2).c_str());
-//                    });
-//                deathThread.detach();
                 Reset(false);
             }
             break;
@@ -614,10 +593,6 @@ void Gameplay::handleBonus()
     {
         imGuiOverlay.currentLives++;
         callPythonScript("scripts/play_sound.py", "audio/sheesh.mp3", 3);
-//        std::thread sheeshThread([&]() {
-//            std::system(getPyScript("scripts/play_sound.py", "audio/sheesh.mp3", 3).c_str());
-//            });
-//        sheeshThread.detach();
         return;
     }
     if (bonusPercentage[bonusIndex] == Bonus::POINTS)
@@ -626,128 +601,29 @@ void Gameplay::handleBonus()
         if (shouldLevelUp())
         {
             callPythonScript("scripts/play_sound.py", "audio/wow.mp3", 5);
-//            std::thread wowThread([&]() {
-//                std::system(getPyScript("scripts/play_sound.py", "audio/wow.mp3", 5).c_str());
-//                });
-//            wowThread.detach();
             Reset(false);
         }
         else {
             callPythonScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1);
-//            std::thread ringThread([&]() {
-//                std::system(getPyScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1).c_str());
-//                });
-//            ringThread.detach();
         }
         return;
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_PLUS)
     {
-        if (velocityVec.z() > -0.55f)
+        if (velocityVec.z() > -0.75f)
             velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor > 0.8f)
-            slerpFactor -= 0.02f;
+            slerpFactor -= 0.04f;
         callPythonScript("scripts/play_sound.py", "audio/neeoom.mp3", 3);
-//        std::thread neeoomThread([&]() {
-//            std::system(getPyScript("scripts/play_sound.py", "audio/neeoom.mp3", 3).c_str());
-//            });
-//        neeoomThread.detach();
         return;
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
     {
         callPythonScript("scripts/play_sound.py", "audio/bruh.mp3", 1);
-//        std::thread slowThread([&]() {
-//            std::system(getPyScript("scripts/play_sound.py", "audio/bruh.mp3", 1).c_str());
-//            });
-//        slowThread.detach();
         if (velocityVec.z() < -0.05f)
             velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor < 1.0f)
-            slerpFactor += 0.02f;
+            slerpFactor += 0.04f;
         return;
     }
-}
-Eigen::MatrixXd Gameplay::getTextureCoords(const char* filename)
-{
-    auto model = ObjLoader::ModelFromObj("Model", filename, basicMaterial);
-    std::vector<Eigen::Vector2d> projectedVertices;
-    for(int i = 0; i < model->GetMesh((0))->data[0].vertices.rows(); i++)
-    {
-        auto v = model->GetMesh((0))->data[0].vertices.row(i);
-        projectedVertices.push_back((Eigen::Vector2d(v.x(), v.z())));
-    }
-    double xmin = std::numeric_limits<double>::max();
-    double xmax = -std::numeric_limits<double>::max();
-    double zmin = std::numeric_limits<double>::max();
-    double zmax = -std::numeric_limits<double>::max();
-
-    for (const Eigen::Vector2d& v : projectedVertices) {
-        xmin = std::min(xmin, v.x());
-        xmax = std::max(xmax, v.x());
-        zmin = std::min(zmin, v.y());
-        zmax = std::max(zmax, v.y());
-    }
-    float xspan = xmax - xmin;
-    float zspan = zmax - zmin;
-
-    Eigen::MatrixXd ret(projectedVertices.size(), 2);
-    for(int i = 0; i < projectedVertices.size(); i++)
-    {
-        Eigen::Vector2d uv((projectedVertices[i].x() - xmin) / xspan, (projectedVertices[i].y() -zmin) / zspan);
-        ret.row(i) = uv.transpose();
-    }
-    return ret;
-
-
-/*double xmin = std::numeric_limits<double>::max();
-double xmax = -std::numeric_limits<double>::max();
-double ymin = std::numeric_limits<double>::max();
-double ymax = -std::numeric_limits<double>::max();
-double zmin = std::numeric_limits<double>::max();
-double zmax = -std::numeric_limits<double>::max();
-
-for (int i = 0; i < model->GetMeshList().size(); i++) {
-    auto mesh = model->GetMesh(i);
-    for (size_t j = 3500; j < mesh->data[0].vertices.rows(); j++) {
-        auto v = mesh->data[0].vertices.row(j);
-        xmin = std::min(xmin, v.x());
-        xmax = std::max(xmax, v.x());
-        ymin = std::min(ymin, v.y());
-        ymax = std::max(ymax, v.y());
-        zmin = std::min(zmin, v.z());
-        zmax = std::max(zmax, v.z());
-    }
-}
-
-std::vector<Eigen::Vector2d> texCoords;
-for (int i = 0; i < model->GetMeshList().size(); i++) {
-    auto mesh = model->GetMesh(i);
-    for (size_t j = 0; j < mesh->data[0].faces.rows(); j++) {
-        auto face = mesh->data[0].faces.row(j);
-        Eigen::Vector3d centroid(0.0f, 0.0f, 0.0f);
-        for (int k = 0; k < 3; k++)
-        {
-            Eigen::Vector3d v = mesh->data[0].vertices.row(face(0, k));
-            centroid += v;
-        }
-        centroid /= 3.0;
-        for (int k = 0; k < 3; k++)
-        {
-            Eigen::Vector3d v = mesh->data[0].vertices.row(face(0, k));
-            double dist = (v - centroid).norm();
-            Eigen::Vector2d uv(dist, 0.0f);
-            texCoords.push_back(uv);
-        }
-    }
-}
-double xspan = xmax - xmin;
-double yspan = ymax - ymin;
-double zspan = zmax - zmin;
-Eigen::MatrixXd ret(texCoords.size(), 2);
-for (size_t i = 0; i < texCoords.size(); i++) {
-    Eigen::Vector2d uv(texCoords[i].x() / xspan, texCoords[i].z() / zspan);
-    ret.row(i) = uv.transpose();
-}
-return ret;*/
 }

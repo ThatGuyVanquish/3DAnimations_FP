@@ -65,6 +65,7 @@ void BasicScene::ResetCameras()
         locomotionCameras[i]->PropagateTransform();
     }
     SetCamerasView();
+    gameplay.head.model->isHidden = false;
     SetCamera(0);
 }
 
@@ -126,27 +127,35 @@ void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, con
     Scene::Update(program, proj, view, model);
     if (std::strcmp(program.name.c_str(), "itemShader") == 0)
     {
-        gameplay.bonusShader->SetUniform4f("lightColor", 0.0f, 0.392f, 0.0f, 1.0f);
-        gameplay.bonusShader->SetUniform4f("Kai", 0.0f, 0.392f, 0.0f, 0.4f);
-        gameplay.bonusShader->SetUniform4f("Kdi", 0.0f, 0.392f, 0.0f, 0.4f);
-        gameplay.bonusShader->SetUniform1f("specular_exponent", 5.0);
-        gameplay.bonusShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+        gameplay.itemShader->SetUniform4f("lightColor", 0.0f, 0.392f, 0.0f, 1.0f);
+        gameplay.itemShader->SetUniform4f("Kai", 0.0f, 0.392f, 0.0f, 0.4f);
+        gameplay.itemShader->SetUniform4f("Kdi", 0.0f, 0.392f, 0.0f, 0.4f);
+        gameplay.itemShader->SetUniform1f("specular_exponent", 5.0);
+        gameplay.itemShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
     }
     if (std::strcmp(program.name.c_str(), "enemyShader") == 0)
     {
-        gameplay.itemShader->SetUniform4f("lightColor", 0.545f, 0.0f, 0.0f, 1.0f);
-        gameplay.itemShader->SetUniform4f("Kai", 0.545f, 0.0f, 0.0f, 0.4f);
-        gameplay.itemShader->SetUniform4f("Kdi", 0.545f, 0.0f, 0.0f, 0.4f);
-        gameplay.itemShader->SetUniform1f("specular_exponent", 3.0);
-        gameplay.itemShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+        gameplay.enemyShader->SetUniform4f("lightColor", 0.545f, 0.0f, 0.0f, 1.0f);
+        gameplay.enemyShader->SetUniform4f("Kai", 0.545f, 0.0f, 0.0f, 0.4f);
+        gameplay.enemyShader->SetUniform4f("Kdi", 0.545f, 0.0f, 0.0f, 0.4f);
+        gameplay.enemyShader->SetUniform1f("specular_exponent", 3.0);
+        gameplay.enemyShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
     }
     if (std::strcmp(program.name.c_str(), "bonusShader") == 0)
     {
-        gameplay.enemyShader->SetUniform4f("lightColor", 1.0f, 0.843f, 0.0f, 1.0f);
-        gameplay.enemyShader->SetUniform4f("Kai", 1.0f, 0.843f, 0.0f, 0.4f);
-        gameplay.enemyShader->SetUniform4f("Kdi", 1.0f, 0.843f, 0.0f, 0.4f);
-        gameplay.enemyShader->SetUniform1f("specular_exponent", 3.0);
-        gameplay.enemyShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+        gameplay.bonusShader->SetUniform4f("lightColor", 1.0f, 0.843f, 0.0f, 1.0f);
+        gameplay.bonusShader->SetUniform4f("Kai", 1.0f, 0.843f, 0.0f, 0.4f);
+        gameplay.bonusShader->SetUniform4f("Kdi", 1.0f, 0.843f, 0.0f, 0.4f);
+        gameplay.bonusShader->SetUniform1f("specular_exponent", 3.0);
+        gameplay.bonusShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
+    }
+    if (std::strcmp(program.name.c_str(), "snakeHeadShader") == 0)
+    {
+        gameplay.snakeHeadShader->SetUniform4f("lightColor", 0.321f, 0.314f, 0.235f, 1.0f);
+        gameplay.snakeHeadShader->SetUniform4f("Kai", 0.321f, 0.314f, 0.235f, 0.4f);
+        gameplay.snakeHeadShader->SetUniform4f("Kdi", 0.321f, 0.314f, 0.235f, 0.4f);
+        gameplay.snakeHeadShader->SetUniform1f("specular_exponent", 3.0);
+        gameplay.snakeHeadShader->SetUniform4f("light_position", 0.0, 15.0, 0.0, 1.0);
     }
 }
 
