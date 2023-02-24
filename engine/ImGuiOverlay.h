@@ -98,7 +98,7 @@ public:
     bool paused = false;
     Leaderboard leaderboard;
     std::vector<std::string> cheatCodes = {"DEVTOOLS"};
-
+    char name[8];
     time_t timeFromLastWASDQE = time(nullptr);
 
 private:

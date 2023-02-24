@@ -300,19 +300,35 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         {
             ImGui::SetCursorPos(ImVec2(center.x - 150, center.y + 50.0f));
             ShowXLText("GAME OVER!", "snap");
+            ImGui::SetCursorPos(ImVec2(center.x + 165, center.y + 180.0f));
+            ShowSmallText("INSERT NAME HERE:", "snap");
             ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 200.0f));
             ImGui::SetNextItemWidth(200.0f);
-            char name[20] = "INSERT NAME HERE";
-            int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+            int flags = ImGuiInputTextFlags_CharsUppercase | /*ImGuiInputTextFlags_AlwaysInsertMode |*/
+                    ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CtrlEnterForNewLine
+                    | ImGuiInputTextFlags_EnterReturnsTrue;
             grabCallbacks = false;
-            if (!ImGui::InputText("", name, 20, flags))
+            if (!ImGui::InputText("", name, 8, flags))
             {
                 deathTimerEnd = time(nullptr) + 5;
                 animate = false;
             }
-            else
+            ImGui::SetCursorPos(ImVec2(center.x + 250, center.y + 250.0f));
+            if (ImGui::Button("SAVE"))
             {
                 leaderboard.add(name, currentScore);
+                deathTimerEnd = time(nullptr);
+                displayGameOver = true;
+                grabCallbacks = true;
+            }
+//            else
+//            {
+//                deathTimerEnd = time(nullptr) + 5;
+//                animate = false;
+//            }
+            ImGui::SetCursorPos(ImVec2(center.x + 350, center.y + 250.0f));
+            if (ImGui::Button("QUIT"))
+            {
                 deathTimerEnd = time(nullptr);
                 displayGameOver = true;
                 grabCallbacks = true;
@@ -398,7 +414,7 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     ShowXLText(msg.c_str(), "arial");
     ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 150));
     ImGui::SetNextItemWidth(200.0f);
-    char cheat[20] = "INSERT CHEATS HERE";
+    char cheat[20] = "";
     int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
     grabCallbacks = false;
     if (ImGui::InputText("", cheat, 20, flags))
@@ -461,11 +477,13 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     }
 
     ImGui::SetCursorPos(ImVec2(85.0f, 220.0f));
-    if (ImGui::Button("MAIN MENU"))
+    if (ImGui::Button("QUIT"))
     {
-        displayMainMenu = true;
+        //displayMainMenu = true;
+        currentLives = 0;
+        died = true;
         paused = false;
-        deathTimerEnd = 0;
+        //deathTimerEnd = 0;
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
         ImGui::PopFont();
