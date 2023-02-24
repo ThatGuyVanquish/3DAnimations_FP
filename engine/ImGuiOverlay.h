@@ -75,7 +75,7 @@ public:
     void DeathScreen(bool &animate);
     void LevelUpScreen(bool& animate);
     void CheatScreen(bool& animate);
-
+    void devLegends();
     void handleCheats(const std::string& cheat);
     
     static const int MENU_FLAGS =

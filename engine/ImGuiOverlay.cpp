@@ -313,24 +313,20 @@ void ImGuiOverlay::DeathScreen(bool &animate)
                 deathTimerEnd = time(nullptr) + 5;
                 animate = false;
             }
-            ImGui::SetCursorPos(ImVec2(center.x + 250, center.y + 250.0f));
+            ImGui::SetCursorPos(ImVec2(center.x + 160, center.y + 250.0f));
             if (ImGui::Button("SAVE"))
             {
                 leaderboard.add(name, currentScore);
-                name[0] = '/0';
+                std::strncpy(name, "", 8);
                 deathTimerEnd = time(nullptr);
                 displayGameOver = true;
                 grabCallbacks = true;
             }
-//            else
-//            {
-//                deathTimerEnd = time(nullptr) + 5;
-//                animate = false;
-//            }
-            ImGui::SetCursorPos(ImVec2(center.x + 350, center.y + 250.0f));
+            ImGui::SetCursorPos(ImVec2(center.x + 300, center.y + 250.0f));
             if (ImGui::Button("QUIT"))
             {
                 deathTimerEnd = time(nullptr);
+                std::strncpy(name, "", 8);
                 displayGameOver = true;
                 grabCallbacks = true;
             }
@@ -416,7 +412,8 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 150));
     ImGui::SetNextItemWidth(200.0f);
     char cheat[20] = "";
-    int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+    int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue
+            | ImGuiInputTextFlags_AutoSelectAll;
     grabCallbacks = false;
     if (ImGui::InputText("", cheat, 20, flags))
     {
@@ -502,4 +499,29 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     ImGui::PopFont();
     ImGui::End();
     return false;
+}
+
+void ImGuiOverlay::devLegends()
+{
+    if (!devMode)
+        return;
+    bool* devToggle = nullptr;
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(0,0,0,50));
+    int flags = MENU_FLAGS - ImGuiWindowFlags_NoBackground;
+    ImGui::Begin("dev legends", devToggle, flags);
+    ImGui::SetWindowPos("dev legends", ImVec2(0, 200));
+    ImGui::SetWindowSize("dev legends", ImVec2(200, 200));
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,100,0,255));
+    ShowSmallText("Dev mode legend toggles:", "arial");
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
+    ShowSmallText("UP,DOWN -> VELOCITY", "arial");
+    ShowSmallText("LEFT,RIGHT -> HEALTH", "arial");
+    ShowSmallText("R -> RESET", "arial");
+    ShowSmallText("G -> ANIMATE", "arial");
+    ShowSmallText("J -> 1K POINTS", "arial");
+    ShowSmallText("H -> COLLISION FRAMES", "arial");
+    ShowSmallText("C -> CYLINDERS", "arial");
+    ShowSmallText("V -> GLOBAL AXIS", "arial");
+    ImGui::PopStyleColor(3);
+    ImGui::End();
 }
