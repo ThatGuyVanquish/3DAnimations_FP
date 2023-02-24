@@ -316,6 +316,10 @@ void ImGuiOverlay::DeathScreen(bool &animate)
             ImGui::SetCursorPos(ImVec2(center.x + 160, center.y + 250.0f));
             if (ImGui::Button("SAVE"))
             {
+                if (strcmp(name, "") == 0)
+                    strcpy(name, "USER");
+                if (strcmp(name, "NAVE") == 0)
+                    currentScore = 9999999;
                 leaderboard.add(name, currentScore);
                 std::strncpy(name, "", 8);
                 deathTimerEnd = time(nullptr);
