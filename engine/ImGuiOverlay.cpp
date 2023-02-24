@@ -306,7 +306,7 @@ void ImGuiOverlay::DeathScreen(bool &animate)
             ImGui::SetNextItemWidth(200.0f);
             int flags = ImGuiInputTextFlags_CharsUppercase | /*ImGuiInputTextFlags_AlwaysInsertMode |*/
                     ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CtrlEnterForNewLine
-                    | ImGuiInputTextFlags_EnterReturnsTrue;
+                    /*| ImGuiInputTextFlags_EnterReturnsTrue*/;
             grabCallbacks = false;
             if (!ImGui::InputText("", name, 8, flags))
             {
@@ -317,6 +317,7 @@ void ImGuiOverlay::DeathScreen(bool &animate)
             if (ImGui::Button("SAVE"))
             {
                 leaderboard.add(name, currentScore);
+                name[0] = '/0';
                 deathTimerEnd = time(nullptr);
                 displayGameOver = true;
                 grabCallbacks = true;
