@@ -43,7 +43,7 @@ void ImGuiOverlay::startTimer(bool &animate)
         }
         else
         {
-            gameTimer = timeFromLastWASDQE = time(nullptr);
+            gameTimer =timeFromLastWASDQE = time(nullptr);
             animate = true;
             countdown = false;
             grabCallbacks = true;
@@ -434,7 +434,11 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     if (!paused)
         return false;
     if (animate)
+    {
         animate = false;
+        accumulatedTime += time(nullptr) - gameTimer;
+    }
+
     ImGui::CreateContext();
     bool* pauseMenuToggle = nullptr;
     ImGui::Begin("Pause Menu", pauseMenuToggle, MENU_FLAGS);
@@ -472,6 +476,7 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
         countdownTimerEnd = 0;
         deathTimerEnd = 0;
         paused = false;
+//        gameTimer = time(nullptr);
     }
 
     ImGui::SetCursorPos(ImVec2(85.0f, 220.0f));
@@ -523,5 +528,61 @@ void ImGuiOverlay::devLegends()
     ShowSmallText("C -> CYLINDERS", "arial");
     ShowSmallText("V -> GLOBAL AXIS", "arial");
     ImGui::PopStyleColor(3);
+    ImGui::End();
+}
+
+void ImGuiOverlay::bonusVisual()
+{
+    if (!gotBonus)
+        return;
+    if (bonusTimerEnd == 0)
+        bonusTimerEnd = time(nullptr) + 2;
+
+    float width = 750.0f, height = 200.0f;
+    bool* bonusToggle = nullptr;
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    center.y -= 250;
+    center.x -= 400;
+    ImGui::Begin("Bonus visual", bonusToggle, MENU_FLAGS);
+    ImGui::SetWindowPos(center);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    auto now = time(nullptr);
+    if (now < bonusTimerEnd)
+    {
+        std::string text;
+        switch (currentBonusType)
+        {
+            case 0:
+            {
+                text = "EXTRA SPEED!";
+                break;
+            }
+            case 1:
+            {
+                text = "EXTRA HEALTH!";
+                break;
+            }
+            case 2:
+            {
+                text = "EXTRA " + std::to_string(bonusPoints) + " POINTS!";
+                break;
+            }
+            case 3:
+            {
+                text = "SLOWED DOWN!";
+                break;
+            }
+        }
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 200, 255));
+        ShowLargeText(text.c_str(), "snap");
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        bonusTimerEnd = 0;
+        gotBonus = false;
+        currentBonusType = -1;
+        bonusPoints = 0;
+    }
     ImGui::End();
 }

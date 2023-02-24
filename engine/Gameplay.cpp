@@ -356,6 +356,9 @@ void Gameplay::HandleEntityCollision(int i)
             } else {
                 callPythonScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1);
                 replaceEntity(entities[i]);
+                imGuiOverlay.bonusPoints = entities[i].ent.points;
+                imGuiOverlay.currentBonusType = 2;
+                imGuiOverlay.gotBonus = true;
             }
             break;
         case EntityType::ENEMY:
@@ -551,15 +554,22 @@ void Gameplay::updateGameplay()
 void Gameplay::handleBonus()
 {
     int bonusIndex = getRandomNumberInRange(0, bonusPercentage.size());
+    imGuiOverlay.gotBonus = true;
+    imGuiOverlay.bonusTimerEnd = 0;
     if (bonusPercentage[bonusIndex] == Bonus::LIFE)
     {
         imGuiOverlay.currentLives++;
         callPythonScript("scripts/play_sound.py", "audio/sheesh.mp3", 3);
+        imGuiOverlay.bonusPoints = 0;
+        imGuiOverlay.currentBonusType = 1;
         return;
     }
     if (bonusPercentage[bonusIndex] == Bonus::POINTS)
     {
-        UpdateScore(getRandomNumberInRange(0, 2000));
+        int gain = getRandomNumberInRange(0, 2000);
+        UpdateScore(gain);
+        imGuiOverlay.bonusPoints = gain;
+        imGuiOverlay.currentBonusType = 2;
         if (shouldLevelUp())
         {
             callPythonScript("scripts/play_sound.py", "audio/wow.mp3", 5);
@@ -572,6 +582,8 @@ void Gameplay::handleBonus()
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_PLUS)
     {
+        imGuiOverlay.bonusPoints = 0;
+        imGuiOverlay.currentBonusType = 0;
         if (velocityVec.z() > -0.75f)
             velocityVec -= Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
         if (slerpFactor > 0.8f)
@@ -581,6 +593,8 @@ void Gameplay::handleBonus()
     }
     if (bonusPercentage[bonusIndex] == Bonus::SPEED_MINUS)
     {
+        imGuiOverlay.bonusPoints = 0;
+        imGuiOverlay.currentBonusType = 3;
         callPythonScript("scripts/play_sound.py", "audio/bruh.mp3", 1);
         if (velocityVec.z() < -0.05f)
             velocityVec += Eigen::Vector3f({ 0.0f, 0.0f, 0.1f });
