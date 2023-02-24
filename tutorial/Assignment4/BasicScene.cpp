@@ -21,7 +21,11 @@ void BasicScene::Init(float fov, int width, int height, float near, float far)
     FOV = fov; WIDTH = width; HEIGHT = height; NEAR = near; FAR = far;
 
     auto daylight{ std::make_shared<Material>("daylight", "shaders/cubemapShader") };
+#ifdef __APPLE__
+    daylight->AddTexture(0, "textures/cubemaps/Apple_Underwater Box_", 3);
+#else
     daylight->AddTexture(0, "textures/cubemaps/Underwater Box_", 3);
+#endif
     auto background{ Model::Create("background", Mesh::Cube(), daylight) };
     AddChild(background);
     background->Scale(120, Axis::XYZ);

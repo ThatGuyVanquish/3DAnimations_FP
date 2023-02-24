@@ -187,7 +187,7 @@ void ImGuiOverlay::showLeaderboard(bool &animate)
     {
         ImGui::SetCursorPos(ImVec2(70.0f, yPos + 20 * i));
         std::string entry = std::to_string(i + 1) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points);
-        ShowSmallText(entry.c_str(), "arial");
+        ShowSmallText(entry.c_str(), "snap");
     }
     ImGui::PopStyleColor();
     ImGui::SetCursorPos(ImVec2(130.0f, yPos + entries.size() * 20 + 10));
