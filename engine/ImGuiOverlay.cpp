@@ -296,14 +296,16 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
         std::string msg = "Score: " + std::to_string(currentScore);
         ShowXLText(msg.c_str(), "snap");
-        if (currentLives == 0)
+        if (currentLives <= 0)
         {
             ImGui::SetCursorPos(ImVec2(center.x - 150, center.y + 50.0f));
             ShowXLText("GAME OVER!", "snap");
+            ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 180.0f));
+            ShowSmallText("INSERT NAME HERE:", "snap");
             ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 200.0f));
             ImGui::SetNextItemWidth(200.0f);
-            char name[20] = "INSERT NAME HERE";
-            int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+            char name[20] = "";
+            int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AlwaysInsertMode/* | ImGuiInputTextFlags_EnterReturnsTrue*/;
             grabCallbacks = false;
             if (!ImGui::InputText("", name, 20, flags))
             {
@@ -398,7 +400,7 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     ShowXLText(msg.c_str(), "arial");
     ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 150));
     ImGui::SetNextItemWidth(200.0f);
-    char cheat[20] = "INSERT CHEATS HERE";
+    char cheat[20] = "";
     int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
     grabCallbacks = false;
     if (ImGui::InputText("", cheat, 20, flags))
@@ -461,7 +463,7 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     }
 
     ImGui::SetCursorPos(ImVec2(85.0f, 220.0f));
-    if (ImGui::Button("MAIN MENU"))
+    if (ImGui::Button("QUIT W/O SAVING"))
     {
         displayMainMenu = true;
         paused = false;
@@ -472,8 +474,24 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
         ImGui::End();
         return true;
     }
-
     ImGui::SetCursorPos(ImVec2(85.0f, 255.0f));
+    if (ImGui::Button("SAVE & QUIT"))
+    {
+        paused = false;
+        currentLives = 0;
+        died = true;
+        return true;
+//        displayMainMenu = true;
+//        paused = false;
+//        deathTimerEnd = 0;
+//        ImGui::PopStyleColor();
+//        ImGui::PopStyleColor();
+//        ImGui::PopFont();
+//        ImGui::End();
+//        return true;
+    }
+
+    ImGui::SetCursorPos(ImVec2(85.0f, 290.0f));
     if (ImGui::Button("LEVIOSA?"))
     {
         callPythonScript("scripts/play_sound.py", "audio/leviosa.mp3", 3);
