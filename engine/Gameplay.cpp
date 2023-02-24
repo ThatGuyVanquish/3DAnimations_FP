@@ -355,8 +355,8 @@ void Gameplay::HandleEntityCollision(int i)
                 Reset(false);
             } else {
                 callPythonScript("scripts/play_sound.py", "audio/ring_sound.mp3", 1);
-                replaceEntity(entities[i]);
                 imGuiOverlay.bonusPoints = entities[i].ent.points;
+                replaceEntity(entities[i]);
                 imGuiOverlay.currentBonusType = 2;
                 imGuiOverlay.gotBonus = true;
             }
@@ -511,6 +511,24 @@ void Gameplay::Reset(bool mainMenu) {
         imGuiOverlay.countdown = true;
         imGuiOverlay.countdownTimerEnd = 0;
         imGuiOverlay.accumulatedTime += time(nullptr) - imGuiOverlay.gameTimer;
+    }
+    switch (imGuiOverlay.currentLevel) {
+        case 1:
+            slerpFactor = 0.86f;
+            velocityVec = { 0, 0, -0.3f };
+            break;
+        case 2:
+            slerpFactor = 0.82f;
+            velocityVec = { 0, 0, -0.4f };
+            break;
+        case 3:
+            slerpFactor = 0.78f;
+            velocityVec = { 0, 0, -0.5f };
+            break;
+        case 4:
+            slerpFactor = 0.74f;
+            velocityVec = { 0, 0, -0.6f };
+            break;
     }
     ResetSnake();
     InitLevel();

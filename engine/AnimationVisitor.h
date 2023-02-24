@@ -33,7 +33,7 @@ namespace cg3d
         Eigen::Quaternionf prev_quat_x, prev_quat_y, prev_quat_z;
 
         // snaky locomotion
-        float delay = 5;
+        float delay = 3.5;
         std::vector<float> directions = {0.025, 0.04, 0.055, 0.07, 0.085, 0.1, 0.1, 0.1, 0.1, 0.1,/* | */ 0.1, 0.1, 0.1, 0.1, 0.1, 0.085, 0.07, 0.055, 0.04, 0.025};
         int round = 9;
         int direction = -1;
