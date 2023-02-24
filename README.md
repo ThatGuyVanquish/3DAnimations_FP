@@ -59,7 +59,7 @@ ${\color{orange}Sound}$ - We've used threads to execute python scripts on a diff
 
 **3** -> Switch to third person view
 
-**0** -> Switch to top down camera *[SUBJECT TO CHANGES]*
+**0** -> Switch to top down camera
 
 ### DEV MODE
 #### NOTE THAT MOUSE MOVEMENT IS RESTRICTED TO CAMERAS, AND IS GENERALLY ONLY AVAILABLE IN DEV MODE.
@@ -68,7 +68,7 @@ ${\color{orange}Sound}$ - We've used threads to execute python scripts on a diff
 
 **:arrow_up:, :arrow_down:** -> Increase and decrease the snake's velocity (could be negative), also changese the slerp factor for it's rotation.
 
-**:arrow_left:, :arrow_right:** -> Increases and decreases the amount of lives the player has. Note that lives could be at the negative, player can only die if collided with enemy with 1 heart. *[SUBJECT TO CHANGES]*
+**:arrow_left:, :arrow_right:** -> Increases and decreases the amount of lives the player has.
 
 **R** -> Reset game back to the main menu.
 
