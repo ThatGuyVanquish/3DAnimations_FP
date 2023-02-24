@@ -124,6 +124,8 @@ void BasicScene::BuildImGui()
     gameplay.imGuiOverlay.CheatScreen(gameplay.animate);
     if (gameplay.imGuiOverlay.PauseMenu(gameplay.animate))
         gameplay.Reset(true);
+    gameplay.imGuiOverlay.devLegends();
+    gameplay.imGuiOverlay.bonusVisual();
 }
 
 void BasicScene::Update(const Program& program, const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, const Eigen::Matrix4f& model)

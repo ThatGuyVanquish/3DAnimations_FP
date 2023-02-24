@@ -43,7 +43,7 @@ void ImGuiOverlay::startTimer(bool &animate)
         }
         else
         {
-            gameTimer = timeFromLastWASDQE = time(nullptr);
+            gameTimer =timeFromLastWASDQE = time(nullptr);
             animate = true;
             countdown = false;
             grabCallbacks = true;
@@ -300,20 +300,33 @@ void ImGuiOverlay::DeathScreen(bool &animate)
         {
             ImGui::SetCursorPos(ImVec2(center.x - 150, center.y + 50.0f));
             ShowXLText("GAME OVER!", "snap");
+            ImGui::SetCursorPos(ImVec2(center.x + 165, center.y + 180.0f));
+            ShowSmallText("INSERT NAME HERE:", "snap");
             ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 200.0f));
             ImGui::SetNextItemWidth(200.0f);
-            char name[20] = "INSERT NAME HERE";
-            int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+            int flags = ImGuiInputTextFlags_CharsUppercase | /*ImGuiInputTextFlags_AlwaysInsertMode |*/
+                    ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CtrlEnterForNewLine
+                    /*| ImGuiInputTextFlags_EnterReturnsTrue*/;
             grabCallbacks = false;
-            if (!ImGui::InputText("", name, 20, flags))
+            if (!ImGui::InputText("", name, 8, flags))
             {
                 deathTimerEnd = time(nullptr) + 5;
                 animate = false;
             }
-            else
+            ImGui::SetCursorPos(ImVec2(center.x + 160, center.y + 250.0f));
+            if (ImGui::Button("SAVE"))
             {
                 leaderboard.add(name, currentScore);
+                std::strncpy(name, "", 8);
                 deathTimerEnd = time(nullptr);
+                displayGameOver = true;
+                grabCallbacks = true;
+            }
+            ImGui::SetCursorPos(ImVec2(center.x + 300, center.y + 250.0f));
+            if (ImGui::Button("QUIT"))
+            {
+                deathTimerEnd = time(nullptr);
+                std::strncpy(name, "", 8);
                 displayGameOver = true;
                 grabCallbacks = true;
             }
@@ -398,8 +411,9 @@ void ImGuiOverlay::CheatScreen(bool &animate)
     ShowXLText(msg.c_str(), "arial");
     ImGui::SetCursorPos(ImVec2(center.x + 150, center.y + 150));
     ImGui::SetNextItemWidth(200.0f);
-    char cheat[20] = "INSERT CHEATS HERE";
-    int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue;
+    char cheat[20] = "";
+    int flags = ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue
+            | ImGuiInputTextFlags_AutoSelectAll;
     grabCallbacks = false;
     if (ImGui::InputText("", cheat, 20, flags))
     {
@@ -420,7 +434,11 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     if (!paused)
         return false;
     if (animate)
+    {
         animate = false;
+        accumulatedTime += time(nullptr) - gameTimer;
+    }
+
     ImGui::CreateContext();
     bool* pauseMenuToggle = nullptr;
     ImGui::Begin("Pause Menu", pauseMenuToggle, MENU_FLAGS);
@@ -458,14 +476,17 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
         countdownTimerEnd = 0;
         deathTimerEnd = 0;
         paused = false;
+//        gameTimer = time(nullptr);
     }
 
     ImGui::SetCursorPos(ImVec2(85.0f, 220.0f));
-    if (ImGui::Button("MAIN MENU"))
+    if (ImGui::Button("QUIT"))
     {
-        displayMainMenu = true;
+        //displayMainMenu = true;
+        currentLives = 0;
+        died = true;
         paused = false;
-        deathTimerEnd = 0;
+        //deathTimerEnd = 0;
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
         ImGui::PopFont();
@@ -483,4 +504,85 @@ bool ImGuiOverlay::PauseMenu(bool &animate)
     ImGui::PopFont();
     ImGui::End();
     return false;
+}
+
+void ImGuiOverlay::devLegends()
+{
+    if (!devMode)
+        return;
+    bool* devToggle = nullptr;
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(0,0,0,50));
+    int flags = MENU_FLAGS - ImGuiWindowFlags_NoBackground;
+    ImGui::Begin("dev legends", devToggle, flags);
+    ImGui::SetWindowPos("dev legends", ImVec2(0, 200));
+    ImGui::SetWindowSize("dev legends", ImVec2(200, 200));
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,100,0,255));
+    ShowSmallText("Dev mode legend toggles:", "arial");
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
+    ShowSmallText("UP,DOWN -> VELOCITY", "arial");
+    ShowSmallText("LEFT,RIGHT -> HEALTH", "arial");
+    ShowSmallText("R -> RESET", "arial");
+    ShowSmallText("G -> ANIMATE", "arial");
+    ShowSmallText("J -> 1K POINTS", "arial");
+    ShowSmallText("H -> COLLISION FRAMES", "arial");
+    ShowSmallText("C -> CYLINDERS", "arial");
+    ShowSmallText("V -> GLOBAL AXIS", "arial");
+    ImGui::PopStyleColor(3);
+    ImGui::End();
+}
+
+void ImGuiOverlay::bonusVisual()
+{
+    if (!gotBonus)
+        return;
+    if (bonusTimerEnd == 0)
+        bonusTimerEnd = time(nullptr) + 2;
+
+    float width = 750.0f, height = 200.0f;
+    bool* bonusToggle = nullptr;
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    center.y -= 250;
+    center.x -= 400;
+    ImGui::Begin("Bonus visual", bonusToggle, MENU_FLAGS);
+    ImGui::SetWindowPos(center);
+    ImGui::SetWindowSize(ImVec2(width, height));
+    auto now = time(nullptr);
+    if (now < bonusTimerEnd)
+    {
+        std::string text;
+        switch (currentBonusType)
+        {
+            case 0:
+            {
+                text = "EXTRA SPEED!";
+                break;
+            }
+            case 1:
+            {
+                text = "EXTRA HEALTH!";
+                break;
+            }
+            case 2:
+            {
+                text = "EXTRA " + std::to_string(bonusPoints) + " POINTS!";
+                break;
+            }
+            case 3:
+            {
+                text = "SLOWED DOWN!";
+                break;
+            }
+        }
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 200, 255));
+        ShowLargeText(text.c_str(), "snap");
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        bonusTimerEnd = 0;
+        gotBonus = false;
+        currentBonusType = -1;
+        bonusPoints = 0;
+    }
+    ImGui::End();
 }

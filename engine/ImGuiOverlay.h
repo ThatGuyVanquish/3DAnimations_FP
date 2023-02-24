@@ -75,9 +75,9 @@ public:
     void DeathScreen(bool &animate);
     void LevelUpScreen(bool& animate);
     void CheatScreen(bool& animate);
-
+    void devLegends();
     void handleCheats(const std::string& cheat);
-    
+    void bonusVisual();
     static const int MENU_FLAGS =
             ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
@@ -96,9 +96,13 @@ public:
     bool displayCheatWindow = false;
     bool devMode = false;
     bool paused = false;
+    bool gotBonus = false;
+    time_t bonusTimerEnd = 0;
+    int currentBonusType = -1;
+    int bonusPoints = 0;
     Leaderboard leaderboard;
     std::vector<std::string> cheatCodes = {"DEVTOOLS"};
-
+    char name[8];
     time_t timeFromLastWASDQE = time(nullptr);
 
 private:
