@@ -54,6 +54,8 @@ ${\color{orange}Sound}$ - We've used threads to execute python scripts on a diff
 
 **Q, E** -> Handle the roll of the snake
 
+**P** -> Pauses the game
+
 ### CAMERAS
 **1** -> Switch to first person view
 
